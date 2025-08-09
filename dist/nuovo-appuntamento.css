@@ -81,3 +81,21 @@ select, input[type="date"], input[type="time"] {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+.rubrica-grabber {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+  margin: 8px auto 6px;
+  cursor: grab;
+}
+
+.rubrica-container {
+  will-change: transform;
+  transform: translateY(0);
+  transition: transform 200ms ease;
+}
+
+.rubrica-container.swipe-out-down {
+  transform: translateY(100%);
+}
