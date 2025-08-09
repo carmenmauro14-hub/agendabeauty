@@ -53,24 +53,25 @@
     </div>
   </main>
 
-  <!-- Modale "rubrica": identica alla lista clienti -->
+  <!-- Modale "rubrica" -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
+    <!-- Contenitore rubrica (riuso stile rubrica) -->
     <div class="rubrica-container"
-     style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
-            overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
+         style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
+                overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
 
-      <!-- Header con grabber e pulsante X -->
-      <div class="rubrica-header" style="position: relative;">
+      <!-- Header con maniglia e X (fuori dalla search) -->
+      <div class="rubrica-header">
         <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
         <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
       </div>
 
-      <!-- Barra ricerca -->
+      <!-- Barra ricerca (invariata) -->
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
       </div>
 
-      <!-- Lista clienti -->
+      <!-- Lista + lettere a destra -->
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
     </div>
