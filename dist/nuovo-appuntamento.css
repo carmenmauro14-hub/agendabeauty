@@ -83,46 +83,46 @@ select, input[type="date"], input[type="time"] {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-.rubrica-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-  margin: 8px auto 6px;
-  cursor: grab;
-}
 
-.rubrica-container {
-  will-change: transform;
-  transform: translateY(0);
-  transition: transform 200ms ease;
-}
+/* ─────────────────────────────────────────────── */
+/*  STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA  */
+/* ─────────────────────────────────────────────── */
 
-.rubrica-container.swipe-out-down {
-  transform: translateY(100%);
-}
-
-/* Header stickato in alto con grabber e X */
-.rubrica-header{
+/* header con grabber */
+#rubricaModal .rubrica-header {
   position: sticky;
   top: 0;
   background: #fff;
   padding: 6px 12px 4px;
   z-index: 2;
+  display: flex;
+  justify-content: center;   /* grabber centrato */
+  align-items: center;
 }
 
-/* Grabber un filo più in alto/centrato */
-.rubrica-grabber{
+/* grabber */
+#rubricaModal .rubrica-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
-  margin: 6px auto 6px; /* era 8px -> lo avviciniamo al bordo alto */
+  margin: 6px auto;          /* vicino al bordo alto */
   cursor: grab;
 }
 
-/* Pulsante X in alto a destra */
-.rubrica-close{
+/* animazione verticale del pannello */
+#rubricaModal .rubrica-container {
+  will-change: transform;
+  transform: translateY(0);
+  transition: transform 200ms ease;
+}
+
+#rubricaModal .rubrica-container.swipe-out-down {
+  transform: translateY(100%);
+}
+
+/* pulsante X nell’angolo alto destro del pannello */
+#rubricaModal .rubrica-close {
   position: absolute;
   right: 12px;
   top: 6px;
@@ -136,5 +136,6 @@ select, input[type="date"], input[type="time"] {
   opacity: .85;
   cursor: pointer;
 }
-.rubrica-close:hover{ opacity: 1; }
-.rubrica-close:active{ transform: scale(.96); }
+
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
