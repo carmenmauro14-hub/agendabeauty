@@ -46,6 +46,14 @@ const letterNavPicker     = document.getElementById("letterNavPicker");
 const rubricaPanel = document.querySelector("#rubricaModal .rubrica-container");
 const rubricaGrabber = document.getElementById("rubricaGrabber");
 
+// [ADD] Bottone X
+const btnRubricaClose = document.getElementById("rubricaClose");
+if (btnRubricaClose) {
+  btnRubricaClose.addEventListener("click", () => {
+    chiudiRubricaConAnimazioneVert(); // stessa animazione dello swipe
+  });
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function showModal(m) { m.style.display = "flex"; }
 function closeModal(m) { m.style.display = "none"; }
