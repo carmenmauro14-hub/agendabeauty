@@ -2,6 +2,8 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12
 import {
   getFirestore, collection, getDocs, addDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// [ADD] Swipe verticale dalla maniglia
+import { abilitaSwipeVerticale } from "./swipe.js";
 
 // ─── Firebase config (allineata al resto dell'app) ────────────────────────────
 const firebaseConfig = {
@@ -40,6 +42,9 @@ const rubricaModal        = document.getElementById("rubricaModal");
 const searchCliente       = document.getElementById("searchCliente");
 const clientListPicker    = document.getElementById("clientListPicker");
 const letterNavPicker     = document.getElementById("letterNavPicker");
+// [ADD] Riferimenti per swipe verticale
+const rubricaPanel = document.querySelector("#rubricaModal .rubrica-container");
+const rubricaGrabber = document.getElementById("rubricaGrabber");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function showModal(m) { m.style.display = "flex"; }
@@ -55,6 +60,25 @@ function updateNavState() {
 rubricaModal.addEventListener("click", (e) => {
   if (e.target === rubricaModal) closeModal(rubricaModal);
 });
+
+// [ADD] Chiudi modale con swipe verso il basso dalla maniglia
+function chiudiRubricaConAnimazioneVert() {
+  if (!rubricaPanel) return;
+  rubricaPanel.classList.add("swipe-out-down");
+  rubricaPanel.addEventListener("transitionend", () => {
+    rubricaPanel.classList.remove("swipe-out-down");
+    closeModal(rubricaModal);
+  }, { once: true });
+}
+if (rubricaGrabber) {
+  abilitaSwipeVerticale(
+    rubricaGrabber,
+    () => {}, // swipe verso l'alto → niente
+    () => chiudiRubricaConAnimazioneVert(),
+    true,
+    80 // soglia alta per evitare chiusure involontarie
+  );
+}
 
 // ─── Rubrica (caricamento e rendering identici) ───────────────────────────────
 let clientiCache = null;
@@ -119,15 +143,10 @@ function renderRubrica(clienti) {
 // Ricerca live nella rubrica
 searchCliente.addEventListener("input", () => {
   const f = searchCliente.value.toLowerCase();
-  // Nascondi la letter-nav se in filtro
   letterNavPicker.style.display = f ? "none" : "flex";
-
-  // Filtra elementi
   clientListPicker.querySelectorAll("li.item").forEach(li => {
     li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
   });
-
-  // Mostra/nascondi intestazioni sezione
   clientListPicker.querySelectorAll("li.section").forEach(sec => {
     let el = sec.nextElementSibling;
     let visible = false;
@@ -139,7 +158,7 @@ searchCliente.addEventListener("input", () => {
   });
 });
 
-// ─── Trattamenti (usa icona salvata nel DB; fallback a trovaIcona) ────────────
+// ─── Trattamenti ──────────────────────────────────────────────────────────────
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
   "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
@@ -159,7 +178,6 @@ async function caricaTrattamenti() {
     const snap = await getDocs(collection(db, "trattamenti"));
     const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     lista.sort((a,b) => (a.nome || "").localeCompare(b.nome || ""));
-
     for (const t of lista) {
       const icona = t.icona || trovaIcona(t.nome);
       const row = document.createElement("div");
@@ -181,41 +199,35 @@ async function caricaTrattamenti() {
   }
 }
 
-// ─── Navigazione step ──────────────────────────────────────────────────────────
+// ─── Navigazione step ─────────────────────────────────────────────────────────
 btnToStep2.addEventListener("click", () => {
   if (!clienteIdHidden.value) return alert("Seleziona un cliente");
   step1.style.display = "none";
   step2.style.display = "block";
 });
-
 btnBackToStep1.addEventListener("click", () => {
   step2.style.display = "none";
   step1.style.display = "block";
 });
-
 btnToStep3.addEventListener("click", () => {
   if (!(inpData.value && inpOra.value)) return alert("Inserisci data e ora");
   step2.style.display = "none";
   step3.style.display = "block";
 });
-
 btnBackToStep2.addEventListener("click", () => {
   step3.style.display = "none";
   step2.style.display = "block";
 });
 
-// ─── Salvataggio appuntamento ─────────────────────────────────────────────────
+// ─── Salvataggio appuntamento ────────────────────────────────────────────────
 btnSalva.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
-  const data = inpData.value; // "YYYY-MM-DD"
-  const ora  = inpOra.value;  // "HH:MM"
-
+  const data = inpData.value;
+  const ora  = inpOra.value;
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(data && ora)) return alert("Inserisci data e ora");
-
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
-
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
@@ -226,19 +238,16 @@ btnSalva.addEventListener("click", async () => {
       icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
     };
   });
-
-  // Costruisci Timestamp locale (evita interpretazioni UTC di stringhe ISO)
   const [y, m, d] = data.split("-").map(n => parseInt(n, 10));
   const [hh, mm]  = ora.split(":").map(n => parseInt(n, 10));
   const localDate = new Date(y, m - 1, d, hh, mm, 0, 0);
   const dateTime  = Timestamp.fromDate(localDate);
-
   try {
     await addDoc(collection(db, "appuntamenti"), {
       clienteId,
       date: data,
       time: ora,
-      dateTime,   // comodo per ordinare/filtrare
+      dateTime,
       trattamenti
     });
     alert("Appuntamento salvato con successo!");
