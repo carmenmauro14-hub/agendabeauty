@@ -125,7 +125,7 @@ select, input[type="date"], input[type="time"] {
 #rubricaModal .rubrica-close {
   position: absolute;
   right: 12px;
-  top: 6px;
+  top: -6px;
   width: 32px;
   height: 32px;
   border: 0;
