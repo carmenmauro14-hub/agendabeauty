@@ -88,7 +88,7 @@ select, input[type="date"], input[type="time"] {
 /*  STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA  */
 /* ─────────────────────────────────────────────── */
 
-/* header con grabber */
+/* header con grabber e X */
 #rubricaModal .rubrica-header {
   position: sticky;
   top: 0;
@@ -96,8 +96,9 @@ select, input[type="date"], input[type="time"] {
   padding: 6px 12px 4px;
   z-index: 2;
   display: flex;
-  justify-content: center;   /* grabber centrato */
+  justify-content: center; /* grabber centrato */
   align-items: center;
+  position: relative; /* ancoraggio X */
 }
 
 /* grabber */
@@ -106,7 +107,7 @@ select, input[type="date"], input[type="time"] {
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
-  margin: 6px auto;          /* vicino al bordo alto */
+  margin: 6px auto;
   cursor: grab;
 }
 
@@ -124,29 +125,18 @@ select, input[type="date"], input[type="time"] {
 /* pulsante X nell’angolo alto destro del pannello */
 #rubricaModal .rubrica-close {
   position: absolute;
-  top: 12px;           /* distanza dal bordo alto della modale */
-  right: 16px;         /* distanza dal bordo destro */
+  right: 12px;
+  top: 4px;
   width: 32px;
   height: 32px;
-  border: none;
-  border-radius: 50%;  /* cerchio */
-  background: #f5f0ed; /* sfondo chiaro */
-  font-size: 20px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
   line-height: 32px;
-  text-align: center;
-  color: #a07863;      /* colore icona */
-  opacity: 0.9;
+  color: #a07863;   /* palette app */
+  opacity: .85;
   cursor: pointer;
-  z-index: 3;          /* sopra tutto */
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  transition: background 0.2s, transform 0.15s;
 }
 
-#rubricaModal .rubrica-close:hover {
-  background: #e6d9d0; /* hover più scuro */
-  opacity: 1;
-}
-
-#rubricaModal .rubrica-close:active {
-  transform: scale(0.95);
-}
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
