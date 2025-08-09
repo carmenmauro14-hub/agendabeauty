@@ -53,27 +53,21 @@
     </div>
   </main>
 
-  <!-- Modale "rubrica": identica alla lista clienti, ma con piccolo margine in alto -->
-  <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
-    <!-- Usiamo direttamente .rubrica-container per avere titolo "Clienti" via ::before -->
-    <div class="rubrica-container"
-         style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
-                overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
-
-      <!-- Pulsante X in alto a destra (fuori dall'header) -->
-      <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
-
-      <!-- Maniglia per swipe verticale -->
-      <div class="rubrica-header">
+  <!-- Modale "rubrica" -->
+  <div id="rubricaModal" class="modal">
+    <div class="rubrica-container">
+      <!-- Header con maniglia centrata e X -->
+      <div class="rubrica-header-line">
         <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
+        <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
       </div>
 
-      <!-- Barra ricerca identica -->
+      <!-- Barra ricerca -->
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
       </div>
 
-      <!-- Lista + lettere a destra -->
+      <!-- Lista + lettere -->
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
     </div>
