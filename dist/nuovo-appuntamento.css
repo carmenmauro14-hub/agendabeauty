@@ -99,3 +99,40 @@ select, input[type="date"], input[type="time"] {
 .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
+
+/* Header stickato in alto con grabber e X */
+.rubrica-header{
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 6px 12px 4px;
+  z-index: 2;
+}
+
+/* Grabber un filo più in alto/centrato */
+.rubrica-grabber{
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+  margin: 6px auto 6px; /* era 8px -> lo avviciniamo al bordo alto */
+  cursor: grab;
+}
+
+/* Pulsante X in alto a destra */
+.rubrica-close{
+  position: absolute;
+  right: 12px;
+  top: 6px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 32px;
+  color: #a07863;   /* palette app */
+  opacity: .85;
+  cursor: pointer;
+}
+.rubrica-close:hover{ opacity: 1; }
+.rubrica-close:active{ transform: scale(.96); }
