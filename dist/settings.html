@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impostazioni - BeautyBook</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="settings.css"> <!-- ✅ collegamento al CSS -->
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <main class="settings-container">
+    <h1 class="settings-title">Impostazioni</h1>
+    <ul class="settings-list">
+      <li onclick="location.href='reminder-settings.html'">
+        <span>Impostazioni Promemoria</span>
+        <span class="arrow">›</span>
+      </li>
+      <li onclick="location.href='trattamenti-settings.html'">
+        <span>Impostazioni Trattamenti</span>
+        <span class="arrow">›</span>
+      </li>
+    </ul>
+  </main>
+
+  <script>
+    fetch("navbar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("navbar-placeholder").innerHTML = data;
+      });
+  </script>
+
+  <script src="navbar.js"></script>
+  <script type="module" src="auth.js"></script>
+</body>
+</html>

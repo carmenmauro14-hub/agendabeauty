@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impostazioni Promemoria - BeautyBook</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="reminder-settings.css"> <!-- CSS dedicato -->
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <div class="back-header" onclick="location.href='settings.html'">
+  <span class="back-arrow">‹</span> Impostazioni
+  </div>
+
+  <main class="reminder-container">
+    <h1 class="reminder-title">Impostazioni Promemoria</h1>
+    <p class="info-text">Qui potrai gestire le notifiche e i promemoria automatici per gli appuntamenti.</p>
+
+    <!-- Area funzionale da sviluppare -->
+    <ul class="reminder-list">
+      <li>
+        <label>
+          <input type="checkbox" id="enable-reminders" />
+          Attiva promemoria automatici
+        </label>
+      </li>
+      <li>
+        Anticipo promemoria:
+        <select id="reminder-time">
+          <option value="24h">24 ore prima</option>
+          <option value="12h">12 ore prima</option>
+          <option value="2h">2 ore prima</option>
+        </select>
+      </li>
+    </ul>
+  </main>
+
+  <script>
+    fetch("navbar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("navbar-placeholder").innerHTML = data;
+      });
+  </script>
+
+  <script src="navbar.js"></script>
+  <script type="module" src="auth.js"></script>
+</body>
+</html>

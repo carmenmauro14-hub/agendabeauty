@@ -1,0 +1,36 @@
+
+.top-nav {
+  position: fixed;
+  bottom: env(safe-area-inset-bottom);
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.7rem 0;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+  padding-bottom: calc(0.7rem + env(safe-area-inset-bottom));
+}
+
+.top-nav a img {
+  width: 50px;
+  height: 50px;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.top-nav a.active img {
+  transform: scale(1.25);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(15%) saturate(850%) hue-rotate(337deg) brightness(80%) contrast(100%);
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Effetto click su icona */
+.top-nav a:active img {
+  transform: scale(0.9);
+  opacity: 0.6;
+}

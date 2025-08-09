@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vista Giorno</title>
+  <link rel="stylesheet" href="navbar.css" />
+  <link rel="stylesheet" href="giorno.css" />
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <!-- ─── TOP BAR IDENTICA ─────────────────────────────── -->
+  <header class="top-bar">
+    <div class="mese-switch" id="meseSwitch">
+      <span id="meseCorrente">Agosto</span>
+      <span class="freccia">▼</span>
+    </div>
+    <div class="top-right">
+      <span id="annoCorrente">2025</span>
+      <button id="btnTornaOggi" class="btn-oggi">2</button>
+    </div>
+  </header>
+
+  <!-- ─── BARRA MENSILE SCROLLABILE ────────────────────── -->
+  <div class="mesi-bar" id="mesiBar" style="display: none;"></div>
+
+  <!-- ─── MINI CALENDARIO ──────────────────────────────── -->
+  <div id="miniCalendario" class="mini-calendario"></div>
+
+  <!-- ─── CONTENUTO VISTA GIORNO ───────────────────────── -->
+  <main id="contenutoGiorno" style="padding: 16px;">
+    <!-- Gli appuntamenti del giorno verranno caricati qui -->
+  </main>
+
+  <!-- ─── BOTTONE FLOTANTE PER NUOVO APPUNTAMENTO ──────── -->
+  <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
+
+  <!-- ─── SCRIPT E NAVBAR ──────────────────────────────── -->
+  <script>
+    // Carica navbar dinamicamente
+    fetch("navbar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("navbar-placeholder").innerHTML = data;
+      });
+  </script>
+  <script src="navbar.js"></script>
+  <script type="module" src="giorno.js"></script>
+  <script type="module" src="auth.js"></script>
+</body>
+</html>

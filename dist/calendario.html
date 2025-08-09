@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda Calendario</title>
+  <link rel="stylesheet" href="calendario.css">
+  <link rel="stylesheet" href="navbar.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <!-- ─── TOP BAR ─────────────────────────────────────── -->
+  <header class="top-bar">
+    <div class="mese-switch" id="meseSwitch">
+      <span id="meseCorrente">Luglio</span>
+      <span class="freccia">▼</span>
+    </div>
+
+    <div class="top-right">
+      <span id="annoCorrente">2025</span>
+      <button id="btnTornaOggi" class="btn-oggi">29</button> <!-- ← giorno attuale -->
+    </div>
+  </header>
+
+  <!-- ─── BAR MENSILE ──────────────────────────────────── -->
+  <div class="mesi-bar" id="mesiBar">
+    <span data-mese="0">gen</span>
+    <span data-mese="1">feb</span>
+    <span data-mese="2">mar</span>
+    <span data-mese="3">apr</span>
+    <span data-mese="4">mag</span>
+    <span data-mese="5">giu</span>
+    <span data-mese="6">lug</span>
+    <span data-mese="7">ago</span>
+    <span data-mese="8">set</span>
+    <span data-mese="9">ott</span>
+    <span data-mese="10">nov</span>
+    <span data-mese="11">dic</span>
+  </div>
+
+  <!-- ─── GIORNI SETTIMANA ─────────────────────────────── -->
+  <div class="giorni-settimana">
+    <span>LUN</span><span>MAR</span><span>MER</span><span>GIO</span>
+    <span>VEN</span><span>SAB</span><span>DOM</span>
+  </div>
+
+  <!-- ─── GRIGLIA GIORNI ──────────────────────────────── -->
+  <div class="griglia" id="grigliaCalendario"></div>
+
+  <!-- ─── PULSANTE AGGIUNGI APPUNTAMENTO ──────────────── -->
+  <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
+
+  <!-- ─── SCRIPT ───────────────────────────────────────── -->
+  <script src="calendario.js" type="module"></script>
+
+  <script>
+    fetch("navbar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("navbar-placeholder").innerHTML = data;
+      });
+  </script>
+
+  <script src="navbar.js"></script>
+  <script type="module" src="auth.js"></script>
+</body>
+</html>
