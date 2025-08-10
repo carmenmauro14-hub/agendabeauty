@@ -78,6 +78,7 @@ function chiudiRubricaConAnimazioneVert() {
   }, { once: true });
 }
 
+// swipe su tutta la header (area più grande, soglia più sensibile)
 const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
 if (rubricaHeader) {
   abilitaSwipeVerticale(
@@ -104,10 +105,7 @@ async function apriRubrica() {
   showModal(rubricaModal);
 }
 
-if (openRubrica) {
-  openRubrica.addEventListener("click", apriRubrica);
-}
-
+if (openRubrica) openRubrica.addEventListener("click", apriRubrica);
 if (openRubricaField) {
   openRubricaField.addEventListener("click", apriRubrica);
   openRubricaField.addEventListener("keydown", (e) => {
@@ -136,16 +134,14 @@ function renderRubrica(clienti) {
       li.className = "item";
       li.textContent = c.nome || "(senza nome)";
       li.onclick = () => {
+        // salva scelta
         clienteIdHidden.value = c.id;
         clienteSelezionato.textContent = c.nome || "(senza nome)";
 
-        // NEW: aggiorna il campo finto input
-        if (pickerValue) {
-          pickerValue.textContent = c.nome || "(senza nome)";
-        }
-        if (pickerPlaceholder) {
-          pickerPlaceholder.style.display = "none";
-        }
+        // Aggiorna il “finto input”
+        if (pickerValue) pickerValue.textContent = c.nome || "(senza nome)";
+        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+        if (openRubricaField) openRubricaField.classList.remove("empty"); // <— NOVITÀ
 
         closeModal(rubricaModal);
         updateNavState();
@@ -286,3 +282,11 @@ btnSalva.addEventListener("click", async () => {
 // ─── Avvio ─────────────────────────────────────────────────────────
 caricaTrattamenti();
 updateNavState();
+
+// (opz.) Se arrivi con un cliente già impostato, mostra il nome nel campo
+// (serve una tua logica per recuperare nomeCliente esistente, qui è solo un esempio)
+if (clienteIdHidden.value && pickerValue && openRubricaField) {
+  // pickerValue.textContent = "Nome cliente già scelto"; // <— se lo hai disponibile
+  openRubricaField.classList.remove("empty");
+  if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+}
