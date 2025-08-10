@@ -89,47 +89,50 @@ select, input[type="date"], input[type="time"] {
 /* ─────────────────────────────────────────────── */
 
 /* pannello della modale: lascio spazio sopra per la topbar (grabber + X) */
-#rubricaModal .rubrica-container{
+#rubricaModal .rubrica-container {
   position: relative;
   padding-top: 56px;            /* spazio per la barra in alto */
   will-change: transform;
   transform: translateY(0);
   transition: transform 200ms ease;
 }
-#rubricaModal .rubrica-container.swipe-out-down{
+#rubricaModal .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
 
-/* barra in alto: grabber centrato + X a destra, sulla stessa riga */
-#rubricaModal .rubrica-header{
-  position: absolute;           /* sta sopra al titolo “Clienti” */
-  top: 8px;
-  left: 12px;
-  right: 12px;
-  height: 28px;
+/* barra in alto: grabber centrato + X a destra, stessa riga, tutta area grabbabile */
+#rubricaModal .rubrica-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;                 /* area più ampia per swipe facile */
   display: flex;
   align-items: center;
   justify-content: center;      /* centra la maniglia */
   z-index: 3;
   background: transparent;
   padding: 0;
+  touch-action: none;           /* blocca scroll verticale su questa area */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* maniglia */
-#rubricaModal .rubrica-grabber{
+#rubricaModal .rubrica-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
-  margin: 0;                    /* niente margini extra */
+  margin: 0;
   cursor: grab;
 }
 
 /* X in alto a destra */
-#rubricaModal .rubrica-close{
+#rubricaModal .rubrica-close {
   position: absolute;
-  top: -2px;
-  right: 0;
+  top: 6px;
+  right: 8px;
   width: 32px;
   height: 32px;
   border: 0;
@@ -141,5 +144,5 @@ select, input[type="date"], input[type="time"] {
   cursor: pointer;
   z-index: 4;
 }
-#rubricaModal .rubrica-close:hover{ opacity: 1; }
-#rubricaModal .rubrica-close:active{ transform: scale(.96); }
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
