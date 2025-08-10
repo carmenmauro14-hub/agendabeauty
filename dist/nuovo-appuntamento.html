@@ -21,12 +21,17 @@
 
       <!-- Picker cliente -->
       <input type="hidden" id="clienteId" />
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-        <div id="clienteSelezionato" style="flex:1; min-height:24px;">
-          Nessun cliente selezionato
-        </div>
-        <button id="openRubrica" class="btn-primary">Apri rubrica</button>
+
+      <!-- Campo “input” che apre la rubrica -->
+      <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
+           aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
+        <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
+        <span id="pickerValue" class="value" aria-live="polite"></span>
       </div>
+
+      <!-- (Vecchi elementi tenuti nascosti per compatibilità) -->
+      <div id="clienteSelezionato" style="display:none;"></div>
+      <button id="openRubrica" class="btn-primary" style="display:none;">Apri rubrica</button>
 
       <div class="wizard-nav">
         <button id="toStep2" class="btn-primary" disabled>Avanti</button>
@@ -53,14 +58,13 @@
     </div>
   </main>
 
-  <!-- Modale "rubrica": identica alla lista clienti, ma con piccolo margine in alto -->
+  <!-- Modale "rubrica": identica alla lista clienti -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
-    <!-- Usiamo direttamente .rubrica-container per avere titolo "Clienti" via ::before -->
     <div class="rubrica-container"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
                 overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
 
-      <!-- Pulsante X in alto a destra (fuori dall'header) -->
+      <!-- Pulsante X in alto a destra -->
       <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
 
       <!-- Maniglia per swipe verticale -->
@@ -68,7 +72,7 @@
         <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
       </div>
 
-      <!-- Barra ricerca identica -->
+      <!-- Barra ricerca -->
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
       </div>
