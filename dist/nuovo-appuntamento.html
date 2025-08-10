@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Nuovo Appuntamento</title>
 
-  <!-- Navbar/stile app -->
+  <!-- Stili app -->
   <link rel="stylesheet" href="navbar.css" />
-  <!-- Riuso stile rubrica per la modale (lista + lettere + input) -->
+  <!-- Riutilizza stile rubrica (lista + lettere + input) -->
   <link rel="stylesheet" href="rubrica.css" />
-  <!-- Stili della pagina a step -->
+  <!-- Stili della pagina a step (+ stile per picker-input) -->
   <link rel="stylesheet" href="nuovo-appuntamento.css" />
 </head>
 <body>
@@ -19,12 +19,20 @@
     <div class="step" id="step1">
       <h2>1. Seleziona cliente</h2>
 
-      <!-- Picker cliente -->
+      <!-- Valore scelto -->
       <input type="hidden" id="clienteId" />
 
       <!-- Campo “input” che apre la rubrica -->
-      <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
-           aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
+      <div
+        id="openRubricaField"
+        class="picker-input"
+        role="button"
+        tabindex="0"
+        aria-label="Apri rubrica clienti"
+        aria-haspopup="dialog"
+        aria-controls="rubricaModal"
+        style="margin-bottom:12px;"
+      >
         <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
         <span id="pickerValue" class="value" aria-live="polite"></span>
       </div>
@@ -58,16 +66,16 @@
     </div>
   </main>
 
-  <!-- Modale "rubrica": identica alla lista clienti -->
+  <!-- Modale "rubrica" -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
     <div class="rubrica-container"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
                 overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
 
-      <!-- Pulsante X in alto a destra -->
+      <!-- X in alto a destra -->
       <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
 
-      <!-- Maniglia per swipe verticale -->
+      <!-- Maniglia per swipe verticale (in alto, centrata) -->
       <div class="rubrica-header">
         <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
       </div>
