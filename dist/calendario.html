@@ -1,93 +1,68 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nuovo Appuntamento</title>
-
-  <!-- Navbar/stile app -->
-  <link rel="stylesheet" href="navbar.css" />
-  <!-- Riuso stile rubrica per la modale (lista + lettere + input) -->
-  <link rel="stylesheet" href="rubrica.css" />
-  <!-- Stili della pagina a step -->
-  <link rel="stylesheet" href="nuovo-appuntamento.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda Calendario</title>
+  <link rel="stylesheet" href="calendario.css">
+  <link rel="stylesheet" href="navbar.css">
 </head>
 <body>
   <div id="navbar-placeholder"></div>
 
-  <main class="wizard-container">
-    <div class="step" id="step1">
-      <h2>1. Seleziona cliente</h2>
-
-      <!-- Picker cliente -->
-      <input type="hidden" id="clienteId" />
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-        <div id="clienteSelezionato" style="flex:1; min-height:24px;">
-          Nessun cliente selezionato
-        </div>
-        <button id="openRubrica" class="btn-primary">Apri rubrica</button>
-      </div>
-
-      <div class="wizard-nav">
-        <button id="toStep2" class="btn-primary" disabled>Avanti</button>
-      </div>
+  <!-- ─── TOP BAR ─────────────────────────────────────── -->
+  <header class="top-bar">
+    <div class="mese-switch" id="meseSwitch">
+      <span id="meseCorrente">Luglio</span>
+      <span class="freccia">▼</span>
     </div>
 
-    <div class="step" id="step2" style="display:none;">
-      <h2>2. Seleziona data e ora</h2>
-      <input type="date" id="dataAppuntamento" />
-      <input type="time" id="oraAppuntamento" />
-      <div class="wizard-nav">
-        <button id="backToStep1">Indietro</button>
-        <button id="toStep3" class="btn-primary" disabled>Avanti</button>
-      </div>
+    <div class="top-right">
+      <span id="annoCorrente">2025</span>
+      <button id="btnTornaOggi" class="btn-oggi">29</button> <!-- ← giorno attuale -->
     </div>
+  </header>
 
-    <div class="step" id="step3" style="display:none;">
-      <h2>3. Scegli trattamenti</h2>
-      <div id="trattamentiWrapper"></div>
-      <div class="wizard-nav">
-        <button id="backToStep2">Indietro</button>
-        <button id="salvaAppuntamento" class="btn-primary">Salva Appuntamento</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Modale "rubrica": identica alla lista clienti, ma con piccolo margine in alto -->
-  <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
-    <!-- Usiamo direttamente .rubrica-container per avere titolo "Clienti" via ::before -->
-    <div class="rubrica-container"
-         style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
-                overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
-
-      <!-- Pulsante X in alto a destra (fuori dall'header) -->
-      <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
-
-      <!-- Maniglia per swipe verticale -->
-      <div class="rubrica-header">
-        <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
-      </div>
-
-      <!-- Barra ricerca identica -->
-      <div class="top-bar">
-        <input id="searchCliente" type="text" placeholder="Cerca cliente…">
-      </div>
-
-      <!-- Lista + lettere a destra -->
-      <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
-      <div id="letterNavPicker" class="letter-nav"></div>
-    </div>
+  <!-- ─── BAR MENSILE ──────────────────────────────────── -->
+  <div class="mesi-bar" id="mesiBar">
+    <span data-mese="0">gen</span>
+    <span data-mese="1">feb</span>
+    <span data-mese="2">mar</span>
+    <span data-mese="3">apr</span>
+    <span data-mese="4">mag</span>
+    <span data-mese="5">giu</span>
+    <span data-mese="6">lug</span>
+    <span data-mese="7">ago</span>
+    <span data-mese="8">set</span>
+    <span data-mese="9">ott</span>
+    <span data-mese="10">nov</span>
+    <span data-mese="11">dic</span>
   </div>
+
+  <!-- ─── GIORNI SETTIMANA ─────────────────────────────── -->
+  <div class="giorni-settimana">
+    <span>LUN</span><span>MAR</span><span>MER</span><span>GIO</span>
+    <span>VEN</span><span>SAB</span><span>DOM</span>
+  </div>
+
+  <!-- ─── GRIGLIA GIORNI ──────────────────────────────── -->
+  <div class="griglia" id="grigliaCalendario"></div>
+
+  <!-- ─── PULSANTE AGGIUNGI APPUNTAMENTO ──────────────── -->
+  <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
+
+  <!-- ─── SCRIPT ───────────────────────────────────────── -->
+  <script src="calendario.js" type="module"></script>
 
   <script>
     fetch("navbar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("navbar-placeholder").innerHTML = html;
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("navbar-placeholder").innerHTML = data;
       });
   </script>
 
+  <script src="navbar.js"></script>
   <script type="module" src="auth.js"></script>
-  <script type="module" src="nuovo-appuntamento.js"></script>
 </body>
 </html>
