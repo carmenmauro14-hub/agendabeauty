@@ -7,6 +7,11 @@ body {
   background: #fff;
 }
 
+/* Evita sbordi globali */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .wizard-container {
   max-width: 600px;
   margin: 80px auto;
@@ -88,39 +93,32 @@ select, input[type="date"], input[type="time"] {
 /*  STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA  */
 /* ─────────────────────────────────────────────── */
 
-/* pannello della modale: lascio spazio sopra per la topbar (grabber + X) */
+/* pannello della modale */
 #rubricaModal .rubrica-container {
   position: relative;
-  padding-top: 56px;            /* spazio per la barra in alto */
+  padding-top: 56px;
   will-change: transform;
   transform: translateY(0);
   transition: transform 200ms ease;
-  /* aggiunte per evitare sbordi e dare bordi arrotondati */
-  box-sizing: border-box;
-  padding-left: 16px;
-  padding-right: 16px;
-  border-radius: 16px 16px 0 0;
-  overflow: hidden;
 }
-
 #rubricaModal .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
 
-/* barra in alto: grabber centrato + X a destra, stessa riga, tutta area grabbabile */
+/* barra in alto */
 #rubricaModal .rubrica-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 44px;                 /* area più ampia per swipe facile */
+  height: 44px;
   display: flex;
   align-items: center;
-  justify-content: center;      /* centra la maniglia */
+  justify-content: center;
   z-index: 3;
   background: transparent;
   padding: 0;
-  touch-action: none;           /* blocca scroll verticale su questa area */
+  touch-action: none;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -135,7 +133,7 @@ select, input[type="date"], input[type="time"] {
   cursor: grab;
 }
 
-/* X in alto a destra */
+/* X chiusura */
 #rubricaModal .rubrica-close {
   position: absolute;
   top: 6px;
@@ -146,7 +144,7 @@ select, input[type="date"], input[type="time"] {
   background: transparent;
   font-size: 22px;
   line-height: 32px;
-  color: #a07863;   /* palette app */
+  color: #a07863;
   opacity: .85;
   cursor: pointer;
   z-index: 4;
@@ -154,29 +152,29 @@ select, input[type="date"], input[type="time"] {
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
 
-/* ─────────────────────────────────────────────── */
-/* Campo “input” che apre la rubrica (step 1) */
-/* ─────────────────────────────────────────────── */
+/* Campo input finto che apre la rubrica */
 .picker-input{
   display:flex;
   align-items:center;
+  justify-content:space-between;
+  gap:12px;
   width:100%;
-  padding:12px 20px;            
+  padding:12px 16px;
   border:1px solid #e6d9d0;
-  border-radius:20px;            
-  background:#fafafa;            
+  border-radius:14px;
+  background:#fff;
   color:#a07863;
   cursor:text;
   user-select:none;
-  box-shadow:none;
+  box-sizing: border-box; /* fix sbordo */
 }
 .picker-input:focus{
   outline:none;
   box-shadow:0 0 0 4px rgba(210,184,163,.25);
 }
-.picker-input .value{ font-weight:600; color:#a07863; }
-
-/* placeholder visibile solo se non c'è un valore */
-#pickerPlaceholder{ color:#a07863; opacity:.55; }
+.picker-input .value{
+  font-weight:600;
+  color:#a07863;
+}
 .picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.55; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
