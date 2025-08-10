@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Nuovo Appuntamento</title>
 
-  <!-- Stili app -->
+  <!-- Navbar/stile app -->
   <link rel="stylesheet" href="navbar.css" />
-  <!-- Riutilizzo degli stili della rubrica (lista/lettere/input) -->
+  <!-- Riuso stile rubrica per la modale (lista + lettere + input) -->
   <link rel="stylesheet" href="rubrica.css" />
   <!-- Stili della pagina a step -->
   <link rel="stylesheet" href="nuovo-appuntamento.css" />
@@ -16,61 +16,62 @@
   <div id="navbar-placeholder"></div>
 
   <main class="wizard-container">
+    <!-- STEP 1 -->
     <div class="step" id="step1">
       <h2>1. Seleziona cliente</h2>
 
-      <!-- ID nascosto con l'ID del cliente -->
+      <!-- Picker cliente -->
       <input type="hidden" id="clienteId" />
 
-      <!-- Campo “input” cliccabile che apre la rubrica -->
-      <div id="openRubricaField"
-           class="picker-input empty"
-           role="button" tabindex="0"
-           aria-haspopup="dialog" aria-controls="rubricaModal"
-           style="margin-bottom:12px;">
+      <!-- Campo “input” che apre la rubrica -->
+      <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
+           aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
         <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
         <span id="pickerValue" class="value" aria-live="polite"></span>
       </div>
 
-      <!-- Vecchi elementi tenuti nascosti per compatibilità -->
+      <!-- (Vecchi elementi tenuti nascosti per compatibilità) -->
       <div id="clienteSelezionato" style="display:none;"></div>
-      <button id="openRubrica" class="btn-primary" style="display:none;">Apri rubrica</button>
+      <button id="openRubrica" class="btn" style="display:none;">Apri rubrica</button>
 
       <div class="wizard-nav">
-        <button id="toStep2" class="btn-primary" disabled>Avanti</button>
+        <button id="cancelWizard" type="button" class="btn">Annulla</button>
+        <button id="toStep2" class="btn" disabled>Avanti</button>
       </div>
     </div>
 
+    <!-- STEP 2 -->
     <div class="step" id="step2" style="display:none;">
       <h2>2. Seleziona data e ora</h2>
       <input type="date" id="dataAppuntamento" />
       <input type="time" id="oraAppuntamento" />
       <div class="wizard-nav">
-        <button id="backToStep1">Indietro</button>
-        <button id="toStep3" class="btn-primary" disabled>Avanti</button>
+        <button id="backToStep1" class="btn" type="button">Indietro</button>
+        <button id="toStep3" class="btn" disabled>Avanti</button>
       </div>
     </div>
 
+    <!-- STEP 3 -->
     <div class="step" id="step3" style="display:none;">
       <h2>3. Scegli trattamenti</h2>
       <div id="trattamentiWrapper"></div>
       <div class="wizard-nav">
-        <button id="backToStep2">Indietro</button>
-        <button id="salvaAppuntamento" class="btn-primary">Salva Appuntamento</button>
+        <button id="backToStep2" class="btn" type="button">Indietro</button>
+        <button id="salvaAppuntamento" class="btn">Salva Appuntamento</button>
       </div>
     </div>
   </main>
 
-  <!-- Modale rubrica -->
+  <!-- Modale "rubrica": identica alla lista clienti -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
     <div class="rubrica-container"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
                 overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
 
-      <!-- X in alto a destra -->
+      <!-- Pulsante X in alto a destra -->
       <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
 
-      <!-- Maniglia per lo swipe -->
+      <!-- Maniglia per swipe verticale -->
       <div class="rubrica-header">
         <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
       </div>
@@ -80,7 +81,7 @@
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
       </div>
 
-      <!-- Lista + lettere -->
+      <!-- Lista + lettere a destra -->
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
     </div>
