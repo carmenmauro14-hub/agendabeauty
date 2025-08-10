@@ -146,3 +146,29 @@ select, input[type="date"], input[type="time"] {
 }
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
+/* Campo “input” che apre la rubrica (step 1) */
+.picker-input{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  padding:12px 16px;
+  border:1px solid #e6d9d0;      /* coerente con rubrica */
+  border-radius:14px;
+  background:#fff;
+  color:#a07863;
+  cursor:text;                    /* sensazione da input */
+  user-select:none;
+}
+.picker-input:focus{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+}
+.picker-input .value{
+  font-weight:600;
+  color:#a07863;
+}
+/* placeholder visibile solo se non c'è un valore */
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
