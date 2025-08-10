@@ -253,3 +253,10 @@ button i {
   height: 1px;
   background-color: #e6d9d0;
 }
+
+/* Placeholder coerente con la palette */
+.top-bar input::placeholder,
+form input::placeholder {
+  color: #a07863;
+  opacity: 0.6; /* come nello step 1 */
+}
