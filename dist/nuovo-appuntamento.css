@@ -88,45 +88,48 @@ select, input[type="date"], input[type="time"] {
 /*  STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA  */
 /* ─────────────────────────────────────────────── */
 
-/* header con grabber e X */
-#rubricaModal .rubrica-header {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  padding: 6px 12px 4px;
-  z-index: 2;
-  display: flex;
-  justify-content: center; /* grabber centrato */
-  align-items: center;
-  position: relative; /* ancoraggio X */
-}
-
-/* grabber */
-#rubricaModal .rubrica-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-  margin: 6px auto;
-  cursor: grab;
-}
-
-/* animazione verticale del pannello */
-#rubricaModal .rubrica-container {
+/* pannello della modale: lascio spazio sopra per la topbar (grabber + X) */
+#rubricaModal .rubrica-container{
+  position: relative;
+  padding-top: 56px;            /* spazio per la barra in alto */
   will-change: transform;
   transform: translateY(0);
   transition: transform 200ms ease;
 }
-
-#rubricaModal .rubrica-container.swipe-out-down {
+#rubricaModal .rubrica-container.swipe-out-down{
   transform: translateY(100%);
 }
 
-/* pulsante X nell’angolo alto destro del pannello */
-#rubricaModal .rubrica-close {
-  position: absolute;
+/* barra in alto: grabber centrato + X a destra, sulla stessa riga */
+#rubricaModal .rubrica-header{
+  position: absolute;           /* sta sopra al titolo “Clienti” */
+  top: 8px;
+  left: 12px;
   right: 12px;
-  top: 4px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;      /* centra la maniglia */
+  z-index: 3;
+  background: transparent;
+  padding: 0;
+}
+
+/* maniglia */
+#rubricaModal .rubrica-grabber{
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+  margin: 0;                    /* niente margini extra */
+  cursor: grab;
+}
+
+/* X in alto a destra */
+#rubricaModal .rubrica-close{
+  position: absolute;
+  top: -2px;
+  right: 0;
   width: 32px;
   height: 32px;
   border: 0;
@@ -136,8 +139,7 @@ select, input[type="date"], input[type="time"] {
   color: #a07863;   /* palette app */
   opacity: .85;
   cursor: pointer;
-  z-index: 5;
+  z-index: 4;
 }
-
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
+#rubricaModal .rubrica-close:hover{ opacity: 1; }
+#rubricaModal .rubrica-close:active{ transform: scale(.96); }
