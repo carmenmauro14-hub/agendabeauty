@@ -1,4 +1,3 @@
-/* ========= Base ========= */
 body {
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
@@ -7,9 +6,6 @@ body {
   padding: 0;
   background: #fff;
 }
-
-/* Tutto in border-box per evitare sbordi da padding/bordi */
-*, *::before, *::after { box-sizing: border-box; }
 
 .wizard-container {
   max-width: 600px;
@@ -22,37 +18,57 @@ body {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  overflow: hidden; /* taglia ai bordi arrotondati: niente “sbordo” */
 }
 
+/* NAV dei pulsanti negli step */
 .wizard-nav {
   margin-top: 20px;
   display: flex;
+  gap: 12px;
   justify-content: space-between;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: white;
+/* Pulsante UNICO per tutti (Annulla/Indietro/Avanti/Salva) */
+.btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 18px;
   border: none;
-  padding: 10px 16px;
-  border-radius: 4px;
+  border-radius: 14px;
+  background: #d2b8a3;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
+  text-decoration: none;
+  user-select: none;
+}
+.btn:hover { opacity: 0.95; }
+.btn:active { transform: scale(0.98); }
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(10%);
 }
 
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
+/* Input data/ora */
 select, input[type="date"], input[type="time"] {
   width: 100%;
-  padding: 10px;
+  padding: 12px 14px;
   margin-top: 12px;
   margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  border: 1px solid #e6d9d0;
+  border-radius: 12px;
+  background: #fff;
+  color: #a07863;
+  font-size: 16px;
 }
 
+/* Trattamenti */
 #trattamentiWrapper {
   max-height: 350px;
   overflow-y: auto;
@@ -75,6 +91,7 @@ select, input[type="date"], input[type="time"] {
   align-items: center;
   gap: 10px;
   flex-grow: 1;
+  color: #a07863;
 }
 
 .trattamento-row .icona-trattamento {
@@ -83,17 +100,18 @@ select, input[type="date"], input[type="time"] {
 }
 
 .prezzo-input {
-  width: 80px;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  width: 90px;
+  padding: 8px;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  color: #a07863;
 }
 
-/* ================================================
-   STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA
-   ================================================ */
+/* ─────────────────────────────────────────────── */
+/*  MODALE RUBRICA (solo per questa pagina)        */
+/* ─────────────────────────────────────────────── */
 
-/* pannello della modale: spazio per la barra in alto (grabber + X) */
+/* pannello della modale: spazio per la topbar (grabber + X) */
 #rubricaModal .rubrica-container {
   position: relative;
   padding-top: 56px;
@@ -101,25 +119,24 @@ select, input[type="date"], input[type="time"] {
   transform: translateY(0);
   transition: transform 200ms ease;
 }
-
 #rubricaModal .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
 
-/* barra in alto: grabber centrato + X a destra, tutta area grabbabile */
+/* barra in alto: grabber centrato + X a destra, stessa riga, area grabbabile */
 #rubricaModal .rubrica-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 44px;               /* area ampia per swipe facile */
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 3;
   background: transparent;
   padding: 0;
-  touch-action: none;         /* blocca scroll verticale su quest’area durante lo swipe */
+  touch-action: none;    /* migliora swipe */
   -webkit-user-select: none;
   user-select: none;
 }
@@ -145,7 +162,7 @@ select, input[type="date"], input[type="time"] {
   background: transparent;
   font-size: 22px;
   line-height: 32px;
-  color: #a07863;   /* palette app */
+  color: #a07863;
   opacity: .85;
   cursor: pointer;
   z-index: 4;
@@ -153,37 +170,28 @@ select, input[type="date"], input[type="time"] {
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
 
-/* ========= Campo “input” che apre la rubrica (step 1) ========= */
-.picker-input {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  max-width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e6d9d0;     /* coerente con rubrica */
-  border-radius: 14px;
-  background: #fff;
-  color: #a07863;
-  cursor: text;                  /* sensazione da input */
-  user-select: none;
-  overflow: hidden;              /* sicurezza extra contro sbordi interni */
+/* Campo “input” che apre la rubrica (step 1) */
+.picker-input{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  padding:12px 16px;
+  border:1px solid #e6d9d0;
+  border-radius:14px;
+  background:#fff;
+  color:#a07863;
+  cursor:text;
+  user-select:none;
 }
-
-.picker-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
+.picker-input:focus{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(210,184,163,.25);
 }
-
-.picker-input .value {
-  font-weight: 600;
-  color: #a07863;
+.picker-input .value{
+  font-weight:600;
+  color:#a07863;
 }
-
-/* placeholder visibile solo se non c'è un valore */
-.picker-input.empty .value { display: none; }
-.picker-input.empty #pickerPlaceholder {
-  color: #c3a897;   /* tinta simile ai placeholder della rubrica */
-  opacity: 1;
-}
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
