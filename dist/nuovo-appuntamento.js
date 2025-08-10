@@ -2,10 +2,9 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12
 import {
   getFirestore, collection, getDocs, addDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-// [ADD] Swipe verticale dalla maniglia
 import { abilitaSwipeVerticale } from "./swipe.js";
 
-// ─── Firebase config (allineata al resto dell'app) ────────────────────────────
+// ─── Firebase config ───────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -15,11 +14,10 @@ const firebaseConfig = {
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
 
-// Evita doppia inizializzazione (auth.js può aver già inizializzato)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db  = getFirestore(app);
 
-// ─── Riferimenti DOM ───────────────────────────────────────────────────────────
+// ─── Riferimenti DOM ───────────────────────────────────────────────
 const step1 = document.getElementById("step1");
 const step2 = document.getElementById("step2");
 const step3 = document.getElementById("step3");
@@ -34,7 +32,7 @@ const inpData = document.getElementById("dataAppuntamento");
 const inpOra  = document.getElementById("oraAppuntamento");
 const wrapperTratt = document.getElementById("trattamentiWrapper");
 
-// Picker cliente (rubrica embedded in modal)
+// Picker cliente
 const clienteIdHidden     = document.getElementById("clienteId");
 const clienteSelezionato  = document.getElementById("clienteSelezionato");
 const openRubrica         = document.getElementById("openRubrica");
@@ -42,19 +40,22 @@ const rubricaModal        = document.getElementById("rubricaModal");
 const searchCliente       = document.getElementById("searchCliente");
 const clientListPicker    = document.getElementById("clientListPicker");
 const letterNavPicker     = document.getElementById("letterNavPicker");
-// [ADD] Riferimenti per swipe verticale
-const rubricaPanel = document.querySelector("#rubricaModal .rubrica-container");
-const rubricaGrabber = document.getElementById("rubricaGrabber");
+const rubricaPanel        = document.querySelector("#rubricaModal .rubrica-container");
+const rubricaGrabber      = document.getElementById("rubricaGrabber");
+const btnRubricaClose     = document.getElementById("rubricaClose");
 
-// [ADD] Bottone X
-const btnRubricaClose = document.getElementById("rubricaClose");
+// [NEW] Campo finto input che apre la rubrica
+const openRubricaField    = document.getElementById("openRubricaField");
+const pickerValue         = document.getElementById("pickerValue");
+const pickerPlaceholder   = document.getElementById("pickerPlaceholder");
+
 if (btnRubricaClose) {
   btnRubricaClose.addEventListener("click", () => {
-    chiudiRubricaConAnimazioneVert(); // stessa animazione dello swipe
+    chiudiRubricaConAnimazioneVert();
   });
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────
 function showModal(m) { m.style.display = "flex"; }
 function closeModal(m) { m.style.display = "none"; }
 
@@ -64,12 +65,10 @@ function updateNavState() {
 }
 [inpData, inpOra].forEach(el => el.addEventListener("input", updateNavState));
 
-// Chiudi modale toccando l'overlay
 rubricaModal.addEventListener("click", (e) => {
   if (e.target === rubricaModal) closeModal(rubricaModal);
 });
 
-// [ADD] Chiudi modale con swipe verso il basso dalla maniglia
 function chiudiRubricaConAnimazioneVert() {
   if (!rubricaPanel) return;
   rubricaPanel.classList.add("swipe-out-down");
@@ -78,21 +77,22 @@ function chiudiRubricaConAnimazioneVert() {
     closeModal(rubricaModal);
   }, { once: true });
 }
+
 const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
 if (rubricaHeader) {
   abilitaSwipeVerticale(
     rubricaHeader,
-    () => {}, // swipe verso l'alto → niente
+    () => {},
     () => chiudiRubricaConAnimazioneVert(),
     true,
-    45 // soglia più bassa, swipe più sensibile
+    45
   );
 }
 
-// ─── Rubrica (caricamento e rendering identici) ───────────────────────────────
+// ─── Rubrica ───────────────────────────────────────────────────────
 let clientiCache = null;
 
-openRubrica.addEventListener("click", async () => {
+async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
     clientiCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -102,10 +102,20 @@ openRubrica.addEventListener("click", async () => {
   searchCliente.value = "";
   letterNavPicker.style.display = "flex";
   showModal(rubricaModal);
-});
+}
+
+if (openRubrica) {
+  openRubrica.addEventListener("click", apriRubrica);
+}
+
+if (openRubricaField) {
+  openRubricaField.addEventListener("click", apriRubrica);
+  openRubricaField.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
+  });
+}
 
 function renderRubrica(clienti) {
-  // Raggruppa per iniziale
   const groups = {};
   clienti.forEach(c => {
     const L = (c.nome ? c.nome.charAt(0) : "#").toUpperCase();
@@ -113,7 +123,6 @@ function renderRubrica(clienti) {
   });
   const letters = Object.keys(groups).sort();
 
-  // Lista
   clientListPicker.innerHTML = "";
   letters.forEach(L => {
     const sec = document.createElement("li");
@@ -129,6 +138,15 @@ function renderRubrica(clienti) {
       li.onclick = () => {
         clienteIdHidden.value = c.id;
         clienteSelezionato.textContent = c.nome || "(senza nome)";
+
+        // NEW: aggiorna il campo finto input
+        if (pickerValue) {
+          pickerValue.textContent = c.nome || "(senza nome)";
+        }
+        if (pickerPlaceholder) {
+          pickerPlaceholder.style.display = "none";
+        }
+
         closeModal(rubricaModal);
         updateNavState();
       };
@@ -136,7 +154,6 @@ function renderRubrica(clienti) {
     });
   });
 
-  // A–Z nav
   letterNavPicker.innerHTML = "";
   letters.forEach(L => {
     const el = document.createElement("span");
@@ -149,7 +166,6 @@ function renderRubrica(clienti) {
   });
 }
 
-// Ricerca live nella rubrica
 searchCliente.addEventListener("input", () => {
   const f = searchCliente.value.toLowerCase();
   letterNavPicker.style.display = f ? "none" : "flex";
@@ -167,7 +183,7 @@ searchCliente.addEventListener("input", () => {
   });
 });
 
-// ─── Trattamenti ──────────────────────────────────────────────────────────────
+// ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
   "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
@@ -208,7 +224,7 @@ async function caricaTrattamenti() {
   }
 }
 
-// ─── Navigazione step ─────────────────────────────────────────────────────────
+// ─── Navigazione step ──────────────────────────────────────────────
 btnToStep2.addEventListener("click", () => {
   if (!clienteIdHidden.value) return alert("Seleziona un cliente");
   step1.style.display = "none";
@@ -228,7 +244,7 @@ btnBackToStep2.addEventListener("click", () => {
   step2.style.display = "block";
 });
 
-// ─── Salvataggio appuntamento ────────────────────────────────────────────────
+// ─── Salvataggio appuntamento ──────────────────────────────────────
 btnSalva.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const data = inpData.value;
@@ -267,6 +283,6 @@ btnSalva.addEventListener("click", async () => {
   }
 });
 
-// ─── Avvio ────────────────────────────────────────────────────────────────────
+// ─── Avvio ─────────────────────────────────────────────────────────
 caricaTrattamenti();
 updateNavState();
