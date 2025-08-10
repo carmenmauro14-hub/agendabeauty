@@ -1,3 +1,4 @@
+/* ========= Base ========= */
 body {
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
@@ -7,10 +8,8 @@ body {
   background: #fff;
 }
 
-/* Evita sbordi globali */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* Tutto in border-box per evitare sbordi da padding/bordi */
+*, *::before, *::after { box-sizing: border-box; }
 
 .wizard-container {
   max-width: 600px;
@@ -23,6 +22,7 @@ body {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  overflow: hidden; /* taglia ai bordi arrotondati: niente “sbordo” */
 }
 
 .wizard-nav {
@@ -89,11 +89,11 @@ select, input[type="date"], input[type="time"] {
   border-radius: 4px;
 }
 
-/* ─────────────────────────────────────────────── */
-/*  STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA  */
-/* ─────────────────────────────────────────────── */
+/* ================================================
+   STILI SOLO PER LA MODALE RUBRICA DI QUESTA PAGINA
+   ================================================ */
 
-/* pannello della modale */
+/* pannello della modale: spazio per la barra in alto (grabber + X) */
 #rubricaModal .rubrica-container {
   position: relative;
   padding-top: 56px;
@@ -101,24 +101,25 @@ select, input[type="date"], input[type="time"] {
   transform: translateY(0);
   transition: transform 200ms ease;
 }
+
 #rubricaModal .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
 
-/* barra in alto */
+/* barra in alto: grabber centrato + X a destra, tutta area grabbabile */
 #rubricaModal .rubrica-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 44px;
+  height: 44px;               /* area ampia per swipe facile */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 3;
   background: transparent;
   padding: 0;
-  touch-action: none;
+  touch-action: none;         /* blocca scroll verticale su quest’area durante lo swipe */
   -webkit-user-select: none;
   user-select: none;
 }
@@ -133,7 +134,7 @@ select, input[type="date"], input[type="time"] {
   cursor: grab;
 }
 
-/* X chiusura */
+/* X in alto a destra */
 #rubricaModal .rubrica-close {
   position: absolute;
   top: 6px;
@@ -144,7 +145,7 @@ select, input[type="date"], input[type="time"] {
   background: transparent;
   font-size: 22px;
   line-height: 32px;
-  color: #a07863;
+  color: #a07863;   /* palette app */
   opacity: .85;
   cursor: pointer;
   z-index: 4;
@@ -152,29 +153,37 @@ select, input[type="date"], input[type="time"] {
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
 
-/* Campo input finto che apre la rubrica */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  width:100%;
-  padding:12px 16px;
-  border:1px solid #e6d9d0;
-  border-radius:14px;
-  background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
-  box-sizing: border-box; /* fix sbordo */
+/* ========= Campo “input” che apre la rubrica (step 1) ========= */
+.picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e6d9d0;     /* coerente con rubrica */
+  border-radius: 14px;
+  background: #fff;
+  color: #a07863;
+  cursor: text;                  /* sensazione da input */
+  user-select: none;
+  overflow: hidden;              /* sicurezza extra contro sbordi interni */
 }
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+
+.picker-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
 }
-.picker-input .value{
-  font-weight:600;
-  color:#a07863;
+
+.picker-input .value {
+  font-weight: 600;
+  color: #a07863;
 }
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
+
+/* placeholder visibile solo se non c'è un valore */
+.picker-input.empty .value { display: none; }
+.picker-input.empty #pickerPlaceholder {
+  color: #c3a897;   /* tinta simile ai placeholder della rubrica */
+  opacity: 1;
+}
