@@ -78,13 +78,14 @@ function chiudiRubricaConAnimazioneVert() {
     closeModal(rubricaModal);
   }, { once: true });
 }
-if (rubricaGrabber) {
+const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
+if (rubricaHeader) {
   abilitaSwipeVerticale(
-    rubricaGrabber,
+    rubricaHeader,
     () => {}, // swipe verso l'alto → niente
     () => chiudiRubricaConAnimazioneVert(),
     true,
-    80 // soglia alta per evitare chiusure involontarie
+    45 // soglia più bassa, swipe più sensibile
   );
 }
 
