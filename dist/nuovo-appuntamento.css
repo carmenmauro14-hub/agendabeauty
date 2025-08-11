@@ -1,3 +1,6 @@
+/* ───────────────────────────────────────────────
+   Base
+─────────────────────────────────────────────── */
 body {
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
@@ -20,7 +23,9 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-/* NAV dei pulsanti negli step */
+/* ───────────────────────────────────────────────
+   Navigazione step / Pulsanti
+─────────────────────────────────────────────── */
 .wizard-nav {
   margin-top: 20px;
   display: flex;
@@ -28,36 +33,49 @@ body {
   justify-content: space-between;
 }
 
-/* Pulsante UNICO per tutti (Annulla/Indietro/Avanti/Salva) */
-.btn {
+/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
+.btn,
+.btn-primary,        /* retro-compatibilità */
+.btn-secondary {     /* retro-compatibilità */
   flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
+  height: 48px;
   padding: 0 18px;
   border: none;
   border-radius: 14px;
   background: #d2b8a3;
   color: #fff;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
   text-decoration: none;
   user-select: none;
 }
-.btn:hover { opacity: 0.95; }
-.btn:active { transform: scale(0.98); }
-.btn:disabled {
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover { opacity: .95; }
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active { transform: scale(.98); }
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled {
   opacity: .55;
   cursor: not-allowed;
   filter: grayscale(10%);
 }
 
-/* Input data/ora */
-select, input[type="date"], input[type="time"] {
+/* ───────────────────────────────────────────────
+   Campi input date/ora
+─────────────────────────────────────────────── */
+select,
+input[type="date"],
+input[type="time"] {
   width: 100%;
+  box-sizing: border-box;   /* evita overflow con padding */
   padding: 12px 14px;
   margin-top: 12px;
   margin-bottom: 12px;
@@ -68,13 +86,15 @@ select, input[type="date"], input[type="time"] {
   font-size: 16px;
 }
 
-/* Trattamenti */
+/* ───────────────────────────────────────────────
+   Trattamenti
+─────────────────────────────────────────────── */
 #trattamentiWrapper {
   max-height: 350px;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  padding: 12px;
   background: #fff;
 }
 
@@ -105,11 +125,44 @@ select, input[type="date"], input[type="time"] {
   border: 1px solid #e6d9d0;
   border-radius: 10px;
   color: #a07863;
+  box-sizing: border-box;
 }
 
-/* ─────────────────────────────────────────────── */
-/*  MODALE RUBRICA (solo per questa pagina)        */
-/* ─────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────
+   “Input finto” che apre la rubrica (step 1)
+─────────────────────────────────────────────── */
+.picker-input{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;      /* FIX overflow */
+  padding:12px 16px;
+
+  border:1px solid #e6d9d0;
+  border-radius:14px;
+  background:#fff;
+  color:#a07863;
+  cursor:text;
+  user-select:none;
+}
+.picker-input:focus{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+}
+.picker-input .value{
+  font-weight:600;
+  color:#a07863;
+}
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
+
+/* ───────────────────────────────────────────────
+   Modale Rubrica (solo in questa pagina)
+─────────────────────────────────────────────── */
 
 /* pannello della modale: spazio per la topbar (grabber + X) */
 #rubricaModal .rubrica-container {
@@ -123,7 +176,7 @@ select, input[type="date"], input[type="time"] {
   transform: translateY(100%);
 }
 
-/* barra in alto: grabber centrato + X a destra, stessa riga, area grabbabile */
+/* barra in alto: grabber centrato + X a destra, area grabbabile */
 #rubricaModal .rubrica-header {
   position: absolute;
   top: 0;
@@ -136,7 +189,7 @@ select, input[type="date"], input[type="time"] {
   z-index: 3;
   background: transparent;
   padding: 0;
-  touch-action: none;    /* migliora swipe */
+  touch-action: none;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -169,29 +222,3 @@ select, input[type="date"], input[type="time"] {
 }
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
-
-/* Campo “input” che apre la rubrica (step 1) */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  width:100%;
-  padding:12px 16px;
-  border:1px solid #e6d9d0;
-  border-radius:14px;
-  background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
-}
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
-}
-.picker-input .value{
-  font-weight:600;
-  color:#a07863;
-}
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
