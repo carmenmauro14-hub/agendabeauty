@@ -27,6 +27,7 @@ const btnBackToStep1 = document.getElementById("backToStep1");
 const btnToStep3     = document.getElementById("toStep3");
 const btnBackToStep2 = document.getElementById("backToStep2");
 const btnSalva       = document.getElementById("salvaAppuntamento");
+const btnCancel      = document.getElementById("cancelWizard");
 
 const inpData = document.getElementById("dataAppuntamento");
 const inpOra  = document.getElementById("oraAppuntamento");
@@ -44,10 +45,19 @@ const rubricaPanel        = document.querySelector("#rubricaModal .rubrica-conta
 const rubricaGrabber      = document.getElementById("rubricaGrabber");
 const btnRubricaClose     = document.getElementById("rubricaClose");
 
-// [NEW] Campo finto input che apre la rubrica
+// Campo finto input che apre la rubrica
 const openRubricaField    = document.getElementById("openRubricaField");
 const pickerValue         = document.getElementById("pickerValue");
 const pickerPlaceholder   = document.getElementById("pickerPlaceholder");
+
+// ─── Funzione tasto ANNULLA ─────────────────────────────────────────
+btnCancel?.addEventListener("click", () => {
+  if (history.length > 1) {
+    history.back();
+  } else {
+    location.href = "calendario.html";
+  }
+});
 
 if (btnRubricaClose) {
   btnRubricaClose.addEventListener("click", () => {
@@ -134,14 +144,11 @@ function renderRubrica(clienti) {
       li.className = "item";
       li.textContent = c.nome || "(senza nome)";
       li.onclick = () => {
-        // salva scelta
         clienteIdHidden.value = c.id;
         clienteSelezionato.textContent = c.nome || "(senza nome)";
-
-        // Aggiorna il “finto input”
         if (pickerValue) pickerValue.textContent = c.nome || "(senza nome)";
         if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-        if (openRubricaField) openRubricaField.classList.remove("empty"); // <— NOVITÀ
+        if (openRubricaField) openRubricaField.classList.remove("empty");
 
         closeModal(rubricaModal);
         updateNavState();
@@ -283,10 +290,7 @@ btnSalva.addEventListener("click", async () => {
 caricaTrattamenti();
 updateNavState();
 
-// (opz.) Se arrivi con un cliente già impostato, mostra il nome nel campo
-// (serve una tua logica per recuperare nomeCliente esistente, qui è solo un esempio)
 if (clienteIdHidden.value && pickerValue && openRubricaField) {
-  // pickerValue.textContent = "Nome cliente già scelto"; // <— se lo hai disponibile
   openRubricaField.classList.remove("empty");
   if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
 }
