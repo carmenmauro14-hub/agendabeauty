@@ -52,6 +52,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   titolo.style.textTransform = "capitalize";
   contenuto.appendChild(titolo);
 
+  // ——— Fallback icone se mancasse t.icona ———
+  function trovaIcona(nome) {
+    const iconeDisponibili = [
+      "makeup_sposa","makeup","microblinding","microblading","extension_ciglia",
+      "laminazione_ciglia","filo_arabo","architettura_sopracciglia","airbrush_sopracciglia"
+    ];
+    const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
+    for (const base of iconeDisponibili) {
+      if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
+    }
+    return "icone_uniformate_colore/setting.png";
+  }
+
   async function caricaAppuntamentiGiorno() {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataParamFinale));
     const snapshot = await getDocs(q);
@@ -61,13 +74,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (const docSnap of snapshot.docs) {
       const dati = docSnap.data();
       const idCliente = dati.clienteId;
+
       let nomeCliente = clientiCache[idCliente];
       if (!nomeCliente) {
         const clienteDoc = await getDoc(doc(db, "clienti", idCliente));
-        nomeCliente = clienteDoc.exists() ? clienteDoc.data().nome || "" : "";
+        nomeCliente = clienteDoc.exists() ? (clienteDoc.data().nome || "") : "";
         clientiCache[idCliente] = nomeCliente;
       }
-      appuntamenti.push({ ora: dati.ora, nome: nomeCliente });
+
+      appuntamenti.push({
+        ora: dati.ora || dati.time,
+        nome: nomeCliente,
+        trattamenti: Array.isArray(dati.trattamenti) ? dati.trattamenti : []
+      });
     }
 
     appuntamenti.sort((a, b) => a.ora.localeCompare(b.ora));
@@ -76,10 +95,36 @@ document.addEventListener("DOMContentLoaded", async () => {
       contenuto.innerHTML += "<p>Nessun appuntamento per questo giorno.</p>";
     } else {
       appuntamenti.forEach(app => {
-        const div = document.createElement("div");
-        div.className = "evento-giorno";
-        div.textContent = `Ore ${app.ora} - ${app.nome}`;
-        contenuto.appendChild(div);
+        const row = document.createElement("div");
+        row.className = "evento-giorno";
+
+        const oraEl = document.createElement("span");
+        oraEl.className = "eg-ora";
+        oraEl.textContent = `Ore ${app.ora}`;
+
+        const iconeEl = document.createElement("span");
+        iconeEl.className = "eg-icone";
+        app.trattamenti.slice(0, 6).forEach(t => {
+          const img = document.createElement("img");
+          img.src = t.icona || trovaIcona(t.nome);
+          img.alt = t.nome || "";
+          iconeEl.appendChild(img);
+        });
+        if (app.trattamenti.length > 6) {
+          const more = document.createElement("span");
+          more.className = "eg-more";
+          more.textContent = `+${app.trattamenti.length - 6}`;
+          iconeEl.appendChild(more);
+        }
+
+        const nomeEl = document.createElement("span");
+        nomeEl.className = "eg-nome";
+        nomeEl.textContent = app.nome;
+
+        row.appendChild(oraEl);
+        row.appendChild(iconeEl);
+        row.appendChild(nomeEl);
+        contenuto.appendChild(row);
       });
     }
   }
@@ -109,16 +154,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     caricaAppuntamentiGiornoDaData(dataStr);
 
-if (miniCalendario.style.display === "block") {
-  mostraMiniCalendario(nuovaData.getFullYear(), nuovaData.getMonth());
-
-  // Mantieni sincronizzati classi e display
-  mesiBar.classList.add("visibile");
-  mesiBar.style.display = "flex";
-  miniCalendario.style.display = "block";
-}
-
-
+    if (miniCalendario.style.display === "block") {
+      mostraMiniCalendario(nuovaData.getFullYear(), nuovaData.getMonth());
+      mesiBar.classList.add("visibile");
+      mesiBar.style.display = "flex";
+      miniCalendario.style.display = "block";
+    }
   }
 
   async function caricaAppuntamentiGiornoDaData(dataStr) {
@@ -131,13 +172,19 @@ if (miniCalendario.style.display === "block") {
     for (const docSnap of snapshot.docs) {
       const dati = docSnap.data();
       const idCliente = dati.clienteId;
+
       let nomeCliente = clientiCache[idCliente];
       if (!nomeCliente) {
         const clienteDoc = await getDoc(doc(db, "clienti", idCliente));
-        nomeCliente = clienteDoc.exists() ? clienteDoc.data().nome || "" : "";
+        nomeCliente = clienteDoc.exists() ? (clienteDoc.data().nome || "") : "";
         clientiCache[idCliente] = nomeCliente;
       }
-      appuntamenti.push({ ora: dati.ora, nome: nomeCliente });
+
+      appuntamenti.push({
+        ora: dati.ora || dati.time,
+        nome: nomeCliente,
+        trattamenti: Array.isArray(dati.trattamenti) ? dati.trattamenti : []
+      });
     }
 
     appuntamenti.sort((a, b) => a.ora.localeCompare(b.ora));
@@ -146,10 +193,36 @@ if (miniCalendario.style.display === "block") {
       contenuto.innerHTML += "<p>Nessun appuntamento per questo giorno.</p>";
     } else {
       appuntamenti.forEach(app => {
-        const div = document.createElement("div");
-        div.className = "evento-giorno";
-        div.textContent = `Ore ${app.ora} - ${app.nome}`;
-        contenuto.appendChild(div);
+        const row = document.createElement("div");
+        row.className = "evento-giorno";
+
+        const oraEl = document.createElement("span");
+        oraEl.className = "eg-ora";
+        oraEl.textContent = `Ore ${app.ora}`;
+
+        const iconeEl = document.createElement("span");
+        iconeEl.className = "eg-icone";
+        app.trattamenti.slice(0, 6).forEach(t => {
+          const img = document.createElement("img");
+          img.src = t.icona || trovaIcona(t.nome);
+          img.alt = t.nome || "";
+          iconeEl.appendChild(img);
+        });
+        if (app.trattamenti.length > 6) {
+          const more = document.createElement("span");
+          more.className = "eg-more";
+          more.textContent = `+${app.trattamenti.length - 6}`;
+          iconeEl.appendChild(more);
+        }
+
+        const nomeEl = document.createElement("span");
+        nomeEl.className = "eg-nome";
+        nomeEl.textContent = app.nome;
+
+        row.appendChild(oraEl);
+        row.appendChild(iconeEl);
+        row.appendChild(nomeEl);
+        contenuto.appendChild(row);
       });
     }
   }
