@@ -262,7 +262,7 @@ body {
 .evento-giorno {
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:6px;
   padding:12px 14px;
   border-radius:12px;
   background:#f7f3f0;
@@ -272,13 +272,13 @@ body {
 
 .eg-ora{ 
   font-weight:700; 
-  min-width:92px; 
+  min-width:72px; 
 }
 
 .eg-icone{ 
   display:flex; 
   align-items:center; 
-  gap:6px; 
+  gap:4px; 
 }
 
 .eg-icone img{ 
