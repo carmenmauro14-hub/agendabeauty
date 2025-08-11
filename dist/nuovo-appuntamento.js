@@ -273,8 +273,8 @@ btnSalva.addEventListener("click", async () => {
   try {
     await addDoc(collection(db, "appuntamenti"), {
       clienteId,
-      date: data,
-      time: ora,
+      data,
+      ora,
       dateTime,
       trattamenti
     });
