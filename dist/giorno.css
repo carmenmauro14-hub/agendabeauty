@@ -257,3 +257,18 @@
   from { transform: translateX(-100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+.evento-giorno{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:#f7f3f0;
+  color:#a07863;
+  margin:10px 0;
+}
+.eg-ora{ font-weight:700; min-width:92px; }
+.eg-icone{ display:flex; align-items:center; gap:6px; }
+.eg-icone img{ width:22px; height:22px; object-fit:contain; display:block; }
+.eg-more{ font-size:12px; opacity:.7; }
+.eg-nome{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
