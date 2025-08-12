@@ -10,7 +10,7 @@
 <body>
   <div id="navbar-placeholder"></div>
 
-  <!-- ─── TOP BAR IDENTICA ─────────────────────────────── -->
+  <!-- Top bar -->
   <header class="top-bar">
     <div class="mese-switch" id="meseSwitch">
       <span id="meseCorrente">Agosto</span>
@@ -22,64 +22,66 @@
     </div>
   </header>
 
-  <!-- ─── BARRA MENSILE SCROLLABILE ────────────────────── -->
-  <div class="mesi-bar" id="mesiBar" style="display: none;"></div>
-
-  <!-- ─── MINI CALENDARIO ──────────────────────────────── -->
+  <!-- Barra mesi + mini calendario -->
+  <div class="mesi-bar" id="mesiBar" style="display:none;"></div>
   <div id="miniCalendario" class="mini-calendario"></div>
 
-  <!-- ─── CONTENUTO VISTA GIORNO ───────────────────────── -->
-  <main id="contenutoGiorno" style="padding: 16px;">
-    <!-- Gli appuntamenti del giorno verranno caricati qui -->
-  </main>
+  <!-- Contenuto giorno -->
+  <main id="contenutoGiorno" style="padding:16px;"></main>
 
-  <!-- ─── BOTTONE FLOTANTE PER NUOVO APPUNTAMENTO ──────── -->
+  <!-- FAB nuovo -->
   <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
 
-  <!-- ─── POPUP DETTAGLIO APPUNTAMENTO ─────────────────── -->
-  <div id="popupDettaglio" class="popup-dettaglio" aria-hidden="true">
-    <div class="popup-content" role="dialog" aria-modal="true">
-      <!-- maniglia + X come rubrica -->
-      <div class="popup-header">
-        <div class="popup-grabber" aria-label="Trascina verso il basso per chiudere"></div>
-        <button class="popup-close" id="popupClose" aria-label="Chiudi">✕</button>
+  <!-- ─────────────────────────────────────────────── -->
+  <!-- MODALE DETTAGLIO APPUNTAMENTO (bottom-sheet)   -->
+  <!-- ─────────────────────────────────────────────── -->
+  <div id="dettaglioModal" class="modal" aria-hidden="true">
+    <div class="det-panel" role="dialog" aria-modal="true" aria-labelledby="detNomeCliente">
+      <!-- X chiusura -->
+      <button class="det-close" id="detClose" aria-label="Chiudi">✕</button>
+
+      <!-- Header con maniglia -->
+      <div class="det-header">
+        <div class="det-grabber" aria-hidden="true"></div>
       </div>
 
-      <h2 id="popupNomeCliente"></h2>
+      <div class="det-body">
+        <h2 id="detNomeCliente" class="det-title">Cliente</h2>
 
-      <div class="popup-row">
-        <span class="lbl">Data</span>
-        <span id="popupData"></span>
-      </div>
-      <div class="popup-row">
-        <span class="lbl">Ora</span>
-        <span id="popupOra"></span>
-      </div>
+        <div class="det-row">
+          <span class="det-label">Data</span>
+          <span class="det-value" id="detData">—</span>
+        </div>
 
-      <div class="popup-row">
-        <span class="lbl">Trattamenti</span>
-        <ul id="popupTrattamenti"></ul>
-      </div>
+        <div class="det-row">
+          <span class="det-label">Ora</span>
+          <span class="det-value" id="detOra">—</span>
+        </div>
 
-      <div class="popup-row totale">
-        <span class="lbl">Totale</span>
-        <span>€ <span id="popupTotale">0.00</span></span>
-      </div>
+        <div class="det-row det-row-col">
+          <span class="det-label">Trattamenti</span>
+          <div class="det-tratt-list" id="detTrattamenti">
+            <!-- righe trattamenti -->
+          </div>
+        </div>
 
-      <div class="popup-actions">
-        <button id="popupModifica" class="btn-primario">Modifica appuntamento</button>
+        <hr class="det-sep"/>
+
+        <div class="det-row">
+          <span class="det-label">Totale</span>
+          <span class="det-value det-totale" id="detTotale">€ 0,00</span>
+        </div>
+
+        <button id="detModifica" class="btn btn-wide" type="button">Modifica appuntamento</button>
       </div>
     </div>
   </div>
 
-  <!-- ─── SCRIPT E NAVBAR ──────────────────────────────── -->
+  <!-- Script -->
   <script>
-    // Carica navbar dinamicamente
-    fetch("navbar.html")
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById("navbar-placeholder").innerHTML = data;
-      });
+    fetch("navbar.html").then(r=>r.text()).then(h=>{
+      document.getElementById("navbar-placeholder").innerHTML = h;
+    });
   </script>
   <script src="navbar.js"></script>
   <script type="module" src="giorno.js"></script>
