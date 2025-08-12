@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ——— MODALE DETTAGLIO ———
   const modal      = document.getElementById("dettaglioModal");
-  const panel      = modal?.querySelector(".det-panel");
+  const panel      = modal.querySelector(".det-panel");
   const btnClose   = document.getElementById("detClose");
   const detTitolo  = document.getElementById("detNomeCliente");
   const detData    = document.getElementById("detData");
@@ -78,27 +78,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function euro(n) {
     try { return n.toLocaleString('it-IT', { style:'currency', currency:'EUR' }); }
-    catch { return `€ ${Number(n || 0).toFixed(2)}`; }
+    catch { return `€ ${n.toFixed(2)}`; }
   }
 
   function openModal() {
-    if (!modal) return;
     modal.style.display = "flex";
     modal.setAttribute("aria-hidden","false");
   }
   function closeModal() {
-    if (!panel || !modal) return;
     panel.classList.add("swipe-out-down");
     panel.addEventListener("transitionend", () => {
       panel.classList.remove("swipe-out-down");
       modal.style.display = "none";
       modal.setAttribute("aria-hidden","true");
-      panel.style.transform = "";
     }, { once:true });
   }
 
-  btnClose?.addEventListener("click", closeModal);
-  modal?.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  btnClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
   // Carica appuntamenti del giorno e attacca click per aprire dettaglio
   async function caricaAppuntamentiGiorno() {
@@ -151,12 +148,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         img.alt = t.nome || "";
         iconeEl.appendChild(img);
       });
-      if (app.trattamenti.length > 6) {
-        const more = document.createElement("span");
-        more.className = "eg-more";
-        more.textContent = `+${app.trattamenti.length - 6}`;
-        iconeEl.appendChild(more);
-      }
 
       const nomeEl = document.createElement("span");
       nomeEl.className = "eg-nome";
@@ -169,29 +160,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       row.addEventListener("click", () => {
         currentAppointmentId = app.id;
 
-        detTitolo && (detTitolo.textContent = app.nome || "Appuntamento");
-        detData   && (detData.textContent   = app.data || dataParamFinale);
-        detOra    && (detOra.textContent    = app.ora  || "");
+        detTitolo.textContent = app.nome || "Appuntamento";
+        detData.textContent   = app.data || dataParamFinale;
+        detOra.textContent    = app.ora  || "";
 
-        if (detTratt) {
-          detTratt.innerHTML = "";
-          let totale = 0;
-          (app.trattamenti || []).forEach(t => {
-            const r = document.createElement("div");
-            r.className = "det-tratt-item";
-            const nome  = document.createElement("span");
-            nome.className = "det-tratt-nome";
-            nome.textContent = t.nome || "-";
-            const prezzo = document.createElement("span");
-            prezzo.className = "det-tratt-prezzo";
-            const p = Number(t.prezzo) || 0;
-            prezzo.textContent = euro(p);
-            totale += p;
-            r.appendChild(nome); r.appendChild(prezzo);
-            detTratt.appendChild(r);
-          });
-          detTotale && (detTotale.textContent = euro(totale));
-        }
+        detTratt.innerHTML = "";
+        let totale = 0;
+        (app.trattamenti || []).forEach(t => {
+          const r = document.createElement("div");
+          r.className = "det-tratt-item";
+          const nome  = document.createElement("span");
+          nome.className = "det-tratt-nome";
+          nome.textContent = t.nome || "-";
+          const prezzo = document.createElement("span");
+          prezzo.className = "det-tratt-prezzo";
+          const p = Number(t.prezzo) || 0;
+          prezzo.textContent = euro(p);
+          totale += p;
+          r.appendChild(nome); r.appendChild(prezzo);
+          detTratt.appendChild(r);
+        });
+        detTotale.textContent = euro(totale);
 
         openModal();
       });
@@ -275,12 +264,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         img.alt = t.nome || "";
         iconeEl.appendChild(img);
       });
-      if (app.trattamenti.length > 6) {
-        const more = document.createElement("span");
-        more.className = "eg-more";
-        more.textContent = `+${app.trattamenti.length - 6}`;
-        iconeEl.appendChild(more);
-      }
 
       const nomeEl = document.createElement("span");
       nomeEl.className = "eg-nome";
@@ -292,30 +275,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       row.addEventListener("click", ()=>{
         currentAppointmentId = app.id;
 
-        detTitolo && (detTitolo.textContent = app.nome || "Appuntamento");
-        detData   && (detData.textContent   = app.data || dataStr);
-        detOra    && (detOra.textContent    = app.ora  || "");
+        detTitolo.textContent = app.nome || "Appuntamento";
+        detData.textContent   = app.data || dataStr;
+        detOra.textContent    = app.ora  || "";
 
-        if (detTratt) {
-          detTratt.innerHTML = "";
-          let totale = 0;
-          (app.trattamenti||[]).forEach(t=>{
-            const r = document.createElement("div");
-            r.className = "det-tratt-item";
-            const n = document.createElement("span"); n.className="det-tratt-nome"; n.textContent = t.nome || "-";
-            const pr= document.createElement("span"); pr.className="det-tratt-prezzo";
-            const p = Number(t.prezzo) || 0; pr.textContent = euro(p); totale += p;
-            r.appendChild(n); r.appendChild(pr); detTratt.appendChild(r);
-          });
-          detTotale && (detTotale.textContent = euro(totale));
-        }
+        detTratt.innerHTML = "";
+        let totale = 0;
+        (app.trattamenti||[]).forEach(t=>{
+          const r = document.createElement("div");
+          r.className = "det-tratt-item";
+          const n = document.createElement("span"); n.className="det-tratt-nome"; n.textContent = t.nome || "-";
+          const pr= document.createElement("span"); pr.className="det-tratt-prezzo";
+          const p = Number(t.prezzo) || 0; pr.textContent = euro(p); totale += p;
+          r.appendChild(n); r.appendChild(pr); detTratt.appendChild(r);
+        });
+        detTotale.textContent = euro(totale);
         openModal();
       });
     });
   }
 
-  // Pulsante "Modifica appuntamento"
-  detModBtn?.addEventListener("click", ()=>{
+  // Pulsante "Modifica appuntamento" (puoi collegare l'editor)
+  detModBtn.addEventListener("click", ()=>{
     if (currentAppointmentId) {
       window.location.href = `nuovo-appuntamento.html?edit=${currentAppointmentId}`;
     }
@@ -403,7 +384,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Swipe tra giorni (orizzontale)
+  // Swipe tra giorni
   abilitaSwipe(contenuto, ()=>{
     const nd = new Date(dataCorrente); nd.setDate(nd.getDate()+1); aggiornaVistaGiorno(nd, "slide-left");
   }, ()=>{
@@ -413,80 +394,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Start
   generaBarraMesiCompleta();
   await caricaAppuntamentiGiorno();
+
+  // Modifica: naviga all'editor (placeholder per ora)
+  // (già impostato sopra su click di detModBtn)
 });
-
-/* ---------- Swipe verticale sulla maniglia del dettaglio ---------- */
-/* Funziona su .det-header dentro #dettaglioModal, chiude tirando giù */
-(() => {
-  const detHeader = document.querySelector("#dettaglioModal .det-header");
-  const panel     = document.querySelector("#dettaglioModal .det-panel");
-  const modal     = document.getElementById("dettaglioModal");
-  if (!detHeader || !panel || !modal) return;
-
-  let startY = 0;
-  let currentY = 0;
-  let dragging = false;
-
-  const THRESHOLD = 60;
-  const MAX_TRANSLATE = 200;
-
-  const setTranslate = (y) => {
-    const clamped = Math.max(0, Math.min(y, MAX_TRANSLATE));
-    panel.style.transition = "none";
-    panel.style.transform = `translateY(${clamped}px)`;
-  };
-
-  const endDrag = () => {
-    panel.style.transition = "";
-    if (currentY - startY > THRESHOLD) {
-      panel.classList.add("swipe-out-down");
-      panel.addEventListener("transitionend", () => {
-        panel.classList.remove("swipe-out-down");
-        panel.style.transform = "";
-        modal.style.display = "none";
-        modal.setAttribute("aria-hidden", "true");
-      }, { once: true });
-    } else {
-      panel.style.transform = "";
-    }
-    dragging = false;
-  };
-
-  // Touch
-  detHeader.addEventListener("touchstart", (e) => {
-    if (!e.touches || !e.touches[0]) return;
-    dragging = true;
-    startY = e.touches[0].clientY;
-    currentY = startY;
-    e.preventDefault();
-  }, { passive: false });
-
-  detHeader.addEventListener("touchmove", (e) => {
-    if (!dragging || !e.touches || !e.touches[0]) return;
-    currentY = e.touches[0].clientY;
-    const delta = currentY - startY;
-    if (delta > 0) setTranslate(delta);
-    e.preventDefault();
-  }, { passive: false });
-
-  detHeader.addEventListener("touchend", endDrag);
-
-  // Mouse
-  detHeader.addEventListener("mousedown", (e) => {
-    dragging = true;
-    startY = e.clientY;
-    currentY = startY;
-    e.preventDefault();
-  });
-
-  window.addEventListener("mousemove", (e) => {
-    if (!dragging) return;
-    currentY = e.clientY;
-    const delta = currentY - startY;
-    if (delta > 0) setTranslate(delta);
-  });
-
-  window.addEventListener("mouseup", () => {
-    if (dragging) endDrag();
-  });
-})();
