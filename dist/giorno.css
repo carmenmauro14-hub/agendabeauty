@@ -175,88 +175,9 @@ body {
   background-color: #f3f3f3;
 }
 
-
 /* ─── STILI SPECIFICI PER LA VISTA GIORNO ─────────────────── */
-
 #contenutoGiorno {
   padding: 16px;
-}
-
-.evento-giorno {
-  background-color: #f4ece7;
-  color: #333;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  font-size: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-#contenutoGiorno p {
-  color: #999;
-  font-style: italic;
-  font-size: 14px;
-}
-
-.mini-calendario {
-  display: none;
-  padding: 10px;
-  margin-top: 6px;
-}
-
-.mini-calendario table {
-  width: 100%;
-  text-align: center;
-  border-spacing: 4px;
-}
-
-.mini-calendario th {
-  font-weight: bold;
-  font-size: 12px;
-  color: #a0846a;
-}
-
-.mini-calendario td {
-  padding: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #333;
-}
-
-.mini-calendario td:hover {
-  background-color: #e5dad2;
-}
-
-.mini-calendario td.oggi {
-  background-color: #d2b8a3;
-  font-weight: bold;
-  color: white;
-}
-
-.mini-calendario td.selezionato {
-  background-color: #f1e7e1;
-  font-weight: bold;
-  color: #8d6e5c;
-  border: 1px solid #d2b8a3;
-}
-
-/* Animazioni slide */
-.slide-left {
-  animation: slideLeft 0.3s ease;
-}
-.slide-right {
-  animation: slideRight 0.3s ease;
-}
-
-@keyframes slideLeft {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideRight {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
 }
 
 .evento-giorno {
@@ -273,6 +194,7 @@ body {
 .eg-ora{ 
   font-weight:700; 
   min-width:72px; 
+  color:#a07863;
 }
 
 .eg-icone{ 
@@ -303,9 +225,84 @@ body {
   text-overflow:ellipsis; 
 }
 
-.evento-giorno{
-  background: #f4ece7;
-  color: #a07863;
+/* ─── POPUP DETTAGLIO ───────────────────────────────────── */
+.popup-dettaglio {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;              /* mostrato via JS */
+  justify-content: center;
+  align-items: flex-end;      /* pannello dal basso */
+  z-index: 10000;
 }
 
-.eg-ora{ color:#a07863; }
+.popup-dettaglio .popup-content {
+  background: #fff;
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 16px 20px;
+  margin: 12px auto 0;
+  position: relative;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+
+.popup-header{
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding-top: 6px;
+  z-index: 2;
+}
+
+.popup-grabber{
+  width: 48px; height: 5px; border-radius: 3px;
+  background: #e6d9d0;
+  margin: 6px auto 8px;
+}
+
+.popup-close{
+  position: absolute;
+  top: 6px; right: 8px;
+  width: 32px; height: 32px;
+  border: 0; background: transparent;
+  font-size: 22px; line-height: 32px;
+  color: #a07863; opacity: .9; cursor: pointer;
+}
+
+.popup-row{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px; padding:10px 0; border-bottom:1px solid #eee;
+  color:#a07863;
+}
+
+.popup-row .lbl{ font-weight:700; min-width:110px; color:#a07863; }
+
+#popupTrattamenti{
+  list-style:none; padding:0; margin:0; width:100%;
+}
+#popupTrattamenti li{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 0; border-bottom:1px dashed #eee; color:#a07863;
+}
+#popupTrattamenti li:last-child{ border-bottom:none; }
+
+.popup-row.totale{
+  border-bottom:none; font-size:16px;
+}
+
+.popup-actions{
+  display:flex; justify-content:flex-end; gap:12px; margin-top:14px;
+}
+
+.btn-primario{
+  background:#d2b8a3; color:#fff; border:none; border-radius:12px;
+  padding:10px 16px; font-weight:700; cursor:pointer;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
