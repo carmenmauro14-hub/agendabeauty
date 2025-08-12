@@ -36,6 +36,42 @@
   <!-- ─── BOTTONE FLOTANTE PER NUOVO APPUNTAMENTO ──────── -->
   <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
 
+  <!-- ─── POPUP DETTAGLIO APPUNTAMENTO ─────────────────── -->
+  <div id="popupDettaglio" class="popup-dettaglio" aria-hidden="true">
+    <div class="popup-content" role="dialog" aria-modal="true">
+      <!-- maniglia + X come rubrica -->
+      <div class="popup-header">
+        <div class="popup-grabber" aria-label="Trascina verso il basso per chiudere"></div>
+        <button class="popup-close" id="popupClose" aria-label="Chiudi">✕</button>
+      </div>
+
+      <h2 id="popupNomeCliente"></h2>
+
+      <div class="popup-row">
+        <span class="lbl">Data</span>
+        <span id="popupData"></span>
+      </div>
+      <div class="popup-row">
+        <span class="lbl">Ora</span>
+        <span id="popupOra"></span>
+      </div>
+
+      <div class="popup-row">
+        <span class="lbl">Trattamenti</span>
+        <ul id="popupTrattamenti"></ul>
+      </div>
+
+      <div class="popup-row totale">
+        <span class="lbl">Totale</span>
+        <span>€ <span id="popupTotale">0.00</span></span>
+      </div>
+
+      <div class="popup-actions">
+        <button id="popupModifica" class="btn-primario">Modifica appuntamento</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ─── SCRIPT E NAVBAR ──────────────────────────────── -->
   <script>
     // Carica navbar dinamicamente
