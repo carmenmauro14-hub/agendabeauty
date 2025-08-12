@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     appId: "1:959324976221:web:780c8e9195965cea0749b4"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db  = getFirestore(app);
 
   const params = new URLSearchParams(window.location.search);
   const dataParam = params.get("data");
@@ -24,8 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   dataCorrente = dataParam ? new Date(dataParam) : oggi;
   const dataParamFinale = dataParam || oggi.toISOString().split("T")[0];
 
-  const contenuto = document.getElementById("contenutoGiorno");
-  const mesiBar = document.getElementById("mesiBar");
+  const contenuto      = document.getElementById("contenutoGiorno");
+  const mesiBar        = document.getElementById("mesiBar");
   const miniCalendario = document.getElementById("miniCalendario");
 
   document.getElementById("meseCorrente").textContent = dataCorrente.toLocaleDateString('it-IT', { month: 'long' });
@@ -65,6 +65,208 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "icone_uniformate_colore/setting.png";
   }
 
+  // ——— Util per € ———
+  function euro(n) {
+    const x = Number(n || 0);
+    try { return x.toLocaleString('it-IT', { style:'currency', currency:'EUR' }); }
+    catch { return `€ ${x.toFixed(2)}`; }
+  }
+
+  // ——— Modale: creazione lazy senza toccare l’HTML ———
+  function ensureModal() {
+    let modal = document.getElementById("apptDetModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "apptDetModal";
+    modal.setAttribute("aria-hidden", "true");
+    Object.assign(modal.style, {
+      display: "none", position: "fixed", inset: "0",
+      background: "rgba(0,0,0,.5)", zIndex: "1000",
+      alignItems: "flex-start", justifyContent: "center", paddingTop: "24px"
+    });
+
+    const panel = document.createElement("div");
+    panel.id = "apptDetPanel";
+    Object.assign(panel.style, {
+      height: "95vh", width: "100%", maxWidth: "520px", margin: "0 auto",
+      background: "#fff", borderRadius: "16px 16px 0 0", position: "relative",
+      overflowY: "auto", padding: "56px 16px 16px 16px",
+      transition: "transform 200ms ease", transform: "translateY(0)"
+    });
+
+    // X chiusura
+    const btnClose = document.createElement("button");
+    btnClose.innerText = "✕";
+    btnClose.setAttribute("aria-label","Chiudi");
+    Object.assign(btnClose.style, {
+      position:"absolute", top:"6px", right:"8px", width:"32px", height:"32px",
+      border:"0", background:"transparent", fontSize:"22px", lineHeight:"32px",
+      color:"#a07863", opacity:".85", cursor:"pointer", zIndex:"4"
+    });
+    btnClose.addEventListener("click", closeModal);
+
+    // Header con maniglia
+    const header = document.createElement("div");
+    Object.assign(header.style, {
+      position:"absolute", top:"0", left:"0", right:"0", height:"44px",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      touchAction:"none", userSelect:"none", zIndex:"3"
+    });
+    const grabber = document.createElement("div");
+    Object.assign(grabber.style, {
+      width:"48px", height:"5px", borderRadius:"3px", background:"#e6d9d0"
+    });
+    header.appendChild(grabber);
+
+    // Contenuto
+    const title = document.createElement("h3");
+    title.id = "apptDetNome";
+    Object.assign(title.style, { margin:"6px 0 12px 0", color:"#222", fontSize:"28px", fontWeight:"900" });
+
+    const row = (labelTxt, valueId) => {
+      const r = document.createElement("div");
+      Object.assign(r.style, {
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"14px 0", borderBottom:"1px solid #f0e8e2"
+      });
+      const l = document.createElement("span");
+      l.textContent = labelTxt; Object.assign(l.style, { fontWeight:"900", color:"#a07863", fontSize:"18px" });
+      const v = document.createElement("span");
+      v.id = valueId; Object.assign(v.style, { color:"#6d584b", fontWeight:"700" });
+      r.appendChild(l); r.appendChild(v); return r;
+    };
+
+    const rData = row("Data", "apptDetData");
+    const rOra  = row("Ora",  "apptDetOra");
+
+    const sep = document.createElement("hr");
+    Object.assign(sep.style, { border:"0", borderTop:"1px solid #f0e8e2", margin:"12px 0" });
+
+    const secTitle = document.createElement("div");
+    secTitle.textContent = "Trattamenti";
+    Object.assign(secTitle.style, { fontWeight:"900", color:"#a07863", fontSize:"18px", marginTop:"4px" });
+
+    const list = document.createElement("div");
+    list.id = "apptDetTratt";
+    // stile delle righe lo mettiamo inline:
+    const rowStyle = {
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      padding:"10px 0", borderBottom:"1px dashed #e6d9d0"
+    };
+
+    const totRow = document.createElement("div");
+    Object.assign(totRow.style, {
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      padding:"16px 0", fontSize:"18px"
+    });
+    const totL = document.createElement("span");
+    totL.textContent = "Totale";
+    Object.assign(totL.style, { fontWeight:"900", color:"#a07863" });
+    const totV = document.createElement("span");
+    totV.id = "apptDetTotale";
+    Object.assign(totV.style, { color:"#6d584b", fontWeight:"700" });
+    totRow.appendChild(totL); totRow.appendChild(totV);
+
+    const actions = document.createElement("div");
+    const modBtn = document.createElement("button");
+    modBtn.id = "apptDetModifica";
+    modBtn.textContent = "Modifica appuntamento";
+    Object.assign(modBtn.style, {
+      display:"inline-flex", alignItems:"center", justifyContent:"center",
+      width:"100%", height:"44px", padding:"0 18px",
+      border:"none", borderRadius:"14px", background:"#d2b8a3",
+      color:"#fff", fontSize:"16px", fontWeight:"600", cursor:"pointer"
+    });
+    actions.appendChild(modBtn);
+
+    const body = document.createElement("div");
+    body.appendChild(title);
+    body.appendChild(rData);
+    body.appendChild(rOra);
+    body.appendChild(sep);
+    body.appendChild(secTitle);
+    body.appendChild(list);
+    body.appendChild(totRow);
+    body.appendChild(actions);
+
+    panel.appendChild(btnClose);
+    panel.appendChild(header);
+    panel.appendChild(body);
+
+    modal.appendChild(panel);
+    document.body.appendChild(modal);
+
+    // overlay click chiude
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+    // ritorna anche alcuni riferimenti utili
+    modal._els = {
+      panel,
+      title,
+      data: document.getElementById("apptDetData"),
+      ora:  document.getElementById("apptDetOra"),
+      list,
+      tot:  document.getElementById("apptDetTotale"),
+      modBtn,
+      rowStyle
+    };
+    return modal;
+  }
+
+  function openModal(appt) {
+    const modal = ensureModal();
+    const els = modal._els;
+
+    els.title.textContent = appt.nome || "Appuntamento";
+    els.data.textContent  = appt.data || dataParamFinale;
+    els.ora.textContent   = appt.ora  || "";
+
+    els.list.innerHTML = "";
+    let totale = 0;
+    (appt.trattamenti || []).forEach(t => {
+      const r = document.createElement("div");
+      Object.assign(r.style, els.rowStyle);
+      const n = document.createElement("span");
+      n.textContent = t.nome || "-";
+      Object.assign(n.style, { color:"#6d584b" });
+      const p = document.createElement("span");
+      const val = Number(t.prezzo) || 0;
+      p.textContent = euro(val);
+      Object.assign(p.style, { color:"#6d584b", fontWeight:"700" });
+      totale += val;
+      r.appendChild(n); r.appendChild(p);
+      els.list.appendChild(r);
+    });
+    els.tot.textContent = euro(totale);
+
+    // Modifica (se vuoi agganciare l'editor in futuro)
+    els.modBtn.onclick = () => {
+      if (appt.id) {
+        window.location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
+      }
+    };
+
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden","false");
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("apptDetModal");
+    if (!modal) return;
+    const panel = modal._els?.panel;
+    if (!panel) { modal.style.display = "none"; return; }
+
+    panel.style.transition = "transform 200ms ease";
+    panel.style.transform = "translateY(100%)";
+    panel.addEventListener("transitionend", () => {
+      panel.style.transform = "";
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden","true");
+    }, { once: true });
+  }
+
+  // ——— Carica Appuntamenti del giorno (iniziale) ———
   async function caricaAppuntamentiGiorno() {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataParamFinale));
     const snapshot = await getDocs(q);
@@ -83,7 +285,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       appuntamenti.push({
-        ora: dati.ora || dati.time,
+        id: docSnap.id,
+        data: dati.data || dati.date,
+        ora:  dati.ora  || dati.time,
         nome: nomeCliente,
         trattamenti: Array.isArray(dati.trattamenti) ? dati.trattamenti : []
       });
@@ -97,6 +301,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       appuntamenti.forEach(app => {
         const row = document.createElement("div");
         row.className = "evento-giorno";
+        row._appt = app; // <— serve al modal
 
         const oraEl = document.createElement("span");
         oraEl.className = "eg-ora";
@@ -125,10 +330,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         row.appendChild(iconeEl);
         row.appendChild(nomeEl);
         contenuto.appendChild(row);
+
+        row.addEventListener("click", () => openModal(row._appt));
       });
     }
   }
 
+  // ——— Aggiorna vista giorno (quando navighi) ———
   function aggiornaVistaGiorno(nuovaData, animazione) {
     dataCorrente = nuovaData;
     const dataStr = nuovaData.toISOString().split("T")[0];
@@ -162,6 +370,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // ——— Carica Appuntamenti per data (quando navighi) ———
   async function caricaAppuntamentiGiornoDaData(dataStr) {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataStr));
     const snapshot = await getDocs(q);
@@ -181,7 +390,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       appuntamenti.push({
-        ora: dati.ora || dati.time,
+        id: docSnap.id,
+        data: dati.data || dati.date,
+        ora:  dati.ora  || dati.time,
         nome: nomeCliente,
         trattamenti: Array.isArray(dati.trattamenti) ? dati.trattamenti : []
       });
@@ -195,6 +406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       appuntamenti.forEach(app => {
         const row = document.createElement("div");
         row.className = "evento-giorno";
+        row._appt = app; // <— serve al modal
 
         const oraEl = document.createElement("span");
         oraEl.className = "eg-ora";
@@ -223,6 +435,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         row.appendChild(iconeEl);
         row.appendChild(nomeEl);
         contenuto.appendChild(row);
+
+        row.addEventListener("click", () => openModal(row._appt));
       });
     }
   }
@@ -365,6 +579,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   generaBarraMesiCompleta();
   await caricaAppuntamentiGiorno();
 
+  // Swipe tra giorni (orizzontale) — invariato
   abilitaSwipe(contenuto, () => {
     const nuovaData = new Date(dataCorrente);
     nuovaData.setDate(nuovaData.getDate() + 1);
