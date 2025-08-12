@@ -65,6 +65,54 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "icone_uniformate_colore/setting.png";
   }
 
+  // ---------- POPUP HELPERS ----------
+  const popup = document.getElementById("popupDettaglio");
+  const popupClose = document.getElementById("popupClose");
+  const elNome = document.getElementById("popupNomeCliente");
+  const elData = document.getElementById("popupData");
+  const elOra  = document.getElementById("popupOra");
+  const elList = document.getElementById("popupTrattamenti");
+  const elTot  = document.getElementById("popupTotale");
+  const btnModifica = document.getElementById("popupModifica");
+  let ultimoDocId = null; // per passare alla modifica
+
+  function apriPopupDettaglio({ nome, data, ora, trattamenti, docId }) {
+    elNome.textContent = nome || "";
+    elData.textContent = data || "";
+    elOra.textContent  = ora || "";
+    elList.innerHTML = "";
+    let tot = 0;
+    (trattamenti || []).forEach(t => {
+      const li = document.createElement("li");
+      const prezzo = Number(t.prezzo || 0);
+      li.textContent = `${t.nome || ""} — €${prezzo.toFixed(2)}`;
+      elList.appendChild(li);
+      tot += prezzo;
+    });
+    elTot.textContent = tot.toFixed(2);
+    ultimoDocId = docId || null;
+    popup.style.display = "flex";
+    popup.setAttribute("aria-hidden", "false");
+  }
+
+  function chiudiPopup() {
+    popup.style.display = "none";
+    popup.setAttribute("aria-hidden", "true");
+  }
+
+  popupClose.addEventListener("click", chiudiPopup);
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) chiudiPopup();
+  });
+
+  btnModifica.addEventListener("click", () => {
+    if (!ultimoDocId) return chiudiPopup();
+    // porta alla pagina di modifica (puoi fare pagina dedicata in futuro)
+    // per ora ri-usa nuovo-appuntamento con parametri:
+    window.location.href = `nuovo-appuntamento.html?edit=${encodeURIComponent(ultimoDocId)}`;
+  });
+
+  // ---------- CARICAMENTO APPUNTAMENTI ----------
   async function caricaAppuntamentiGiorno() {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataParamFinale));
     const snapshot = await getDocs(q);
@@ -83,6 +131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       appuntamenti.push({
+        id: docSnap.id,
         ora: dati.ora || dati.time,
         nome: nomeCliente,
         trattamenti: Array.isArray(dati.trattamenti) ? dati.trattamenti : []
@@ -125,6 +174,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         row.appendChild(iconeEl);
         row.appendChild(nomeEl);
         contenuto.appendChild(row);
+
+        // click per dettagli
+        row.addEventListener("click", () => {
+          apriPopupDettaglio({
+            nome: app.nome,
+            data: dataParamFinale,
+            ora: app.ora,
+            trattamenti: app.trattamenti,
+            docId: app.id
+          });
+        });
       });
     }
   }
@@ -181,6 +241,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       appuntamenti.push({
+        id: docSnap.id,
         ora: dati.ora || dati.time,
         nome: nomeCliente,
         trattamenti: Array.isArray(dati.trattamenti) ? dati.trattamenti : []
@@ -223,6 +284,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         row.appendChild(iconeEl);
         row.appendChild(nomeEl);
         contenuto.appendChild(row);
+
+        // click per dettagli
+        row.addEventListener("click", () => {
+          apriPopupDettaglio({
+            nome: app.nome,
+            data: dataStr,
+            ora: app.ora,
+            trattamenti: app.trattamenti,
+            docId: app.id
+          });
+        });
       });
     }
   }
