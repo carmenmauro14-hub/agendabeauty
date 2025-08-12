@@ -44,10 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const titolo = document.createElement("h2");
   titolo.id = "titoloData";
   titolo.textContent = dataCorrente.toLocaleDateString("it-IT", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric"
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
   });
   titolo.style.textTransform = "capitalize";
   contenuto.appendChild(titolo);
@@ -70,6 +67,74 @@ document.addEventListener("DOMContentLoaded", async () => {
     const x = Number(n || 0);
     try { return x.toLocaleString('it-IT', { style:'currency', currency:'EUR' }); }
     catch { return `€ ${x.toFixed(2)}`; }
+  }
+
+  // ——— Swipe verticale per il dettaglio ———
+  function setupDetSwipe(headerEl, panelEl, modalEl) {
+    let startY = 0, currentY = 0, dragging = false, started = false;
+    const THRESHOLD = 60;        // oltre questa distanza chiudiamo
+    const MAX_Y     = 220;       // massimo trascinamento visivo
+    const MAX_SLOPE = 0.6;       // privilegia verticale (evita conflitti orizzontali)
+
+    const setY = (dy) => {
+      const y = Math.max(0, Math.min(dy, MAX_Y));
+      panelEl.style.transition = "none";
+      panelEl.style.transform  = `translateY(${y}px)`;
+    };
+    const endDrag = () => {
+      panelEl.style.transition = "";
+      const delta = currentY - startY;
+      if (delta > THRESHOLD) {
+        panelEl.style.transform = `translateY(100%)`;
+        panelEl.addEventListener("transitionend", () => {
+          panelEl.style.transform = "";
+          modalEl.style.display = "none";
+          modalEl.setAttribute("aria-hidden","true");
+        }, { once:true });
+      } else {
+        panelEl.style.transform = "";
+      }
+      dragging = false; started = false;
+    };
+
+    // Touch
+    headerEl.addEventListener("touchstart", (e) => {
+      if (!e.touches?.[0]) return;
+      dragging = true; started = false;
+      startY   = e.touches[0].clientY;
+      currentY = startY;
+      e.preventDefault();
+    }, { passive:false });
+
+    headerEl.addEventListener("touchmove", (e) => {
+      if (!dragging || !e.touches?.[0]) return;
+      const t = e.touches[0];
+      const dy = t.clientY - startY;
+      const dx = Math.abs(t.clientX - (e.touches[0].clientX));
+      // Attiva solo se spostamento prevalente è verticale verso il basso
+      if (!started) {
+        started = Math.abs(dy) > 6 && (Math.abs(dy) > dx / MAX_SLOPE);
+      }
+      if (started && dy > 0) { setY(dy); e.preventDefault(); }
+      currentY = t.clientY;
+    }, { passive:false });
+
+    headerEl.addEventListener("touchend", endDrag);
+
+    // Mouse
+    headerEl.addEventListener("mousedown", (e) => {
+      dragging = true; started = true;
+      startY   = e.clientY;
+      currentY = startY;
+      e.preventDefault();
+    });
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      const dy = e.clientY - startY;
+      if (dy > 0) setY(dy);
+      currentY = e.clientY;
+    });
+    window.addEventListener("mouseup", () => { if (dragging) endDrag(); });
   }
 
   // ——— Modale: creazione lazy senza toccare l’HTML ———
@@ -106,7 +171,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     btnClose.addEventListener("click", closeModal);
 
-    // Header con maniglia
+    // Header con maniglia (area grabbable)
     const header = document.createElement("div");
     Object.assign(header.style, {
       position:"absolute", top:"0", left:"0", right:"0", height:"44px",
@@ -149,7 +214,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const list = document.createElement("div");
     list.id = "apptDetTratt";
-    // stile delle righe lo mettiamo inline:
     const rowStyle = {
       display:"flex", alignItems:"center", justifyContent:"space-between",
       padding:"10px 0", borderBottom:"1px dashed #e6d9d0"
@@ -200,7 +264,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // overlay click chiude
     modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-    // ritorna anche alcuni riferimenti utili
+    // 🔗 attiva swipe verticale sulla maniglia
+    setupDetSwipe(header, panel, modal);
+
     modal._els = {
       panel,
       title,
@@ -240,11 +306,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     els.tot.textContent = euro(totale);
 
-    // Modifica (se vuoi agganciare l'editor in futuro)
     els.modBtn.onclick = () => {
-      if (appt.id) {
-        window.location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
-      }
+      if (appt.id) window.location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
     };
 
     modal.style.display = "flex";
