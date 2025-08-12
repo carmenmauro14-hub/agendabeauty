@@ -8,6 +8,45 @@
   <link rel="stylesheet" href="giorno.css" />
 </head>
 <body>
+  <!-- Modal dettaglio appuntamento (stile bottom-sheet) -->
+<div id="detModal" class="det-modal" aria-hidden="true">
+  <div class="det-sheet" role="dialog" aria-modal="true" aria-labelledby="detTitolo">
+    <!-- Maniglia + X -->
+    <div class="det-topbar" id="detTopbar" aria-label="Trascina verso il basso per chiudere">
+      <div class="det-grabber" aria-hidden="true"></div>
+      <button class="det-close" id="detCloseBtn" aria-label="Chiudi">✕</button>
+    </div>
+
+    <div class="det-body">
+      <h3 id="detTitolo" class="det-title">Cliente</h3>
+
+      <div class="det-row">
+        <span class="det-label">Data</span>
+        <span id="detData" class="det-value">—</span>
+      </div>
+
+      <div class="det-row">
+        <span class="det-label">Ora</span>
+        <span id="detOra" class="det-value">—</span>
+      </div>
+
+      <hr class="det-sep"/>
+
+      <div class="det-section">
+        <div class="det-section-title">Trattamenti</div>
+        <div id="detTrattList" class="det-tratt-list"></div>
+      </div>
+
+      <div class="det-total-row">
+        <span class="det-total-label">Totale</span>
+        <span id="detTotale" class="det-total-value">€ 0,00</span>
+      </div>
+
+      <button id="detModifica" class="btn det-action">Modifica appuntamento</button>
+    </div>
+  </div>
+</div>
+
   <div id="navbar-placeholder"></div>
 
   <!-- ─── TOP BAR IDENTICA ─────────────────────────────── -->
