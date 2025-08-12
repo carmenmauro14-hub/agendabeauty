@@ -309,3 +309,44 @@ body {
 }
 
 .eg-ora{ color:#a07863; }
+
+/* ── Modal dettaglio appuntamento (additivo) ───────────────────── */
+.det-modal{
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.5); z-index:1000;
+  align-items:flex-start; justify-content:center; padding-top:24px;
+}
+.det-sheet{
+  width:100%; max-width:520px; height:95vh; margin:0 auto;
+  background:#fff; border-radius:16px 16px 0 0; overflow:auto;
+  position:relative; transform:translateY(0); transition:transform .2s ease;
+  padding-top:52px; /* spazio per maniglia + X */
+}
+.det-topbar{
+  position:absolute; top:0; left:0; right:0; height:44px;
+  display:flex; align-items:center; justify-content:center;
+  -webkit-user-select:none; user-select:none; touch-action:none;
+}
+.det-grabber{
+  width:48px; height:5px; border-radius:3px; background:#e6d9d0;
+}
+.det-close{
+  position:absolute; top:6px; right:8px; width:32px; height:32px;
+  border:0; background:transparent; font-size:22px; line-height:32px;
+  color:#a07863; opacity:.85; cursor:pointer;
+}
+.det-close:hover{ opacity:1; }
+
+.det-body{ padding:12px 16px 24px; }
+.det-title{ margin:6px 0 12px; color:#222; font-size:28px; font-weight:900; }
+.det-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #f0e8e2; }
+.det-label{ font-weight:900; color:#a07863; font-size:18px; }
+.det-value{ color:#6d584b; font-weight:700; }
+.det-sep{ border:0; border-top:1px solid #f0e8e2; margin:12px 0; }
+.det-section-title{ font-weight:900; color:#a07863; margin-bottom:6px; }
+.det-tratt-list{ }
+.det-tratt-item{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #e6d9d0; }
+.det-tratt-item:last-child{ border-bottom:0; }
+.det-tratt-nome{ color:#6d584b; }
+.det-tratt-prezzo{ color:#6d584b; font-weight:700; }
+.det-total-row{ display:flex; align
