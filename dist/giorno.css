@@ -349,4 +349,10 @@ body {
 .det-tratt-item:last-child{ border-bottom:0; }
 .det-tratt-nome{ color:#6d584b; }
 .det-tratt-prezzo{ color:#6d584b; font-weight:700; }
-.det-total-row{ display:flex; align
+.det-total-row{ display:flex; align-items:center; justify-content:space-between; font-size:18px; padding:14px 0; }
+.det-total-label{ font-weight:900; color:#a07863; }
+.det-total-value{ color:#6d584b; font-weight:800; }
+.det-action{ width:100%; margin-top:8px; background:#d2b8a3; }
+
+/* animazione chiusura verso il basso */
+.det-sheet.swipe-out-down{ transform:translateY(100%); }
