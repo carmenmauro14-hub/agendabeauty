@@ -8,6 +8,34 @@
   <link rel="stylesheet" href="giorno.css" />
 </head>
 <body>
+  <div id="navbar-placeholder"></div>
+
+  <!-- ─── TOP BAR IDENTICA ─────────────────────────────── -->
+  <header class="top-bar">
+    <div class="mese-switch" id="meseSwitch">
+      <span id="meseCorrente">Agosto</span>
+      <span class="freccia">▼</span>
+    </div>
+    <div class="top-right">
+      <span id="annoCorrente">2025</span>
+      <button id="btnTornaOggi" class="btn-oggi">2</button>
+    </div>
+  </header>
+
+  <!-- ─── BARRA MENSILE SCROLLABILE ────────────────────── -->
+  <div class="mesi-bar" id="mesiBar" style="display: none;"></div>
+
+  <!-- ─── MINI CALENDARIO ──────────────────────────────── -->
+  <div id="miniCalendario" class="mini-calendario"></div>
+
+  <!-- ─── CONTENUTO VISTA GIORNO ───────────────────────── -->
+  <main id="contenutoGiorno" style="padding: 16px;">
+    <!-- Gli appuntamenti del giorno verranno caricati qui -->
+  </main>
+
+  <!-- ─── BOTTONE FLOTANTE PER NUOVO APPUNTAMENTO ──────── -->
+  <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
+  
   <!-- Modal dettaglio appuntamento (stile bottom-sheet) -->
 <div id="detModal" class="det-modal" aria-hidden="true">
   <div class="det-sheet" role="dialog" aria-modal="true" aria-labelledby="detTitolo">
@@ -46,34 +74,6 @@
     </div>
   </div>
 </div>
-
-  <div id="navbar-placeholder"></div>
-
-  <!-- ─── TOP BAR IDENTICA ─────────────────────────────── -->
-  <header class="top-bar">
-    <div class="mese-switch" id="meseSwitch">
-      <span id="meseCorrente">Agosto</span>
-      <span class="freccia">▼</span>
-    </div>
-    <div class="top-right">
-      <span id="annoCorrente">2025</span>
-      <button id="btnTornaOggi" class="btn-oggi">2</button>
-    </div>
-  </header>
-
-  <!-- ─── BARRA MENSILE SCROLLABILE ────────────────────── -->
-  <div class="mesi-bar" id="mesiBar" style="display: none;"></div>
-
-  <!-- ─── MINI CALENDARIO ──────────────────────────────── -->
-  <div id="miniCalendario" class="mini-calendario"></div>
-
-  <!-- ─── CONTENUTO VISTA GIORNO ───────────────────────── -->
-  <main id="contenutoGiorno" style="padding: 16px;">
-    <!-- Gli appuntamenti del giorno verranno caricati qui -->
-  </main>
-
-  <!-- ─── BOTTONE FLOTANTE PER NUOVO APPUNTAMENTO ──────── -->
-  <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
 
   <!-- ─── SCRIPT E NAVBAR ──────────────────────────────── -->
   <script>
