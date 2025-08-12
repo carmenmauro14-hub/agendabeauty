@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { abilitaSwipe } from './swipe.js';
+import { abilitaSwipe, abilitaSwipeVerticale } from './swipe.js'; // NEW ⬅️
 
 let meseMiniCorrente;
 let annoMiniCorrente;
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   titolo.style.textTransform = "capitalize";
   contenuto.appendChild(titolo);
 
-  // ——— Fallback icone se mancasse t.icona ———
+  // ——— Fallback icone ———
   function trovaIcona(nome) {
     const iconeDisponibili = [
       "makeup_sposa","makeup","microblinding","microblading","extension_ciglia",
@@ -62,82 +62,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "icone_uniformate_colore/setting.png";
   }
 
-  // ——— Util per € ———
+  // ——— Util € ———
   function euro(n) {
     const x = Number(n || 0);
     try { return x.toLocaleString('it-IT', { style:'currency', currency:'EUR' }); }
     catch { return `€ ${x.toFixed(2)}`; }
   }
 
-  // ——— Swipe verticale per il dettaglio ———
-  function setupDetSwipe(headerEl, panelEl, modalEl) {
-    let startY = 0, currentY = 0, dragging = false, started = false;
-    const THRESHOLD = 60;        // oltre questa distanza chiudiamo
-    const MAX_Y     = 220;       // massimo trascinamento visivo
-    const MAX_SLOPE = 0.6;       // privilegia verticale (evita conflitti orizzontali)
-
-    const setY = (dy) => {
-      const y = Math.max(0, Math.min(dy, MAX_Y));
-      panelEl.style.transition = "none";
-      panelEl.style.transform  = `translateY(${y}px)`;
-    };
-    const endDrag = () => {
-      panelEl.style.transition = "";
-      const delta = currentY - startY;
-      if (delta > THRESHOLD) {
-        panelEl.style.transform = `translateY(100%)`;
-        panelEl.addEventListener("transitionend", () => {
-          panelEl.style.transform = "";
-          modalEl.style.display = "none";
-          modalEl.setAttribute("aria-hidden","true");
-        }, { once:true });
-      } else {
-        panelEl.style.transform = "";
-      }
-      dragging = false; started = false;
-    };
-
-    // Touch
-    headerEl.addEventListener("touchstart", (e) => {
-      if (!e.touches?.[0]) return;
-      dragging = true; started = false;
-      startY   = e.touches[0].clientY;
-      currentY = startY;
-      e.preventDefault();
-    }, { passive:false });
-
-    headerEl.addEventListener("touchmove", (e) => {
-      if (!dragging || !e.touches?.[0]) return;
-      const t = e.touches[0];
-      const dy = t.clientY - startY;
-      const dx = Math.abs(t.clientX - (e.touches[0].clientX));
-      // Attiva solo se spostamento prevalente è verticale verso il basso
-      if (!started) {
-        started = Math.abs(dy) > 6 && (Math.abs(dy) > dx / MAX_SLOPE);
-      }
-      if (started && dy > 0) { setY(dy); e.preventDefault(); }
-      currentY = t.clientY;
-    }, { passive:false });
-
-    headerEl.addEventListener("touchend", endDrag);
-
-    // Mouse
-    headerEl.addEventListener("mousedown", (e) => {
-      dragging = true; started = true;
-      startY   = e.clientY;
-      currentY = startY;
-      e.preventDefault();
-    });
-    window.addEventListener("mousemove", (e) => {
-      if (!dragging) return;
-      const dy = e.clientY - startY;
-      if (dy > 0) setY(dy);
-      currentY = e.clientY;
-    });
-    window.addEventListener("mouseup", () => { if (dragging) endDrag(); });
-  }
-
-  // ——— Modale: creazione lazy senza toccare l’HTML ———
+  // ——— Modale creato a runtime ———
   function ensureModal() {
     let modal = document.getElementById("apptDetModal");
     if (modal) return modal;
@@ -160,7 +92,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       transition: "transform 200ms ease", transform: "translateY(0)"
     });
 
-    // X chiusura
     const btnClose = document.createElement("button");
     btnClose.innerText = "✕";
     btnClose.setAttribute("aria-label","Chiudi");
@@ -171,7 +102,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     btnClose.addEventListener("click", closeModal);
 
-    // Header con maniglia (area grabbable)
     const header = document.createElement("div");
     Object.assign(header.style, {
       position:"absolute", top:"0", left:"0", right:"0", height:"44px",
@@ -179,12 +109,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       touchAction:"none", userSelect:"none", zIndex:"3"
     });
     const grabber = document.createElement("div");
-    Object.assign(grabber.style, {
-      width:"48px", height:"5px", borderRadius:"3px", background:"#e6d9d0"
-    });
+    Object.assign(grabber.style, { width:"48px", height:"5px", borderRadius:"3px", background:"#e6d9d0" });
     header.appendChild(grabber);
 
-    // Contenuto
     const title = document.createElement("h3");
     title.id = "apptDetNome";
     Object.assign(title.style, { margin:"6px 0 12px 0", color:"#222", fontSize:"28px", fontWeight:"900" });
@@ -201,7 +128,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       v.id = valueId; Object.assign(v.style, { color:"#6d584b", fontWeight:"700" });
       r.appendChild(l); r.appendChild(v); return r;
     };
-
     const rData = row("Data", "apptDetData");
     const rOra  = row("Ora",  "apptDetOra");
 
@@ -257,26 +183,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     panel.appendChild(btnClose);
     panel.appendChild(header);
     panel.appendChild(body);
-
     modal.appendChild(panel);
     document.body.appendChild(modal);
 
-    // overlay click chiude
+    // click sull'overlay chiude
     modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-    // 🔗 attiva swipe verticale sulla maniglia
-    setupDetSwipe(header, panel, modal);
+    // NEW: swipe verticale sul pannello → chiude
+    abilitaSwipeVerticale(panel, null, closeModal, true, 45); // ⬅️ usa il tuo swipe.js
 
     modal._els = {
       panel,
       title,
-      data: document.getElementById("apptDetData"),
-      ora:  document.getElementById("apptDetOra"),
+      data: document.createElement("span"), // placeholder, sostituiti più sotto
+      ora:  document.createElement("span"),
       list,
-      tot:  document.getElementById("apptDetTotale"),
+      tot:  document.createElement("span"),
       modBtn,
       rowStyle
     };
+    modal._els.data = rData.querySelector("#apptDetData");
+    modal._els.ora  = rOra.querySelector("#apptDetOra");
+    modal._els.tot  = totV;
+
     return modal;
   }
 
@@ -293,22 +222,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     (appt.trattamenti || []).forEach(t => {
       const r = document.createElement("div");
       Object.assign(r.style, els.rowStyle);
-      const n = document.createElement("span");
-      n.textContent = t.nome || "-";
-      Object.assign(n.style, { color:"#6d584b" });
-      const p = document.createElement("span");
-      const val = Number(t.prezzo) || 0;
-      p.textContent = euro(val);
-      Object.assign(p.style, { color:"#6d584b", fontWeight:"700" });
-      totale += val;
-      r.appendChild(n); r.appendChild(p);
-      els.list.appendChild(r);
+      const n = document.createElement("span"); n.textContent = t.nome || "-"; Object.assign(n.style, { color:"#6d584b" });
+      const p = document.createElement("span"); const val = Number(t.prezzo) || 0;
+      p.textContent = euro(val); Object.assign(p.style, { color:"#6d584b", fontWeight:"700" });
+      totale += val; r.appendChild(n); r.appendChild(p); els.list.appendChild(r);
     });
     els.tot.textContent = euro(totale);
 
-    els.modBtn.onclick = () => {
-      if (appt.id) window.location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
-    };
+    els.modBtn.onclick = () => { if (appt.id) window.location.href = `nuovo-appuntamento.html?edit=${appt.id}`; };
 
     modal.style.display = "flex";
     modal.setAttribute("aria-hidden","false");
@@ -319,7 +240,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!modal) return;
     const panel = modal._els?.panel;
     if (!panel) { modal.style.display = "none"; return; }
-
     panel.style.transition = "transform 200ms ease";
     panel.style.transform = "translateY(100%)";
     panel.addEventListener("transitionend", () => {
@@ -329,10 +249,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, { once: true });
   }
 
-  // ——— Carica Appuntamenti del giorno (iniziale) ———
+  // ——— Carica appuntamenti (iniziale) ———
   async function caricaAppuntamentiGiorno() {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataParamFinale));
     const snapshot = await getDocs(q);
+
     const clientiCache = {};
     const appuntamenti = [];
 
@@ -364,7 +285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       appuntamenti.forEach(app => {
         const row = document.createElement("div");
         row.className = "evento-giorno";
-        row._appt = app; // <— serve al modal
+        row._appt = app;
 
         const oraEl = document.createElement("span");
         oraEl.className = "eg-ora";
@@ -399,7 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ——— Aggiorna vista giorno (quando navighi) ———
+  // ——— Aggiorna vista giorno ———
   function aggiornaVistaGiorno(nuovaData, animazione) {
     dataCorrente = nuovaData;
     const dataStr = nuovaData.toISOString().split("T")[0];
@@ -411,10 +332,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const titolo = document.getElementById("titoloData");
     titolo.textContent = nuovaData.toLocaleDateString("it-IT", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
     });
 
     contenuto.classList.add(animazione);
@@ -433,7 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ——— Carica Appuntamenti per data (quando navighi) ———
+  // ——— Carica appuntamenti per data ———
   async function caricaAppuntamentiGiornoDaData(dataStr) {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataStr));
     const snapshot = await getDocs(q);
@@ -469,7 +387,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       appuntamenti.forEach(app => {
         const row = document.createElement("div");
         row.className = "evento-giorno";
-        row._appt = app; // <— serve al modal
+        row._appt = app;
 
         const oraEl = document.createElement("span");
         oraEl.className = "eg-ora";
@@ -642,7 +560,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   generaBarraMesiCompleta();
   await caricaAppuntamentiGiorno();
 
-  // Swipe tra giorni (orizzontale) — invariato
+  // Swipe orizzontale tra giorni (invariato)
   abilitaSwipe(contenuto, () => {
     const nuovaData = new Date(dataCorrente);
     nuovaData.setDate(nuovaData.getDate() + 1);
