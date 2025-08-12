@@ -10,7 +10,7 @@
 <body>
   <div id="navbar-placeholder"></div>
 
-  <!-- Top bar -->
+  <!-- ─── TOP BAR IDENTICA ─────────────────────────────── -->
   <header class="top-bar">
     <div class="mese-switch" id="meseSwitch">
       <span id="meseCorrente">Agosto</span>
@@ -22,66 +22,28 @@
     </div>
   </header>
 
-  <!-- Barra mesi + mini calendario -->
-  <div class="mesi-bar" id="mesiBar" style="display:none;"></div>
+  <!-- ─── BARRA MENSILE SCROLLABILE ────────────────────── -->
+  <div class="mesi-bar" id="mesiBar" style="display: none;"></div>
+
+  <!-- ─── MINI CALENDARIO ──────────────────────────────── -->
   <div id="miniCalendario" class="mini-calendario"></div>
 
-  <!-- Contenuto giorno -->
-  <main id="contenutoGiorno" style="padding:16px;"></main>
+  <!-- ─── CONTENUTO VISTA GIORNO ───────────────────────── -->
+  <main id="contenutoGiorno" style="padding: 16px;">
+    <!-- Gli appuntamenti del giorno verranno caricati qui -->
+  </main>
 
-  <!-- FAB nuovo -->
+  <!-- ─── BOTTONE FLOTANTE PER NUOVO APPUNTAMENTO ──────── -->
   <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
 
-  <!-- ─────────────────────────────────────────────── -->
-  <!-- MODALE DETTAGLIO APPUNTAMENTO (bottom-sheet)   -->
-  <!-- ─────────────────────────────────────────────── -->
-  <div id="dettaglioModal" class="modal" aria-hidden="true">
-    <div class="det-panel" role="dialog" aria-modal="true" aria-labelledby="detNomeCliente">
-      <!-- X chiusura -->
-      <button class="det-close" id="detClose" aria-label="Chiudi">✕</button>
-
-      <!-- Header con maniglia -->
-      <div class="det-header">
-        <div class="det-grabber" aria-hidden="true"></div>
-      </div>
-
-      <div class="det-body">
-        <h2 id="detNomeCliente" class="det-title">Cliente</h2>
-
-        <div class="det-row">
-          <span class="det-label">Data</span>
-          <span class="det-value" id="detData">—</span>
-        </div>
-
-        <div class="det-row">
-          <span class="det-label">Ora</span>
-          <span class="det-value" id="detOra">—</span>
-        </div>
-
-        <div class="det-row det-row-col">
-          <span class="det-label">Trattamenti</span>
-          <div class="det-tratt-list" id="detTrattamenti">
-            <!-- righe trattamenti -->
-          </div>
-        </div>
-
-        <hr class="det-sep"/>
-
-        <div class="det-row">
-          <span class="det-label">Totale</span>
-          <span class="det-value det-totale" id="detTotale">€ 0,00</span>
-        </div>
-
-        <button id="detModifica" class="btn btn-wide" type="button">Modifica appuntamento</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Script -->
+  <!-- ─── SCRIPT E NAVBAR ──────────────────────────────── -->
   <script>
-    fetch("navbar.html").then(r=>r.text()).then(h=>{
-      document.getElementById("navbar-placeholder").innerHTML = h;
-    });
+    // Carica navbar dinamicamente
+    fetch("navbar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("navbar-placeholder").innerHTML = data;
+      });
   </script>
   <script src="navbar.js"></script>
   <script type="module" src="giorno.js"></script>
