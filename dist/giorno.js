@@ -190,7 +190,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
     // NEW: swipe verticale sul pannello → chiude
-    abilitaSwipeVerticale(panel, null, closeModal, true, 45); // ⬅️ usa il tuo swipe.js
+    const topbar = panel.querySelector(':scope > div'); // la barra con la maniglia che hai creato
+    abilitaSwipeVerticale(topbar, null, closeModal, true, 45);
 
     modal._els = {
       panel,
@@ -210,6 +211,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function openModal(appt) {
+      // 🔹 Reset posizione pannello per evitare blocchi dopo chiusura con swipe
+    const panel = document.getElementById("apptDetPanel");
+    if (panel) panel.style.transform = "";
+
     const modal = ensureModal();
     const els = modal._els;
 
