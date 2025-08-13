@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { abilitaSwipe, abilitaSwipeVerticale } from './swipe.js'; // NEW ⬅️
+import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { abilitaSwipe, abilitaSwipeVerticale } from './swipe.js';
 
 let meseMiniCorrente;
 let annoMiniCorrente;
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   titolo.style.textTransform = "capitalize";
   contenuto.appendChild(titolo);
 
-  // ——— Fallback icone ———
+  // Fallback icone
   function trovaIcona(nome) {
     const iconeDisponibili = [
       "makeup_sposa","makeup","microblinding","microblading","extension_ciglia",
@@ -62,14 +62,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "icone_uniformate_colore/setting.png";
   }
 
-  // ——— Util € ———
+  // Util € 
   function euro(n) {
     const x = Number(n || 0);
     try { return x.toLocaleString('it-IT', { style:'currency', currency:'EUR' }); }
     catch { return `€ ${x.toFixed(2)}`; }
   }
 
-  // ——— Modale creato a runtime ———
+  // ─────────────────────────────
+  // Listino trattamenti (cache)
+  // ─────────────────────────────
+  let trattamentiListino = null;
+  async function getTrattamentiListino(db) {
+    if (trattamentiListino) return trattamentiListino;
+    const snap = await getDocs(collection(db, "trattamenti"));
+    trattamentiListino = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const iconeDisponibili = [
+      "makeup_sposa","makeup","microblading","extension_ciglia",
+      "laminazione_ciglia","filo_arabo","architettura_sopracciglia","airbrush_sopracciglia"
+    ];
+    const fallbackIcon = (nome) => {
+      const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
+      for (const base of iconeDisponibili) if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
+      return "icone_uniformate_colore/setting.png";
+    };
+    trattamentiListino.forEach(t => { if (!t.icona) t.icona = fallbackIcon(t.nome); });
+    return trattamentiListino;
+  }
+
+  // ─────────────────────────────
+  // Modale creato a runtime
+  // ─────────────────────────────
   function ensureModal() {
     let modal = document.getElementById("apptDetModal");
     if (modal) return modal;
@@ -186,35 +210,176 @@ document.addEventListener("DOMContentLoaded", async () => {
     modal.appendChild(panel);
     document.body.appendChild(modal);
 
-    // click sull'overlay chiude
     modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-    // NEW: swipe verticale sul pannello → chiude
+    // swipe verticale sulla topbar
     const topbar = panel.querySelector(':scope > div');
     if (topbar) {
       abilitaSwipeVerticale(topbar, null, closeModal, true, 45);
     }
+
     modal._els = {
       panel,
       title,
-      data: document.createElement("span"), // placeholder, sostituiti più sotto
-      ora:  document.createElement("span"),
+      data: rData.querySelector("#apptDetData"),
+      ora:  rOra.querySelector("#apptDetOra"),
       list,
-      tot:  document.createElement("span"),
+      tot:  totV,
       modBtn,
       rowStyle
     };
-    modal._els.data = rData.querySelector("#apptDetData");
-    modal._els.ora  = rOra.querySelector("#apptDetOra");
-    modal._els.tot  = totV;
-
     return modal;
   }
 
+  // ─────────────────────────────
+  // Modifica appuntamento (checklist)
+  // ─────────────────────────────
+  async function enterEditMode(appt) {
+    const modal = document.getElementById("apptDetModal");
+    if (!modal) return;
+    const els = modal._els;
+    els.title.textContent = appt.nome || "Appuntamento";
+
+    // Data/Ora editabili
+    els.data.innerHTML = "";
+    els.ora.innerHTML  = "";
+    const inpData = document.createElement("input");
+    inpData.type = "date";
+    inpData.value = (appt.data || "").slice(0, 10);
+    const inpOra = document.createElement("input");
+    inpOra.type = "time";
+    inpOra.value = appt.ora || "";
+    Object.assign(inpData.style, { border:"1px solid #e6d9d0", borderRadius:"10px", padding:"6px 8px" });
+    Object.assign(inpOra.style,  { border:"1px solid #e6d9d0", borderRadius:"10px", padding:"6px 8px" });
+    els.data.appendChild(inpData);
+    els.ora.appendChild(inpOra);
+
+    // Checklist trattamenti
+    const listino = await getTrattamentiListino(db);
+    const preselezionati = new Map((appt.trattamenti || []).map(t => [t.nome, Number(t.prezzo) || 0]));
+
+    els.list.innerHTML = "";
+    const makeRow = (t) => {
+      const r = document.createElement("div");
+      Object.assign(r.style, els.rowStyle);
+      r.className = "riga-tratt";
+
+      const left = document.createElement("label");
+      left.style.display = "flex";
+      left.style.alignItems = "center";
+      left.style.gap = "10px";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = preselezionati.has(t.nome);
+
+      const spanNome = document.createElement("span");
+      spanNome.textContent = t.nome;
+      spanNome.style.color = "#6d584b";
+
+      left.appendChild(cb);
+      left.appendChild(spanNome);
+
+      const right = document.createElement("div");
+      const inpPrezzo = document.createElement("input");
+      inpPrezzo.type = "number";
+      inpPrezzo.className = "price";
+      inpPrezzo.min = "0";
+      inpPrezzo.step = "0.01";
+      inpPrezzo.value = (cb.checked ? preselezionati.get(t.nome) : (Number(t.prezzo) || 0)).toString();
+      Object.assign(inpPrezzo.style, { width:"90px", border:"1px solid #e6d9d0", borderRadius:"10px", padding:"6px 8px", textAlign:"right" });
+      inpPrezzo.disabled = !cb.checked;
+
+      cb.addEventListener("change", () => {
+        inpPrezzo.disabled = !cb.checked;
+        updateTotal();
+      });
+      inpPrezzo.addEventListener("input", updateTotal);
+
+      right.appendChild(inpPrezzo);
+      r.appendChild(left);
+      r.appendChild(right);
+      return r;
+    };
+
+    listino
+      .slice()
+      .sort((a,b)=>(a.nome||"").localeCompare(b.nome||""))
+      .forEach(t => els.list.appendChild(makeRow(t)));
+
+    const updateTotal = () => {
+      let sum = 0;
+      els.list.querySelectorAll(".riga-tratt").forEach(r => {
+        const cb = r.querySelector('input[type="checkbox"]');
+        if (!cb.checked) return;
+        const price = Number(r.querySelector('.price').value) || 0;
+        sum += price;
+      });
+      els.tot.textContent = euro(sum);
+    };
+    updateTotal();
+
+    // Barra azioni: Annulla + Salva
+    const oldBtn = els.modBtn;
+    const actionsBar = document.createElement("div");
+    actionsBar.style.display = "flex";
+    actionsBar.style.gap = "10px";
+    actionsBar.style.marginTop = "12px";
+
+    const btnAnnulla = document.createElement("button");
+    btnAnnulla.textContent = "Annulla";
+    btnAnnulla.className = "btn";
+    btnAnnulla.style.background = "#f1e7e1";
+    btnAnnulla.style.color = "#a07863";
+    btnAnnulla.style.flex = "1";
+
+    const btnSalva = document.createElement("button");
+    btnSalva.textContent = "Salva";
+    btnSalva.className = "btn";
+    btnSalva.style.flex = "2";
+
+    oldBtn.parentNode.replaceChild(actionsBar, oldBtn);
+    actionsBar.appendChild(btnAnnulla);
+    actionsBar.appendChild(btnSalva);
+
+    btnAnnulla.onclick = () => { openModal(appt); };
+
+    btnSalva.onclick = async () => {
+      const nuoviTratt = [];
+      els.list.querySelectorAll(".riga-tratt").forEach(r => {
+        const cb = r.querySelector('input[type="checkbox"]');
+        if (!cb.checked) return;
+        const nome = r.querySelector("label span").textContent;
+        const prezzo = Number(r.querySelector(".price").value) || 0;
+        const base = listino.find(x => x.nome === nome);
+        nuoviTratt.push({ nome, prezzo, icona: base?.icona || null });
+      });
+
+      const payload = {
+        data: inpData.value,
+        ora:  inpOra.value,
+        trattamenti: nuoviTratt
+      };
+
+      try {
+        await updateDoc(doc(db, "appuntamenti", appt.id), payload);
+        appt.data = payload.data;
+        appt.ora  = payload.ora;
+        appt.trattamenti = nuoviTratt;
+
+        closeModal();
+        aggiornaVistaGiorno(new Date(payload.data), "");
+      } catch (e) {
+        console.error("Errore salvataggio:", e);
+        alert("Errore durante il salvataggio.");
+      }
+    };
+  }
+
+  // Apertura modale (view mode)
   function openModal(appt) {
-      // 🔹 Reset posizione pannello per evitare blocchi dopo chiusura con swipe
-    const panel = document.getElementById("apptDetPanel");
-    if (panel) panel.style.transform = "";
+    const panelFix = document.getElementById("apptDetPanel");
+    if (panelFix) panelFix.style.transform = ""; // reset translate dopo swipe
 
     const modal = ensureModal();
     const els = modal._els;
@@ -235,7 +400,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     els.tot.textContent = euro(totale);
 
-    els.modBtn.onclick = () => { if (appt.id) window.location.href = `nuovo-appuntamento.html?edit=${appt.id}`; };
+    // ora "Modifica appuntamento" apre la modalità edit
+    els.modBtn.onclick = () => enterEditMode(appt);
 
     modal.style.display = "flex";
     modal.setAttribute("aria-hidden","false");
@@ -255,7 +421,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, { once: true });
   }
 
-  // ——— Carica appuntamenti (iniziale) ———
+  // Carica appuntamenti (iniziale)
   async function caricaAppuntamentiGiorno() {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataParamFinale));
     const snapshot = await getDocs(q);
@@ -326,7 +492,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ——— Aggiorna vista giorno ———
+  // Aggiorna vista giorno
   function aggiornaVistaGiorno(nuovaData, animazione) {
     dataCorrente = nuovaData;
     const dataStr = nuovaData.toISOString().split("T")[0];
@@ -357,7 +523,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ——— Carica appuntamenti per data ———
+  // Carica appuntamenti per data
   async function caricaAppuntamentiGiornoDaData(dataStr) {
     const q = query(collection(db, "appuntamenti"), where("data", "==", dataStr));
     const snapshot = await getDocs(q);
@@ -566,7 +732,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   generaBarraMesiCompleta();
   await caricaAppuntamentiGiorno();
 
-  // Swipe orizzontale tra giorni (invariato)
+  // Swipe orizzontale tra giorni
   abilitaSwipe(contenuto, () => {
     const nuovaData = new Date(dataCorrente);
     nuovaData.setDate(nuovaData.getDate() + 1);
