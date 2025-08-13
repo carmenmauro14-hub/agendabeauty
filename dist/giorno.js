@@ -190,9 +190,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
     // NEW: swipe verticale sul pannello → chiude
-    const topbar = panel.querySelector(':scope > div'); // la barra con la maniglia che hai creato
-    abilitaSwipeVerticale(topbar, null, closeModal, true, 45);
-
+    const topbar = panel.querySelector(':scope > div');
+    if (topbar) {
+      abilitaSwipeVerticale(topbar, null, closeModal, true, 45);
+    }
     modal._els = {
       panel,
       title,
