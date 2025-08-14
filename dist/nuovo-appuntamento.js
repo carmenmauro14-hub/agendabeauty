@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, getDocs, addDoc, Timestamp
+  getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { abilitaSwipeVerticale } from "./swipe.js";
 
@@ -17,38 +17,44 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db  = getFirestore(app);
 
+// ─── Lettura modalità (nuovo / modifica) ───────────────────────────
+const params  = new URLSearchParams(location.search);
+const editId  = params.get("edit");   // se presente, siamo in MODIFICA
+let apptData  = null;                 // dati appuntamento in modifica (se edit)
+
 // ─── Riferimenti DOM ───────────────────────────────────────────────
-const step1 = document.getElementById("step1");
-const step2 = document.getElementById("step2");
-const step3 = document.getElementById("step3");
+const pageTitle          = document.getElementById("pageTitle"); // se esiste nell'HTML
+const step1              = document.getElementById("step1");
+const step2              = document.getElementById("step2");
+const step3              = document.getElementById("step3");
 
-const btnToStep2     = document.getElementById("toStep2");
-const btnBackToStep1 = document.getElementById("backToStep1");
-const btnToStep3     = document.getElementById("toStep3");
-const btnBackToStep2 = document.getElementById("backToStep2");
-const btnSalva       = document.getElementById("salvaAppuntamento");
-const btnCancel      = document.getElementById("cancelWizard");
+const btnToStep2         = document.getElementById("toStep2");
+const btnBackToStep1     = document.getElementById("backToStep1");
+const btnToStep3         = document.getElementById("toStep3");
+const btnBackToStep2     = document.getElementById("backToStep2");
+const btnSalva           = document.getElementById("salvaAppuntamento");
+const btnCancel          = document.getElementById("cancelWizard");
 
-const inpData = document.getElementById("dataAppuntamento");
-const inpOra  = document.getElementById("oraAppuntamento");
-const wrapperTratt = document.getElementById("trattamentiWrapper");
+const inpData            = document.getElementById("dataAppuntamento");
+const inpOra             = document.getElementById("oraAppuntamento");
+const wrapperTratt       = document.getElementById("trattamentiWrapper");
 
 // Picker cliente
-const clienteIdHidden     = document.getElementById("clienteId");
-const clienteSelezionato  = document.getElementById("clienteSelezionato");
-const openRubrica         = document.getElementById("openRubrica");
-const rubricaModal        = document.getElementById("rubricaModal");
-const searchCliente       = document.getElementById("searchCliente");
-const clientListPicker    = document.getElementById("clientListPicker");
-const letterNavPicker     = document.getElementById("letterNavPicker");
-const rubricaPanel        = document.querySelector("#rubricaModal .rubrica-container");
-const rubricaGrabber      = document.getElementById("rubricaGrabber");
-const btnRubricaClose     = document.getElementById("rubricaClose");
+const clienteIdHidden    = document.getElementById("clienteId");
+const clienteSelezionato = document.getElementById("clienteSelezionato");
+const openRubrica        = document.getElementById("openRubrica");
+const rubricaModal       = document.getElementById("rubricaModal");
+const searchCliente      = document.getElementById("searchCliente");
+const clientListPicker   = document.getElementById("clientListPicker");
+const letterNavPicker    = document.getElementById("letterNavPicker");
+const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-container");
+const rubricaGrabber     = document.getElementById("rubricaGrabber");
+const btnRubricaClose    = document.getElementById("rubricaClose");
 
 // Campo finto input che apre la rubrica
-const openRubricaField    = document.getElementById("openRubricaField");
-const pickerValue         = document.getElementById("pickerValue");
-const pickerPlaceholder   = document.getElementById("pickerPlaceholder");
+const openRubricaField   = document.getElementById("openRubricaField");
+const pickerValue        = document.getElementById("pickerValue");
+const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
 
 // ─── Funzione tasto ANNULLA ─────────────────────────────────────────
 btnCancel?.addEventListener("click", () => {
@@ -66,6 +72,11 @@ if (btnRubricaClose) {
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────
+function setPageTitle(text) {
+  if (pageTitle) pageTitle.textContent = text;
+  document.title = text;
+}
+
 function showModal(m) { m.style.display = "flex"; }
 function closeModal(m) { m.style.display = "none"; }
 
@@ -73,9 +84,9 @@ function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOra.value);
 }
-[inpData, inpOra].forEach(el => el.addEventListener("input", updateNavState));
+[inpData, inpOra].forEach(el => el?.addEventListener("input", updateNavState));
 
-rubricaModal.addEventListener("click", (e) => {
+rubricaModal?.addEventListener("click", (e) => {
   if (e.target === rubricaModal) closeModal(rubricaModal);
 });
 
@@ -115,7 +126,7 @@ async function apriRubrica() {
   showModal(rubricaModal);
 }
 
-if (openRubrica) openRubrica.addEventListener("click", apriRubrica);
+openRubrica?.addEventListener("click", apriRubrica);
 if (openRubricaField) {
   openRubricaField.addEventListener("click", apriRubrica);
   openRubricaField.addEventListener("keydown", (e) => {
@@ -169,7 +180,7 @@ function renderRubrica(clienti) {
   });
 }
 
-searchCliente.addEventListener("input", () => {
+searchCliente?.addEventListener("input", () => {
   const f = searchCliente.value.toLowerCase();
   letterNavPicker.style.display = f ? "none" : "flex";
   clientListPicker.querySelectorAll("li.item").forEach(li => {
@@ -200,7 +211,12 @@ function trovaIcona(nome) {
   return "icone_uniformate_colore/setting.png";
 }
 
-async function caricaTrattamenti() {
+/**
+ * Carica il listino “trattamenti” e, se passi selectedMap,
+ * spunta e imposta i prezzi di quelli già presenti nell’appuntamento.
+ * selectedMap: Map(nomeTrattamento -> prezzoSalvato)
+ */
+async function caricaTrattamenti(selectedMap = null) {
   wrapperTratt.innerHTML = "";
   try {
     const snap = await getDocs(collection(db, "trattamenti"));
@@ -208,16 +224,29 @@ async function caricaTrattamenti() {
     lista.sort((a,b) => (a.nome || "").localeCompare(b.nome || ""));
     for (const t of lista) {
       const icona = t.icona || trovaIcona(t.nome);
+      const prezzoListino = Number(t.prezzo) || 0;
+
       const row = document.createElement("div");
       row.classList.add("trattamento-row");
+
+      // valore precompilato in MODIFICA (se presente nella mappa)
+      const checked   = selectedMap ? selectedMap.has(t.nome) : false;
+      const prezzoSel = selectedMap && selectedMap.has(t.nome)
+                        ? Number(selectedMap.get(t.nome)) || 0
+                        : prezzoListino;
+
       row.innerHTML = `
         <label>
           <input type="checkbox" class="trattamento-checkbox"
-                 data-nome="${t.nome}" data-prezzo="${t.prezzo}" data-icona="${icona}">
+                 ${checked ? "checked" : ""}
+                 data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
           <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
           ${t.nome}
         </label>
-        <input type="number" class="prezzo-input" placeholder="€${t.prezzo}" value="${t.prezzo}" min="0" step="0.01">
+        <input type="number" class="prezzo-input"
+               placeholder="€${prezzoListino}"
+               value="${prezzoSel}"
+               min="0" step="0.01" ${checked ? "" : ""}>
       `;
       wrapperTratt.appendChild(row);
     }
@@ -228,34 +257,37 @@ async function caricaTrattamenti() {
 }
 
 // ─── Navigazione step ──────────────────────────────────────────────
-btnToStep2.addEventListener("click", () => {
+btnToStep2?.addEventListener("click", () => {
   if (!clienteIdHidden.value) return alert("Seleziona un cliente");
   step1.style.display = "none";
   step2.style.display = "block";
 });
-btnBackToStep1.addEventListener("click", () => {
+btnBackToStep1?.addEventListener("click", () => {
   step2.style.display = "none";
   step1.style.display = "block";
 });
-btnToStep3.addEventListener("click", () => {
+btnToStep3?.addEventListener("click", () => {
   if (!(inpData.value && inpOra.value)) return alert("Inserisci data e ora");
   step2.style.display = "none";
   step3.style.display = "block";
 });
-btnBackToStep2.addEventListener("click", () => {
+btnBackToStep2?.addEventListener("click", () => {
   step3.style.display = "none";
   step2.style.display = "block";
 });
 
 // ─── Salvataggio appuntamento ──────────────────────────────────────
-btnSalva.addEventListener("click", async () => {
+btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const data = inpData.value;
   const ora  = inpOra.value;
+
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(data && ora)) return alert("Inserisci data e ora");
+
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
+
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
@@ -266,19 +298,32 @@ btnSalva.addEventListener("click", async () => {
       icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
     };
   });
+
   const [y, m, d] = data.split("-").map(n => parseInt(n, 10));
   const [hh, mm]  = ora.split(":").map(n => parseInt(n, 10));
   const localDate = new Date(y, m - 1, d, hh, mm, 0, 0);
   const dateTime  = Timestamp.fromDate(localDate);
+
   try {
-    await addDoc(collection(db, "appuntamenti"), {
-      clienteId,
-      data,
-      ora,
-      dateTime,
-      trattamenti
-    });
-    alert("Appuntamento salvato con successo!");
+    if (editId) {
+      await updateDoc(doc(db, "appuntamenti", editId), {
+        clienteId,
+        data,
+        ora,
+        dateTime,
+        trattamenti
+      });
+      alert("Appuntamento aggiornato!");
+    } else {
+      await addDoc(collection(db, "appuntamenti"), {
+        clienteId,
+        data,
+        ora,
+        dateTime,
+        trattamenti
+      });
+      alert("Appuntamento salvato con successo!");
+    }
     location.href = "calendario.html";
   } catch (err) {
     console.error("Errore salvataggio:", err);
@@ -287,10 +332,69 @@ btnSalva.addEventListener("click", async () => {
 });
 
 // ─── Avvio ─────────────────────────────────────────────────────────
-caricaTrattamenti();
-updateNavState();
+(async function init() {
+  if (editId) {
+    // MODIFICA
+    setPageTitle("Modifica Appuntamento");
+    try {
+      const apptDoc = await getDoc(doc(db, "appuntamenti", editId));
+      if (!apptDoc.exists()) {
+        alert("Appuntamento non trovato.");
+        setPageTitle("Nuovo Appuntamento");
+        await caricaTrattamenti(); // fallback
+        updateNavState();
+        return;
+      }
+      apptData = apptDoc.data();
 
-if (clienteIdHidden.value && pickerValue && openRubricaField) {
-  openRubricaField.classList.remove("empty");
-  if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-}
+      // Precompila data/ora
+      if (inpData) inpData.value = apptData.data || "";
+      if (inpOra)  inpOra.value  = apptData.ora  || "";
+
+      // Precompila cliente (nome + hidden input)
+      if (apptData.clienteId) {
+        clienteIdHidden.value = apptData.clienteId;
+        try {
+          const cliDoc = await getDoc(doc(db, "clienti", apptData.clienteId));
+          const nomeCli = cliDoc.exists() ? (cliDoc.data().nome || "(senza nome)") : "(senza nome)";
+          if (clienteSelezionato) clienteSelezionato.textContent = nomeCli;
+          if (pickerValue) pickerValue.textContent = nomeCli;
+          if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+          if (openRubricaField) openRubricaField.classList.remove("empty");
+        } catch {
+          // ignora errori nome cliente
+        }
+      }
+
+      // Precompila trattamenti: costruisci mappa (nome → prezzo)
+      const selectedMap = new Map((Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
+                                  .map(t => [t.nome, Number(t.prezzo) || 0]));
+      await caricaTrattamenti(selectedMap);
+
+    } catch (e) {
+      console.error("Errore caricamento appuntamento:", e);
+      alert("Errore nel caricamento dell'appuntamento. Procedo come 'Nuovo'.");
+      setPageTitle("Nuovo Appuntamento");
+      await caricaTrattamenti();
+    }
+  } else {
+    // NUOVO
+    setPageTitle("Nuovo Appuntamento");
+    await caricaTrattamenti();
+  }
+
+  updateNavState();
+
+  // Se arrivi da giorno.html?data=YYYY-MM-DD e vuoi preimpostare la data: opzionale
+  const fromDate = new URLSearchParams(location.search).get("data");
+  if (!editId && fromDate && inpData && !inpData.value) {
+    inpData.value = fromDate;
+    updateNavState();
+  }
+
+  // Mantieni visual stato “picker” se già c’è un cliente
+  if (clienteIdHidden.value && pickerValue && openRubricaField) {
+    openRubricaField.classList.remove("empty");
+    if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+  }
+})();
