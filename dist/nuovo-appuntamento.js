@@ -23,7 +23,7 @@ const editId  = params.get("edit");   // se presente, siamo in MODIFICA
 let apptData  = null;                 // dati appuntamento in modifica (se edit)
 
 // ─── Riferimenti DOM ───────────────────────────────────────────────
-const wizardTitle        = document.getElementById("wizardTitle"); // <-- modificato
+const wizardTitle        = document.getElementById("wizardTitle");
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
 const step3              = document.getElementById("step3");
@@ -51,9 +51,16 @@ const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-contai
 const rubricaGrabber     = document.getElementById("rubricaGrabber");
 const btnRubricaClose    = document.getElementById("rubricaClose");
 
+// Campo finto input che apre la rubrica
 const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
 const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
+
+// ─── (Opzionale) modalità “pagina-modale”: overlay/sheet se presenti in HTML ──
+const pageModal   = document.querySelector(".page-modal");  // overlay
+const sheetEl     = document.getElementById("wizardSheet"); // pannello
+const sheetHeader = document.querySelector(".sheet-header");
+const sheetClose  = document.getElementById("sheetClose");
 
 // ─── Funzione tasto ANNULLA ─────────────────────────────────────────
 btnCancel?.addEventListener("click", () => {
@@ -64,15 +71,13 @@ btnCancel?.addEventListener("click", () => {
   }
 });
 
-if (btnRubricaClose) {
-  btnRubricaClose.addEventListener("click", () => {
-    chiudiRubricaConAnimazioneVert();
-  });
-}
+btnRubricaClose?.addEventListener("click", () => {
+  chiudiRubricaConAnimazioneVert();
+});
 
 // ─── Helpers ───────────────────────────────────────────────────────
 function setPageTitle(text) {
-  if (wizardTitle) wizardTitle.textContent = text; // <-- aggiornato
+  if (wizardTitle) wizardTitle.textContent = text;
   document.title = text;
 }
 
@@ -98,6 +103,7 @@ function chiudiRubricaConAnimazioneVert() {
   }, { once: true });
 }
 
+// Swipe verticale (rubrica)
 const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
 if (rubricaHeader) {
   abilitaSwipeVerticale(
@@ -109,6 +115,18 @@ if (rubricaHeader) {
   );
 }
 
+// ─── (Opzionale) Chiusura “pagina-modale” nuova/modifica appuntamento ───────
+function chiudiSheet() {
+  const doClose = () => document.getElementById("cancelWizard")?.click();
+  if (!sheetEl) return doClose();
+  sheetEl.classList.add("swipe-out-down");
+  sheetEl.addEventListener("transitionend", doClose, { once: true });
+}
+sheetClose?.addEventListener("click", chiudiSheet);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
+pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
+if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
+
 // ─── Rubrica ───────────────────────────────────────────────────────
 let clientiCache = null;
 
@@ -119,8 +137,8 @@ async function apriRubrica() {
     clientiCache.sort((a,b) => (a.nome || "").localeCompare(b.nome || ""));
   }
   renderRubrica(clientiCache);
-  searchCliente.value = "";
-  letterNavPicker.style.display = "flex";
+  if (searchCliente) searchCliente.value = "";
+  if (letterNavPicker) letterNavPicker.style.display = "flex";
   showModal(rubricaModal);
 }
 
@@ -158,7 +176,6 @@ function renderRubrica(clienti) {
         if (pickerValue) pickerValue.textContent = c.nome || "(senza nome)";
         if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
         if (openRubricaField) openRubricaField.classList.remove("empty");
-
         closeModal(rubricaModal);
         updateNavState();
       };
@@ -180,7 +197,7 @@ function renderRubrica(clienti) {
 
 searchCliente?.addEventListener("input", () => {
   const f = searchCliente.value.toLowerCase();
-  letterNavPicker.style.display = f ? "none" : "flex";
+  if (letterNavPicker) letterNavPicker.style.display = f ? "none" : "flex";
   clientListPicker.querySelectorAll("li.item").forEach(li => {
     li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
   });
@@ -209,6 +226,11 @@ function trovaIcona(nome) {
   return "icone_uniformate_colore/setting.png";
 }
 
+/**
+ * Carica il listino “trattamenti” e, se passi selectedMap,
+ * spunta e imposta i prezzi di quelli già presenti nell’appuntamento.
+ * selectedMap: Map(nomeTrattamento -> prezzoSalvato)
+ */
 async function caricaTrattamenti(selectedMap = null) {
   wrapperTratt.innerHTML = "";
   try {
@@ -222,6 +244,7 @@ async function caricaTrattamenti(selectedMap = null) {
       const row = document.createElement("div");
       row.classList.add("trattamento-row");
 
+      // valore precompilato in MODIFICA (se presente nella mappa)
       const checked   = selectedMap ? selectedMap.has(t.nome) : false;
       const prezzoSel = selectedMap && selectedMap.has(t.nome)
                         ? Number(selectedMap.get(t.nome)) || 0
@@ -338,9 +361,11 @@ btnSalva?.addEventListener("click", async () => {
       }
       apptData = apptDoc.data();
 
+      // Precompila data/ora
       if (inpData) inpData.value = apptData.data || "";
       if (inpOra)  inpOra.value  = apptData.ora  || "";
 
+      // Precompila cliente
       if (apptData.clienteId) {
         clienteIdHidden.value = apptData.clienteId;
         try {
@@ -353,8 +378,11 @@ btnSalva?.addEventListener("click", async () => {
         } catch {}
       }
 
-      const selectedMap = new Map((Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
-                                  .map(t => [t.nome, Number(t.prezzo) || 0]));
+      // Precompila trattamenti
+      const selectedMap = new Map(
+        (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
+          .map(t => [t.nome, Number(t.prezzo) || 0])
+      );
       await caricaTrattamenti(selectedMap);
 
     } catch (e) {
@@ -370,12 +398,14 @@ btnSalva?.addEventListener("click", async () => {
 
   updateNavState();
 
+  // Se arrivi con ?data=YYYY-MM-DD preimposta la data (solo in "Nuovo")
   const fromDate = new URLSearchParams(location.search).get("data");
   if (!editId && fromDate && inpData && !inpData.value) {
     inpData.value = fromDate;
     updateNavState();
   }
 
+  // Mantieni stato picker se già valorizzato
   if (clienteIdHidden.value && pickerValue && openRubricaField) {
     openRubricaField.classList.remove("empty");
     if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
