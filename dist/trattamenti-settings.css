@@ -53,14 +53,36 @@ body {
   margin-bottom: 30px;
 }
 
+/* Input stile coerente con nuovo-appuntamento */
 .settings-form input[type="text"],
 .settings-form input[type="number"] {
-  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin-top: 12px;
+  margin-bottom: 12px;
   border: 1px solid #e6d9d0;
-  border-radius: 6px;
-  font-size: 16px;
+  border-radius: 12px;
+  background: #fff;
   color: #a07863;
-  background-color: #fff;
+  font-size: 16px; /* evita zoom iOS */
+  caret-color: #a07863;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+/* Focus */
+.settings-form input[type="text"]:focus,
+.settings-form input[type="number"]:focus {
+  outline: none;
+  border-color: #d2b8a3;
+  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
+}
+
+/* Selezione testo */
+.settings-form input[type="text"]::selection,
+.settings-form input[type="number"]::selection {
+  background: rgba(210,184,163,0.3);
+  color: #a07863;
 }
 
 .settings-form input[type="number"]::-webkit-inner-spin-button {
