@@ -1,6 +1,7 @@
 /* ───────────────────────────────────────────────
    Base
 ─────────────────────────────────────────────── */
+html { -webkit-text-size-adjust: 100%; }          /* Evita zoom iOS */
 body {
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
@@ -8,43 +9,38 @@ body {
   margin: 0;
   padding: 0;
   background: #fff;
+  color: #a07863;
 }
 
-/* Evita zoom su iOS quando si entra negli input */
-html { -webkit-text-size-adjust: 100%; }
-input, select, textarea { font-size: 16px; }
-
-/* Contenitore wizard */
 .wizard-container {
   max-width: 600px;
   margin: 80px auto;
   padding: 20px;
 }
 
-/* Card step */
-.step {
-  background: #f9f9f9;
-  padding: 18px;
-  border-radius: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-
-/* Titolo pagina */
+/* Titolo fisso tra gli step, con più aria sopra */
 .wizard-title {
   font-size: 22px;
   font-weight: bold;
   color: #a07863;
-  margin: 18px 0 10px;
-  line-height: 1.2;
+  margin: 28px 0 16px;       /* ↑ più spazio sopra */
+}
+
+/* Card step */
+.step {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 /* ───────────────────────────────────────────────
    Navigazione step / Pulsanti
 ─────────────────────────────────────────────── */
 .wizard-nav {
-  margin-top: 18px;
+  margin-top: 20px;
   display: flex;
-  gap: 14px;
+  gap: 12px;
   justify-content: space-between;
 }
 
@@ -55,14 +51,14 @@ input, select, textarea { font-size: 16px; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 52px;
+  height: 48px;
   padding: 0 18px;
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #d2b8a3;
   color: #fff;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
   text-decoration: none;
@@ -83,11 +79,15 @@ input, select, textarea { font-size: 16px; }
 }
 
 /* ───────────────────────────────────────────────
-   Campi input date/ora (colori invariati)
+   Campi input / date / ora
+   (colori uniformati – NON cambiare palette)
 ─────────────────────────────────────────────── */
 select,
 input[type="date"],
-input[type="time"] {
+input[type="time"],
+input[type="text"],
+input[type="number"],
+textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
@@ -97,95 +97,59 @@ input[type="time"] {
   border-radius: 12px;
   background: #fff;
   color: #a07863;
-  font-size: 16px;
+  font-size: 16px;            /* >=16px: evita zoom iOS */
+  outline: none;
+}
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input::placeholder,
+textarea::placeholder { color: #a07863; opacity: .6; }
+input:focus,
+select:focus,
+textarea:focus { box-shadow: 0 0 0 4px rgba(210,184,163,.25); }
+
+/* Input prezzo (leggermente più grande ma stessa palette) */
+.prezzo-input {
+  width: 90px;
+  padding: 8px;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  color: #a07863;
+  box-sizing: border-box;
+  font-size: 18px;            /* 16–18 ok su iOS */
 }
 
 /* ───────────────────────────────────────────────
    Trattamenti
-   (mantenuti i colori input; migliora layout e checkbox)
 ─────────────────────────────────────────────── */
+/* Rimuoviamo lo scroll interno: scorre la pagina */
 #trattamentiWrapper {
-  max-height: 350px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
   border: 1px solid #e6d9d0;
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 12px;
   background: #fff;
 }
 
-/* Riga trattamento a griglia */
 .trattamento-row {
-  display: grid;
-  grid-template-columns: 36px 28px 1fr 96px; /* checkbox, icona, nome, prezzo */
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid #f0e8e2;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
-  background: #fff;
-}
-.trattamento-row:hover { box-shadow: 0 1px 0 rgba(0,0,0,.02); }
-
-/* Stato “selezionato” della riga (input colori invariati) */
-.trattamento-row.is-checked {
-  background: #fbf6f2;         /* leggero sabbia */
-  border-color: #e8d8cf;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
 }
 
-/* Etichetta come contenitore “virtuale” della griglia */
 .trattamento-row label {
-  grid-column: 1 / 4;          /* checkbox + icona + nome */
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1;
   color: #a07863;
 }
 
 .trattamento-row .icona-trattamento {
   width: 24px;
   height: 24px;
-}
-
-/* Input prezzo: stessi colori, piccoli fine-tuning */
-.prezzo-input {
-  grid-column: 4;
-  width: 100%;
-  height: 44px;
-  padding: 8px;
-  border: 1px solid #e6d9d0;
-  border-radius: 12px;
-  color: #a07863;
-  box-sizing: border-box;
-  text-align: center;
-  font-size: 18px; /* evita zoom iOS */
-}
-
-/* Checkbox custom coerente con la palette */
-.trattamento-checkbox {
-  grid-column: 1;
-  appearance: none;
-  -webkit-appearance: none;
-  width: 22px; height: 22px;
-  border: 2px solid #d2b8a3;
-  border-radius: 8px;
-  display: inline-grid;
-  place-content: center;
-  cursor: pointer;
-  background: #fff;
-  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
-}
-.trattamento-checkbox:focus { outline: none; box-shadow: 0 0 0 3px rgba(210,184,163,.25); }
-.trattamento-checkbox:checked {
-  background: #d2b8a3;
-  border-color: #d2b8a3;
-}
-.trattamento-checkbox:checked::after {
-  content: "";
-  width: 10px; height: 6px;
-  border: 2px solid #fff;
-  border-top: 0; border-left: 0;
-  transform: rotate(45deg);
-  margin-top: -1px;
 }
 
 /* ───────────────────────────────────────────────
@@ -196,10 +160,12 @@ input[type="time"] {
   align-items:center;
   justify-content:space-between;
   gap:12px;
+
   width:100%;
   max-width:100%;
   box-sizing:border-box;
   padding:12px 16px;
+
   border:1px solid #e6d9d0;
   border-radius:14px;
   background:#fff;
@@ -216,7 +182,7 @@ input[type="time"] {
 .picker-input.empty #pickerPlaceholder{ opacity:.6; }
 
 /* ───────────────────────────────────────────────
-   Modale Rubrica (solo in questa pagina)
+   Modale Rubrica (riuso base – qui solo helper)
 ─────────────────────────────────────────────── */
 #rubricaModal .rubrica-container {
   position: relative;
@@ -225,9 +191,8 @@ input[type="time"] {
   transform: translateY(0);
   transition: transform 200ms ease;
 }
-#rubricaModal .rubrica-container.swipe-out-down {
-  transform: translateY(100%);
-}
+#rubricaModal .rubrica-container.swipe-out-down { transform: translateY(100%); }
+
 #rubricaModal .rubrica-header {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -242,27 +207,30 @@ input[type="time"] {
   -webkit-user-select: none;
   user-select: none;
 }
+
 #rubricaModal .rubrica-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
-  margin: 0;
-  cursor: grab;
 }
+
 #rubricaModal .rubrica-close {
   position: absolute;
   top: 6px; right: 8px;
   width: 32px; height: 32px;
   border: 0; background: transparent;
   font-size: 22px; line-height: 32px;
-  color: #a07863; opacity: .85; cursor: pointer; z-index: 4;
+  color: #a07863;
+  opacity: .85;
+  cursor: pointer;
+  z-index: 4;
 }
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
 
 /* ───────────────────────────────────────────────
-   Stile pagina-modale (se usi la modalità “sheet”)
+   Stile “pagina come modale” (se usi il sheet)
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -273,31 +241,47 @@ input[type="time"] {
   align-items: flex-end;
   z-index: 1000;
 }
+
 #wizardSheet {
   background: #fff;
   width: 100%;
   max-width: 600px;
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
   transform: translateY(0);
   transition: transform 0.25s ease;
+
+  /* Lasciamo scorrere il contenuto all’interno del “foglio” */
+  max-height: 94vh;
+  overflow-y: auto;
 }
 #wizardSheet.swipe-out-down { transform: translateY(100%); }
 
 /* Header del “foglio” */
 .sheet-header {
   position: relative;
-  padding: 10px 0 6px;
+  padding: 8px 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .sheet-grabber {
-  width: 48px; height: 5px;
-  border-radius: 3px; background: #e6d9d0;
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
 }
 #sheetClose {
-  position: absolute; right: 12px; top: 4px;
+  position: absolute;
+  right: 12px; top: 4px;
   background: transparent; border: none;
   font-size: 20px; color: #a07863; cursor: pointer;
+}
+
+/* ───────────────────────────────────────────────
+   Responsive
+─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .settings-form input,
+  .bottoni-form button { font-size: 14px; }
 }
