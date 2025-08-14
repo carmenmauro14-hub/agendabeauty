@@ -1,177 +1,333 @@
-/* ─── Base ──────────────────────────────────────── */
+/* ───────────────────────────────────────────────
+   Base + reset mobile
+─────────────────────────────────────────────── */
+html { -webkit-text-size-adjust: 100%; }
+
 body {
-  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
                "Helvetica Neue", sans-serif;
+  margin: 0;
+  padding: 0;
   background: #fff;
   color: #a07863;
 }
 
-.page-modal {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
-  background: rgba(0,0,0,0.5);
-  padding: 20px 0;
-}
-
+/* Contenitore step
+   - su pagina normale: top 56
+   - dentro il foglio modale: top 16 */
 .wizard-container {
-  background: #fff;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 480px;
+  max-width: 600px;
+  margin: 56px auto 80px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  display: flex;
-  flex-direction: column;
-  margin-top: 24px; /* meno spazio sopra */
+}
+.page-modal .wizard-container { margin: 16px auto 24px; }
+
+/* Card step */
+.step {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
+/* Titolo pagina */
 .wizard-title {
-  font-size: 26px;
+  margin: 0 0 12px 0;              /* meno spazio sotto il titolo */
+  font-size: 28px;
+  line-height: 1.15;
   font-weight: 900;
+  color: #a07863;
+}
+
+/* Titoli step */
+.step > h2 {
   margin: 0 0 16px 0;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 800;
   color: #a07863;
 }
 
-/* ─── Step ──────────────────────────────────────── */
-.step-title {
-  font-size: 20px;
+/* ───────────────────────────────────────────────
+   Navigazione step / Pulsanti
+─────────────────────────────────────────────── */
+.wizard-nav {
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 14px;
+  background: #d2b8a3;
+  color: #fff;
+  font-size: 16px;
   font-weight: 700;
-  margin-bottom: 16px;
-  color: #a07863;
+  cursor: pointer;
+  transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
+  text-decoration: none;
+  user-select: none;
+}
+.btn:hover   { opacity: .95; }
+.btn:active  { transform: scale(.98); }
+.btn:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(10%);
 }
 
-/* ─── Input ──────────────────────────────────────── */
-input[type="text"],
+/* ───────────────────────────────────────────────
+   Campi input
+─────────────────────────────────────────────── */
+select,
 input[type="date"],
 input[type="time"],
+input[type="text"],
 input[type="number"] {
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #e6d9d0;
-  border-radius: 12px;
-  color: #a07863;
   width: 100%;
   box-sizing: border-box;
-}
-
-input::placeholder {
+  padding: 12px 14px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #e6d9d0;
+  border-radius: 12px;
+  background: #fff;
   color: #a07863;
-  opacity: 0.6;
+  font-size: 16px;                 /* >=16px per evitare zoom iOS */
 }
 
-/* ─── Lista trattamenti ─────────────────────────── */
+input:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(210,184,163,.30); /* alone beige */
+}
+
+/* ───────────────────────────────────────────────
+   Picker cliente “finto input”
+─────────────────────────────────────────────── */
+.picker-input{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:12px 16px;
+  border:1px solid #e6d9d0;
+  border-radius:14px;
+  background:#fff;
+  color:#a07863;
+  cursor:text;
+  user-select:none;
+}
+.picker-input:focus{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+}
+.picker-input .value{ font-weight:600; color:#a07863; }
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
+
+/* ───────────────────────────────────────────────
+   Trattamenti
+   (no scroll interno; righe ben allineate)
+─────────────────────────────────────────────── */
 #trattamentiWrapper {
+  /* nessun max-height => niente scroll interno */
+  max-height: none;
+  overflow: visible;
   border: 1px solid #e6d9d0;
   border-radius: 14px;
-  padding: 12px;
+  padding: 16px;
   background: #fff;
 }
 
+/* Riga trattamento: label a sinistra (checkbox, icona, nome)
+   prezzo a destra con larghezza fissa */
 .trattamento-row {
-  display: grid;
-  grid-template-columns: 28px 28px 1fr 120px;
+  display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 8px;
-  margin-bottom: 8px;
-  border-radius: 10px;
+  border-radius: 12px;
 }
+.trattamento-row + .trattamento-row { margin-top: 8px; }
 
+/* Colonna sinistra (checkbox + icona + nome) */
 .trattamento-row label {
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;                  /* si allarga */
+  min-width: 0;                    /* abilita ellissi se serve */
   color: #a07863;
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 700;
 }
 
+/* Icona piccola */
 .trattamento-row .icona-trattamento {
   width: 24px;
   height: 24px;
-  opacity: .9;
+  opacity: .95;
 }
 
-/* Prezzo uniforme */
+/* Prezzo: stessa misura per tutte, non si restringe */
 .prezzo-input {
-  grid-column: 4;
-  width: 100%;
-  height: 44px;
-  box-sizing: border-box;
-  padding: 8px 12px;
+  flex: 0 0 112px;                 /* larghezza costante */
+  width: 112px;
+  padding: 10px 12px;
   border: 1px solid #e6d9d0;
   border-radius: 12px;
-  background: #fff;
   color: #a07863;
-  font-size: 18px;
-  text-align: center;
+  font-size: 18px;                 /* niente zoom iOS */
+  text-align: right;
+  background: #fff;
+}
+.prezzo-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(210,184,163,.30);
 }
 
-/* ─── Checkbox personalizzato ───────────────────── */
-.trattamento-checkbox {
-  appearance: none;
+/* Checkbox personalizzato, coerente con la palette */
+.trattamento-checkbox{
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
+  appearance: none;
+  width: 28px;
+  height: 28px;
   border: 2px solid #d2b8a3;
   border-radius: 8px;
   background: #fff;
-  display: inline-grid;
-  place-content: center;
+  display: inline-block;
+  position: relative;
   cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  flex: 0 0 28px;
 }
-
-.trattamento-checkbox:focus {
+.trattamento-checkbox:focus{
   outline: none;
   box-shadow: 0 0 0 3px rgba(210,184,163,.25);
 }
-
-.trattamento-checkbox:checked {
+.trattamento-checkbox:checked{
   background: #d2b8a3;
   border-color: #d2b8a3;
 }
-
-.trattamento-checkbox:checked::after {
+.trattamento-checkbox:checked::after{
   content: "";
-  width: 10px;
-  height: 6px;
-  border: 2px solid #fff;
-  border-top: 0;
-  border-left: 0;
-  transform: rotate(45deg);
-  margin-top: -2px;
+  position: absolute;
+  inset: 0;
+  background:
+    url("data:image/svg+xml;utf8,\
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+      <path fill='white' d='M9.2 16.6 4.8 12.2l1.6-1.6 2.8 2.8 8.4-8.4 1.6 1.6z'/>\
+    </svg>") center/20px 20px no-repeat;
 }
 
-/* ─── Pulsanti ──────────────────────────────────── */
-.actions {
+/* Stato evidenziato della riga quando la checkbox è on */
+.trattamento-row:has(.trattamento-checkbox:checked){
+  background: #f9f1ec;
+}
+
+/* ───────────────────────────────────────────────
+   Modale rubrica (riuso in questa pagina)
+─────────────────────────────────────────────── */
+
+/* pannello della modale: spazio per topbar (grabber + X) */
+#rubricaModal .rubrica-container {
+  position: relative;
+  padding-top: 56px;
+  will-change: transform;
+  transform: translateY(0);
+  transition: transform 200ms ease;
+}
+#rubricaModal .rubrica-container.swipe-out-down { transform: translateY(100%); }
+
+/* header con grabber centrato */
+#rubricaModal .rubrica-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 44px;
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 20px;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  background: transparent;
+  padding: 0;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#rubricaModal .rubrica-grabber {
+  width: 48px; height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
 }
 
-button {
-  border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background: #d2b8a3;
-  color: #fff;
-}
-
-.btn-secondary {
-  background: #f4e5dc;
+/* X */
+#rubricaModal .rubrica-close {
+  position: absolute;
+  top: 6px; right: 8px;
+  width: 32px; height: 32px;
+  border: 0;
+  background: transparent;
+  font-size: 22px; line-height: 32px;
   color: #a07863;
+  opacity: .85;
+  cursor: pointer; z-index: 4;
 }
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
 
-.btn-danger {
-  background: #e07a5f;
-  color: #fff;
+/* ───────────────────────────────────────────────
+   “Pagina-modale” (foglio dall’alto) — opzionale
+─────────────────────────────────────────────── */
+.page-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+}
+#wizardSheet {
+  background: #fff;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  transform: translateY(0);
+  transition: transform 0.25s ease;
+}
+#wizardSheet.swipe-out-down { transform: translateY(100%); }
+
+/* header del foglio (grabber + chiudi) */
+.sheet-header {
+  position: relative;
+  padding: 8px 0 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.sheet-grabber {
+  width: 48px; height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+}
+#sheetClose {
+  position: absolute;
+  right: 12px; top: 2px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: #a07863;
+  cursor: pointer;
 }
