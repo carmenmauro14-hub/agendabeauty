@@ -220,5 +220,14 @@ input[type="time"] {
   cursor: pointer;
   z-index: 4;
 }
+
+.wizard-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #a07863;
+  margin: 0 0 16px 0;
+}
+
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
