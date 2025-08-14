@@ -5,63 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Nuovo Appuntamento</title>
 
-  <!-- Navbar/stile app -->
+  <!-- Navbar/stile app (rimane sotto l'overlay) -->
   <link rel="stylesheet" href="navbar.css" />
-  <!-- Riuso stile rubrica per la modale (lista + lettere + input) -->
   <link rel="stylesheet" href="rubrica.css" />
-  <!-- Stili della pagina a step -->
   <link rel="stylesheet" href="nuovo-appuntamento.css" />
 </head>
 <body>
   <div id="navbar-placeholder"></div>
 
-  <main class="wizard-container">
-    <!-- Titolo pagina che JS aggiornerà -->
-    <h1 id="wizardTitle" class="wizard-title" aria-live="polite"></h1>
+  <!-- OVERLAY tipo modale che contiene il wizard -->
+  <div class="page-modal" aria-modal="true" role="dialog" aria-labelledby="wizardTitle">
+    <div class="sheet" id="wizardSheet">
+      <!-- X in alto a destra -->
+      <button class="sheet-close" id="sheetClose" aria-label="Chiudi">✕</button>
 
-    <!-- STEP 1 -->
-    <div class="step" id="step1">
-      <h2>1. Seleziona cliente</h2>
-      <input type="hidden" id="clienteId" />
-
-      <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
-           aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
-        <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
-        <span id="pickerValue" class="value" aria-live="polite"></span>
+      <!-- area drag/grabber (coerente con la rubrica) -->
+      <div class="sheet-header">
+        <div class="sheet-grabber" aria-hidden="true"></div>
       </div>
 
-      <div id="clienteSelezionato" style="display:none;"></div>
-      <button id="openRubrica" class="btn" style="display:none;">Apri rubrica</button>
+      <!-- CONTENUTO WIZARD -->
+      <main class="wizard-container">
+        <!-- Titolo pagina che JS aggiornerà -->
+        <h1 id="wizardTitle" class="wizard-title" aria-live="polite"></h1>
 
-      <div class="wizard-nav">
-        <button id="cancelWizard" type="button" class="btn">Annulla</button>
-        <button id="toStep2" class="btn" disabled>Avanti</button>
-      </div>
+        <!-- STEP 1 -->
+        <div class="step" id="step1">
+          <h2>1. Seleziona cliente</h2>
+          <input type="hidden" id="clienteId" />
+
+          <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
+              aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
+            <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
+            <span id="pickerValue" class="value" aria-live="polite"></span>
+          </div>
+
+          <div id="clienteSelezionato" style="display:none;"></div>
+          <button id="openRubrica" class="btn" style="display:none;">Apri rubrica</button>
+
+          <div class="wizard-nav">
+            <button id="cancelWizard" type="button" class="btn">Annulla</button>
+            <button id="toStep2" class="btn" disabled>Avanti</button>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step" id="step2" style="display:none;">
+          <h2>2. Seleziona data e ora</h2>
+          <input type="date" id="dataAppuntamento" />
+          <input type="time" id="oraAppuntamento" />
+          <div class="wizard-nav">
+            <button id="backToStep1" class="btn" type="button">Indietro</button>
+            <button id="toStep3" class="btn" disabled>Avanti</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" id="step3" style="display:none;">
+          <h2>3. Scegli trattamenti</h2>
+          <div id="trattamentiWrapper"></div>
+          <div class="wizard-nav">
+            <button id="backToStep2" class="btn" type="button">Indietro</button>
+            <button id="salvaAppuntamento" class="btn">Salva Appuntamento</button>
+          </div>
+        </div>
+      </main>
     </div>
+  </div>
 
-    <!-- STEP 2 -->
-    <div class="step" id="step2" style="display:none;">
-      <h2>2. Seleziona data e ora</h2>
-      <input type="date" id="dataAppuntamento" />
-      <input type="time" id="oraAppuntamento" />
-      <div class="wizard-nav">
-        <button id="backToStep1" class="btn" type="button">Indietro</button>
-        <button id="toStep3" class="btn" disabled>Avanti</button>
-      </div>
-    </div>
-
-    <!-- STEP 3 -->
-    <div class="step" id="step3" style="display:none;">
-      <h2>3. Scegli trattamenti</h2>
-      <div id="trattamentiWrapper"></div>
-      <div class="wizard-nav">
-        <button id="backToStep2" class="btn" type="button">Indietro</button>
-        <button id="salvaAppuntamento" class="btn">Salva Appuntamento</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Modale rubrica -->
+  <!-- Modale rubrica (come prima) -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
     <div class="rubrica-container"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
