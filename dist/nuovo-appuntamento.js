@@ -23,7 +23,7 @@ const editId  = params.get("edit");   // se presente, siamo in MODIFICA
 let apptData  = null;                 // dati appuntamento in modifica (se edit)
 
 // ─── Riferimenti DOM ───────────────────────────────────────────────
-const pageTitle          = document.getElementById("pageTitle"); // se esiste nell'HTML
+const wizardTitle        = document.getElementById("wizardTitle"); // <-- modificato
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
 const step3              = document.getElementById("step3");
@@ -51,7 +51,6 @@ const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-contai
 const rubricaGrabber     = document.getElementById("rubricaGrabber");
 const btnRubricaClose    = document.getElementById("rubricaClose");
 
-// Campo finto input che apre la rubrica
 const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
 const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
@@ -73,7 +72,7 @@ if (btnRubricaClose) {
 
 // ─── Helpers ───────────────────────────────────────────────────────
 function setPageTitle(text) {
-  if (pageTitle) pageTitle.textContent = text;
+  if (wizardTitle) wizardTitle.textContent = text; // <-- aggiornato
   document.title = text;
 }
 
@@ -99,7 +98,6 @@ function chiudiRubricaConAnimazioneVert() {
   }, { once: true });
 }
 
-// swipe su tutta la header (area più grande, soglia più sensibile)
 const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
 if (rubricaHeader) {
   abilitaSwipeVerticale(
@@ -211,11 +209,6 @@ function trovaIcona(nome) {
   return "icone_uniformate_colore/setting.png";
 }
 
-/**
- * Carica il listino “trattamenti” e, se passi selectedMap,
- * spunta e imposta i prezzi di quelli già presenti nell’appuntamento.
- * selectedMap: Map(nomeTrattamento -> prezzoSalvato)
- */
 async function caricaTrattamenti(selectedMap = null) {
   wrapperTratt.innerHTML = "";
   try {
@@ -229,7 +222,6 @@ async function caricaTrattamenti(selectedMap = null) {
       const row = document.createElement("div");
       row.classList.add("trattamento-row");
 
-      // valore precompilato in MODIFICA (se presente nella mappa)
       const checked   = selectedMap ? selectedMap.has(t.nome) : false;
       const prezzoSel = selectedMap && selectedMap.has(t.nome)
                         ? Number(selectedMap.get(t.nome)) || 0
@@ -246,7 +238,7 @@ async function caricaTrattamenti(selectedMap = null) {
         <input type="number" class="prezzo-input"
                placeholder="€${prezzoListino}"
                value="${prezzoSel}"
-               min="0" step="0.01" ${checked ? "" : ""}>
+               min="0" step="0.01">
       `;
       wrapperTratt.appendChild(row);
     }
@@ -334,24 +326,21 @@ btnSalva?.addEventListener("click", async () => {
 // ─── Avvio ─────────────────────────────────────────────────────────
 (async function init() {
   if (editId) {
-    // MODIFICA
     setPageTitle("Modifica Appuntamento");
     try {
       const apptDoc = await getDoc(doc(db, "appuntamenti", editId));
       if (!apptDoc.exists()) {
         alert("Appuntamento non trovato.");
         setPageTitle("Nuovo Appuntamento");
-        await caricaTrattamenti(); // fallback
+        await caricaTrattamenti();
         updateNavState();
         return;
       }
       apptData = apptDoc.data();
 
-      // Precompila data/ora
       if (inpData) inpData.value = apptData.data || "";
       if (inpOra)  inpOra.value  = apptData.ora  || "";
 
-      // Precompila cliente (nome + hidden input)
       if (apptData.clienteId) {
         clienteIdHidden.value = apptData.clienteId;
         try {
@@ -361,12 +350,9 @@ btnSalva?.addEventListener("click", async () => {
           if (pickerValue) pickerValue.textContent = nomeCli;
           if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
           if (openRubricaField) openRubricaField.classList.remove("empty");
-        } catch {
-          // ignora errori nome cliente
-        }
+        } catch {}
       }
 
-      // Precompila trattamenti: costruisci mappa (nome → prezzo)
       const selectedMap = new Map((Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
                                   .map(t => [t.nome, Number(t.prezzo) || 0]));
       await caricaTrattamenti(selectedMap);
@@ -378,21 +364,18 @@ btnSalva?.addEventListener("click", async () => {
       await caricaTrattamenti();
     }
   } else {
-    // NUOVO
     setPageTitle("Nuovo Appuntamento");
     await caricaTrattamenti();
   }
 
   updateNavState();
 
-  // Se arrivi da giorno.html?data=YYYY-MM-DD e vuoi preimpostare la data: opzionale
   const fromDate = new URLSearchParams(location.search).get("data");
   if (!editId && fromDate && inpData && !inpData.value) {
     inpData.value = fromDate;
     updateNavState();
   }
 
-  // Mantieni visual stato “picker” se già c’è un cliente
   if (clienteIdHidden.value && pickerValue && openRubricaField) {
     openRubricaField.classList.remove("empty");
     if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
