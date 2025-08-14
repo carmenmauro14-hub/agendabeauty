@@ -281,6 +281,14 @@ input[type="time"] {
   color: #a07863;
   cursor: pointer;
 }
+/* Evita lo zoom automatico di Safari iOS */
+html { -webkit-text-size-adjust: 100%; }
+
+/* Tutti i campi modulo >=16px */
+input, select, textarea { font-size: 16px; }
+
+/* In particolare i prezzi (prima senza font-size) */
+.prezzo-input { font-size: 18px; }  /* 16–18 va bene */
 
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
