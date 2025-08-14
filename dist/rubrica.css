@@ -35,8 +35,15 @@ body {
   font-size: 16px;
   border: 1px solid #e6d9d0;
   border-radius: 20px;
-  background: #fafafa;
+  background: #fff;
   color: #a07863;
+  transition: all 0.2s ease;
+}
+
+.top-bar input:focus {
+  border-color: #d2b8a3;
+  box-shadow: 0 0 0 4px rgba(210, 184, 163, .25);
+  outline: none;
 }
 
 .top-bar button {
@@ -163,6 +170,14 @@ form input {
   border: 1px solid #e6d9d0;
   border-radius: 12px;
   color: #a07863;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+form input:focus {
+  border-color: #d2b8a3;
+  box-shadow: 0 0 0 4px rgba(210, 184, 163, .25);
+  outline: none;
 }
 
 .actions {
@@ -209,7 +224,6 @@ button i {
   display: none;
 }
 
-/* Stessi reset della lista */
 #clientList,
 #clientListPicker {
   list-style: none;
@@ -217,7 +231,6 @@ button i {
   margin: 0;
 }
 
-/* Intestazioni lettera identiche */
 #clientList li.section,
 #clientListPicker li.section {
   padding: 8px 12px;
@@ -228,7 +241,6 @@ button i {
   color: #b08b65;
 }
 
-/* Voci cliente identiche */
 #clientList li.item,
 #clientListPicker li.item {
   padding: 10px 80px 10px 16px;
@@ -254,9 +266,9 @@ button i {
   background-color: #e6d9d0;
 }
 
-/* Placeholder coerente con la palette */
+/* Placeholder coerente */
 .top-bar input::placeholder,
 form input::placeholder {
   color: #a07863;
-  opacity: 0.6; /* come nello step 1 */
+  opacity: 0.6;
 }
