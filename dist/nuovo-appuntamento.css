@@ -1,287 +1,177 @@
-/* ───────────────────────────────────────────────
-   Base
-─────────────────────────────────────────────── */
-html { -webkit-text-size-adjust: 100%; }          /* Evita zoom iOS */
+/* ─── Base ──────────────────────────────────────── */
 body {
+  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
                "Helvetica Neue", sans-serif;
-  margin: 0;
-  padding: 0;
   background: #fff;
   color: #a07863;
+}
+
+.page-modal {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: rgba(0,0,0,0.5);
+  padding: 20px 0;
 }
 
 .wizard-container {
-  max-width: 600px;
-  margin: 80px auto;
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
   padding: 20px;
-}
-
-/* Titolo fisso tra gli step, con più aria sopra */
-.wizard-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #a07863;
-  margin: 28px 0 16px;       /* ↑ più spazio sopra */
-}
-
-/* Card step */
-.step {
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-/* ───────────────────────────────────────────────
-   Navigazione step / Pulsanti
-─────────────────────────────────────────────── */
-.wizard-nav {
-  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  flex-direction: column;
+  margin-top: 24px; /* meno spazio sopra */
 }
 
-.btn,
-.btn-primary,
-.btn-secondary {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 14px;
-  background: #d2b8a3;
-  color: #fff;
-  font-size: 16px;
+.wizard-title {
+  font-size: 26px;
+  font-weight: 900;
+  margin: 0 0 16px 0;
+  color: #a07863;
+}
+
+/* ─── Step ──────────────────────────────────────── */
+.step-title {
+  font-size: 20px;
   font-weight: 700;
-  cursor: pointer;
-  transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
-  text-decoration: none;
-  user-select: none;
-}
-.btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover { opacity: .95; }
-.btn:active,
-.btn-primary:active,
-.btn-secondary:active { transform: scale(.98); }
-.btn:disabled,
-.btn-primary:disabled,
-.btn-secondary:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-  filter: grayscale(10%);
+  margin-bottom: 16px;
+  color: #a07863;
 }
 
-/* ───────────────────────────────────────────────
-   Campi input / date / ora
-   (colori uniformati – NON cambiare palette)
-─────────────────────────────────────────────── */
-select,
+/* ─── Input ──────────────────────────────────────── */
+input[type="text"],
 input[type="date"],
 input[type="time"],
-input[type="text"],
-input[type="number"],
-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  margin-top: 12px;
-  margin-bottom: 12px;
+input[type="number"] {
+  padding: 12px;
+  font-size: 16px;
   border: 1px solid #e6d9d0;
   border-radius: 12px;
-  background: #fff;
   color: #a07863;
-  font-size: 16px;            /* >=16px: evita zoom iOS */
-  outline: none;
-}
-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-input::placeholder,
-textarea::placeholder { color: #a07863; opacity: .6; }
-input:focus,
-select:focus,
-textarea:focus { box-shadow: 0 0 0 4px rgba(210,184,163,.25); }
-
-/* Input prezzo (leggermente più grande ma stessa palette) */
-.prezzo-input {
-  width: 90px;
-  padding: 8px;
-  border: 1px solid #e6d9d0;
-  border-radius: 10px;
-  color: #a07863;
+  width: 100%;
   box-sizing: border-box;
-  font-size: 18px;            /* 16–18 ok su iOS */
 }
 
-/* ───────────────────────────────────────────────
-   Trattamenti
-─────────────────────────────────────────────── */
-/* Rimuoviamo lo scroll interno: scorre la pagina */
+input::placeholder {
+  color: #a07863;
+  opacity: 0.6;
+}
+
+/* ─── Lista trattamenti ─────────────────────────── */
 #trattamentiWrapper {
-  max-height: none;
-  overflow: visible;
   border: 1px solid #e6d9d0;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 12px;
   background: #fff;
 }
 
 .trattamento-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px 28px 1fr 120px;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 10px;
+  gap: 12px;
+  padding: 10px 8px;
+  margin-bottom: 8px;
+  border-radius: 10px;
 }
 
 .trattamento-row label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-grow: 1;
+  display: contents;
   color: #a07863;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .trattamento-row .icona-trattamento {
   width: 24px;
   height: 24px;
+  opacity: .9;
 }
 
-/* ───────────────────────────────────────────────
-   “Input finto” che apre la rubrica (step 1)
-─────────────────────────────────────────────── */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-  padding:12px 16px;
-
-  border:1px solid #e6d9d0;
-  border-radius:14px;
-  background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
-}
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
-}
-.picker-input .value{ font-weight:600; color:#a07863; }
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
-
-/* ───────────────────────────────────────────────
-   Modale Rubrica (riuso base – qui solo helper)
-─────────────────────────────────────────────── */
-#rubricaModal .rubrica-container {
-  position: relative;
-  padding-top: 56px;
-  will-change: transform;
-  transform: translateY(0);
-  transition: transform 200ms ease;
-}
-#rubricaModal .rubrica-container.swipe-out-down { transform: translateY(100%); }
-
-#rubricaModal .rubrica-header {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  background: transparent;
-  padding: 0;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-#rubricaModal .rubrica-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-}
-
-#rubricaModal .rubrica-close {
-  position: absolute;
-  top: 6px; right: 8px;
-  width: 32px; height: 32px;
-  border: 0; background: transparent;
-  font-size: 22px; line-height: 32px;
-  color: #a07863;
-  opacity: .85;
-  cursor: pointer;
-  z-index: 4;
-}
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
-
-/* ───────────────────────────────────────────────
-   Stile “pagina come modale” (se usi il sheet)
-─────────────────────────────────────────────── */
-.page-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1000;
-}
-
-#wizardSheet {
-  background: #fff;
+/* Prezzo uniforme */
+.prezzo-input {
+  grid-column: 4;
   width: 100%;
-  max-width: 600px;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-  transform: translateY(0);
-  transition: transform 0.25s ease;
-
-  /* Lasciamo scorrere il contenuto all’interno del “foglio” */
-  max-height: 94vh;
-  overflow-y: auto;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #e6d9d0;
+  border-radius: 12px;
+  background: #fff;
+  color: #a07863;
+  font-size: 18px;
+  text-align: center;
 }
-#wizardSheet.swipe-out-down { transform: translateY(100%); }
 
-/* Header del “foglio” */
-.sheet-header {
-  position: relative;
-  padding: 8px 0;
+/* ─── Checkbox personalizzato ───────────────────── */
+.trattamento-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #d2b8a3;
+  border-radius: 8px;
+  background: #fff;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.trattamento-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(210,184,163,.25);
+}
+
+.trattamento-checkbox:checked {
+  background: #d2b8a3;
+  border-color: #d2b8a3;
+}
+
+.trattamento-checkbox:checked::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border: 2px solid #fff;
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+
+/* ─── Pulsanti ──────────────────────────────────── */
+.actions {
   display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.sheet-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-}
-#sheetClose {
-  position: absolute;
-  right: 12px; top: 4px;
-  background: transparent; border: none;
-  font-size: 20px; color: #a07863; cursor: pointer;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-/* ───────────────────────────────────────────────
-   Responsive
-─────────────────────────────────────────────── */
-@media (max-width: 480px) {
-  .settings-form input,
-  .bottoni-form button { font-size: 14px; }
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #d2b8a3;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #f4e5dc;
+  color: #a07863;
+}
+
+.btn-danger {
+  background: #e07a5f;
+  color: #fff;
 }
