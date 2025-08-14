@@ -33,10 +33,9 @@ body {
   justify-content: space-between;
 }
 
-/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
 .btn,
-.btn-primary,        /* retro-compatibilità */
-.btn-secondary {     /* retro-compatibilità */
+.btn-primary,
+.btn-secondary {
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -75,7 +74,7 @@ select,
 input[type="date"],
 input[type="time"] {
   width: 100%;
-  box-sizing: border-box;   /* evita overflow con padding */
+  box-sizing: border-box;
   padding: 12px 14px;
   margin-top: 12px;
   margin-bottom: 12px;
@@ -112,6 +111,7 @@ input[type="time"] {
   gap: 10px;
   flex-grow: 1;
   color: #a07863;
+  cursor: pointer;
 }
 
 .trattamento-row .icona-trattamento {
@@ -126,45 +126,89 @@ input[type="time"] {
   border-radius: 10px;
   color: #a07863;
   box-sizing: border-box;
+  font-size: 18px; /* evita zoom iOS */
+}
+.prezzo-input:focus {
+  outline: none;
+  border-color: #d2b8a3;
+  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
+  border-radius: 14px;
+}
+
+/* Checkbox personalizzate */
+.trattamento-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #d2b8a3;
+  border-radius: 6px;
+  background: #fff;
+  position: relative;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.trattamento-row input[type="checkbox"]:hover {
+  box-shadow: 0 0 0 3px rgba(210,184,163,.18);
+}
+.trattamento-row input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
+}
+.trattamento-row input[type="checkbox"]:checked {
+  background: #d2b8a3;
+  border-color: #d2b8a3;
+}
+.trattamento-row input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -62%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+/* Evidenzia riga selezionata */
+.trattamento-row:has(input[type="checkbox"]:checked) {
+  background: rgba(210,184,163,.08);
+  border-radius: 10px;
+  padding-inline: 6px;
 }
 
 /* ───────────────────────────────────────────────
    “Input finto” che apre la rubrica (step 1)
 ─────────────────────────────────────────────── */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;      /* FIX overflow */
-  padding:12px 16px;
-
-  border:1px solid #e6d9d0;
-  border-radius:14px;
-  background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
+.picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid #e6d9d0;
+  border-radius: 14px;
+  background: #fff;
+  color: #a07863;
+  cursor: text;
+  user-select: none;
 }
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+.picker-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
 }
-.picker-input .value{
-  font-weight:600;
-  color:#a07863;
+.picker-input .value {
+  font-weight: 600;
+  color: #a07863;
 }
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
+.picker-input.empty .value { display: none; }
+.picker-input.empty #pickerPlaceholder { opacity: .6; }
 
 /* ───────────────────────────────────────────────
-   Modale Rubrica (solo in questa pagina)
+   Modale Rubrica
 ─────────────────────────────────────────────── */
-
-/* pannello della modale: spazio per la topbar (grabber + X) */
 #rubricaModal .rubrica-container {
   position: relative;
   padding-top: 56px;
@@ -175,8 +219,6 @@ input[type="time"] {
 #rubricaModal .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
-
-/* barra in alto: grabber centrato + X a destra, area grabbabile */
 #rubricaModal .rubrica-header {
   position: absolute;
   top: 0;
@@ -189,22 +231,13 @@ input[type="time"] {
   z-index: 3;
   background: transparent;
   padding: 0;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
-
-/* maniglia */
 #rubricaModal .rubrica-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
-  margin: 0;
-  cursor: grab;
 }
-
-/* X in alto a destra */
 #rubricaModal .rubrica-close {
   position: absolute;
   top: 6px;
@@ -218,18 +251,12 @@ input[type="time"] {
   color: #a07863;
   opacity: .85;
   cursor: pointer;
-  z-index: 4;
 }
-
-.wizard-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #a07863;
-  margin-bottom: 10px;
-}
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
 
 /* ───────────────────────────────────────────────
-   Stile pagina-modale (opzionale)
+   Stile pagina-modale
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -240,7 +267,6 @@ input[type="time"] {
   align-items: flex-end;
   z-index: 1000;
 }
-
 #wizardSheet {
   background: #fff;
   width: 100%;
@@ -250,12 +276,9 @@ input[type="time"] {
   transform: translateY(0);
   transition: transform 0.25s ease;
 }
-
 #wizardSheet.swipe-out-down {
   transform: translateY(100%);
 }
-
-/* Header “pannello modale” con grabber + chiudi */
 .sheet-header {
   position: relative;
   padding: 8px 0;
@@ -263,14 +286,12 @@ input[type="time"] {
   justify-content: center;
   align-items: center;
 }
-
 .sheet-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
 }
-
 #sheetClose {
   position: absolute;
   right: 12px;
@@ -281,14 +302,7 @@ input[type="time"] {
   color: #a07863;
   cursor: pointer;
 }
+
 /* Evita lo zoom automatico di Safari iOS */
 html { -webkit-text-size-adjust: 100%; }
-
-/* Tutti i campi modulo >=16px */
 input, select, textarea { font-size: 16px; }
-
-/* In particolare i prezzi (prima senza font-size) */
-.prezzo-input { font-size: 18px; }  /* 16–18 va bene */
-
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
