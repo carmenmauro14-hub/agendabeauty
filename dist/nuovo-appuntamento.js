@@ -250,19 +250,20 @@ async function caricaTrattamenti(selectedMap = null) {
                         ? Number(selectedMap.get(t.nome)) || 0
                         : prezzoListino;
 
-      row.innerHTML = `
-        <label>
-          <input type="checkbox" class="trattamento-checkbox"
-                 ${checked ? "checked" : ""}
-                 data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
-          <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
-          ${t.nome}
-        </label>
-        <input type="number" class="prezzo-input"
-               placeholder="€${prezzoListino}"
-               value="${prezzoSel}"
-               min="0" step="0.01">
-      `;
+row.innerHTML = `
+  <label>
+    <input type="checkbox" class="trattamento-checkbox"
+           ${checked ? "checked" : ""}
+           data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
+    <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
+    ${t.nome}
+  </label>
+  <input type="number" class="prezzo-input"
+         placeholder="€${prezzoListino}"
+         value="${prezzoSel}"
+         min="0" step="0.01"
+         inputmode="decimal">
+`;
       wrapperTratt.appendChild(row);
     }
   } catch (e) {
