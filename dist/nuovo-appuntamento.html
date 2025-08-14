@@ -16,22 +16,20 @@
   <div id="navbar-placeholder"></div>
 
   <main class="wizard-container">
+    <!-- Titolo pagina che JS aggiornerà -->
     <h1 id="wizardTitle" class="wizard-title" aria-live="polite"></h1>
+
     <!-- STEP 1 -->
     <div class="step" id="step1">
       <h2>1. Seleziona cliente</h2>
-
-      <!-- Picker cliente -->
       <input type="hidden" id="clienteId" />
 
-      <!-- Campo “input” che apre la rubrica -->
       <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
            aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
         <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
         <span id="pickerValue" class="value" aria-live="polite"></span>
       </div>
 
-      <!-- (Vecchi elementi tenuti nascosti per compatibilità) -->
       <div id="clienteSelezionato" style="display:none;"></div>
       <button id="openRubrica" class="btn" style="display:none;">Apri rubrica</button>
 
@@ -63,26 +61,18 @@
     </div>
   </main>
 
-  <!-- Modale "rubrica": identica alla lista clienti -->
+  <!-- Modale rubrica -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
     <div class="rubrica-container"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
                 overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
-
-      <!-- Pulsante X in alto a destra -->
       <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
-
-      <!-- Maniglia per swipe verticale -->
       <div class="rubrica-header">
-        <div class="rubrica-grabber" id="rubricaGrabber" aria-label="Trascina verso il basso per chiudere"></div>
+        <div class="rubrica-grabber" id="rubricaGrabber"></div>
       </div>
-
-      <!-- Barra ricerca -->
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
       </div>
-
-      <!-- Lista + lettere a destra -->
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
     </div>
