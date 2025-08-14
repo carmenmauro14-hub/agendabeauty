@@ -10,26 +10,41 @@ body {
   background: #fff;
 }
 
+/* Evita zoom su iOS quando si entra negli input */
+html { -webkit-text-size-adjust: 100%; }
+input, select, textarea { font-size: 16px; }
+
+/* Contenitore wizard */
 .wizard-container {
   max-width: 600px;
   margin: 80px auto;
   padding: 20px;
 }
 
+/* Card step */
 .step {
   background: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* Titolo pagina */
+.wizard-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #a07863;
+  margin: 18px 0 10px;
+  line-height: 1.2;
 }
 
 /* ───────────────────────────────────────────────
    Navigazione step / Pulsanti
 ─────────────────────────────────────────────── */
 .wizard-nav {
-  margin-top: 20px;
+  margin-top: 18px;
   display: flex;
-  gap: 12px;
+  gap: 14px;
   justify-content: space-between;
 }
 
@@ -40,14 +55,14 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
+  height: 52px;
   padding: 0 18px;
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #d2b8a3;
   color: #fff;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
   text-decoration: none;
@@ -68,7 +83,7 @@ body {
 }
 
 /* ───────────────────────────────────────────────
-   Campi input date/ora
+   Campi input date/ora (colori invariati)
 ─────────────────────────────────────────────── */
 select,
 input[type="date"],
@@ -87,31 +102,43 @@ input[type="time"] {
 
 /* ───────────────────────────────────────────────
    Trattamenti
+   (mantenuti i colori input; migliora layout e checkbox)
 ─────────────────────────────────────────────── */
 #trattamentiWrapper {
   max-height: 350px;
   overflow-y: auto;
   border: 1px solid #e6d9d0;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 12px;
   background: #fff;
 }
 
+/* Riga trattamento a griglia */
 .trattamento-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px 28px 1fr 96px; /* checkbox, icona, nome, prezzo */
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 10px;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #f0e8e2;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  background: #fff;
+}
+.trattamento-row:hover { box-shadow: 0 1px 0 rgba(0,0,0,.02); }
+
+/* Stato “selezionato” della riga (input colori invariati) */
+.trattamento-row.is-checked {
+  background: #fbf6f2;         /* leggero sabbia */
+  border-color: #e8d8cf;
 }
 
+/* Etichetta come contenitore “virtuale” della griglia */
 .trattamento-row label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-grow: 1;
+  grid-column: 1 / 4;          /* checkbox + icona + nome */
+  display: contents;
   color: #a07863;
-  cursor: pointer;
 }
 
 .trattamento-row .icona-trattamento {
@@ -119,95 +146,77 @@ input[type="time"] {
   height: 24px;
 }
 
+/* Input prezzo: stessi colori, piccoli fine-tuning */
 .prezzo-input {
-  width: 90px;
+  grid-column: 4;
+  width: 100%;
+  height: 44px;
   padding: 8px;
   border: 1px solid #e6d9d0;
-  border-radius: 10px;
+  border-radius: 12px;
   color: #a07863;
   box-sizing: border-box;
+  text-align: center;
   font-size: 18px; /* evita zoom iOS */
 }
-.prezzo-input:focus {
-  outline: none;
-  border-color: #d2b8a3;
-  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
-  border-radius: 14px;
-}
 
-/* Checkbox personalizzate */
-.trattamento-row input[type="checkbox"] {
+/* Checkbox custom coerente con la palette */
+.trattamento-checkbox {
+  grid-column: 1;
   appearance: none;
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 22px; height: 22px;
   border: 2px solid #d2b8a3;
-  border-radius: 6px;
-  background: #fff;
-  position: relative;
+  border-radius: 8px;
+  display: inline-grid;
+  place-content: center;
   cursor: pointer;
-  flex: 0 0 auto;
-  transition: background .2s, border-color .2s, box-shadow .2s;
+  background: #fff;
+  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
-.trattamento-row input[type="checkbox"]:hover {
-  box-shadow: 0 0 0 3px rgba(210,184,163,.18);
-}
-.trattamento-row input[type="checkbox"]:focus-visible {
-  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
-}
-.trattamento-row input[type="checkbox"]:checked {
+.trattamento-checkbox:focus { outline: none; box-shadow: 0 0 0 3px rgba(210,184,163,.25); }
+.trattamento-checkbox:checked {
   background: #d2b8a3;
   border-color: #d2b8a3;
 }
-.trattamento-row input[type="checkbox"]:checked::after {
-  content: '✓';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -62%);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 800;
-}
-/* Evidenzia riga selezionata */
-.trattamento-row:has(input[type="checkbox"]:checked) {
-  background: rgba(210,184,163,.08);
-  border-radius: 10px;
-  padding-inline: 6px;
+.trattamento-checkbox:checked::after {
+  content: "";
+  width: 10px; height: 6px;
+  border: 2px solid #fff;
+  border-top: 0; border-left: 0;
+  transform: rotate(45deg);
+  margin-top: -1px;
 }
 
 /* ───────────────────────────────────────────────
    “Input finto” che apre la rubrica (step 1)
 ─────────────────────────────────────────────── */
-.picker-input {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 12px 16px;
-  border: 1px solid #e6d9d0;
-  border-radius: 14px;
-  background: #fff;
-  color: #a07863;
-  cursor: text;
-  user-select: none;
+.picker-input{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:12px 16px;
+  border:1px solid #e6d9d0;
+  border-radius:14px;
+  background:#fff;
+  color:#a07863;
+  cursor:text;
+  user-select:none;
 }
-.picker-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
+.picker-input:focus{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(210,184,163,.25);
 }
-.picker-input .value {
-  font-weight: 600;
-  color: #a07863;
-}
-.picker-input.empty .value { display: none; }
-.picker-input.empty #pickerPlaceholder { opacity: .6; }
+.picker-input .value{ font-weight:600; color:#a07863; }
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
 
 /* ───────────────────────────────────────────────
-   Modale Rubrica
+   Modale Rubrica (solo in questa pagina)
 ─────────────────────────────────────────────── */
 #rubricaModal .rubrica-container {
   position: relative;
@@ -221,9 +230,7 @@ input[type="time"] {
 }
 #rubricaModal .rubrica-header {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 44px;
   display: flex;
   align-items: center;
@@ -231,32 +238,31 @@ input[type="time"] {
   z-index: 3;
   background: transparent;
   padding: 0;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 #rubricaModal .rubrica-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
+  margin: 0;
+  cursor: grab;
 }
 #rubricaModal .rubrica-close {
   position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 32px;
-  color: #a07863;
-  opacity: .85;
-  cursor: pointer;
+  top: 6px; right: 8px;
+  width: 32px; height: 32px;
+  border: 0; background: transparent;
+  font-size: 22px; line-height: 32px;
+  color: #a07863; opacity: .85; cursor: pointer; z-index: 4;
 }
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
 
 /* ───────────────────────────────────────────────
-   Stile pagina-modale
+   Stile pagina-modale (se usi la modalità “sheet”)
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -272,37 +278,26 @@ input[type="time"] {
   width: 100%;
   max-width: 600px;
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.08);
   transform: translateY(0);
   transition: transform 0.25s ease;
 }
-#wizardSheet.swipe-out-down {
-  transform: translateY(100%);
-}
+#wizardSheet.swipe-out-down { transform: translateY(100%); }
+
+/* Header del “foglio” */
 .sheet-header {
   position: relative;
-  padding: 8px 0;
+  padding: 10px 0 6px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .sheet-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
+  width: 48px; height: 5px;
+  border-radius: 3px; background: #e6d9d0;
 }
 #sheetClose {
-  position: absolute;
-  right: 12px;
-  top: 4px;
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  color: #a07863;
-  cursor: pointer;
+  position: absolute; right: 12px; top: 4px;
+  background: transparent; border: none;
+  font-size: 20px; color: #a07863; cursor: pointer;
 }
-
-/* Evita lo zoom automatico di Safari iOS */
-html { -webkit-text-size-adjust: 100%; }
-input, select, textarea { font-size: 16px; }
