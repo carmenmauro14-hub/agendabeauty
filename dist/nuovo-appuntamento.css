@@ -228,5 +228,59 @@ input[type="time"] {
   margin-bottom: 10px;
 }
 
+/* ───────────────────────────────────────────────
+   Stile pagina-modale (opzionale)
+─────────────────────────────────────────────── */
+.page-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+#wizardSheet {
+  background: #fff;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  transform: translateY(0);
+  transition: transform 0.25s ease;
+}
+
+#wizardSheet.swipe-out-down {
+  transform: translateY(100%);
+}
+
+/* Header “pannello modale” con grabber + chiudi */
+.sheet-header {
+  position: relative;
+  padding: 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sheet-grabber {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+}
+
+#sheetClose {
+  position: absolute;
+  right: 12px;
+  top: 4px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: #a07863;
+  cursor: pointer;
+}
+
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
