@@ -222,11 +222,10 @@ input[type="time"] {
 }
 
 .wizard-title {
-  text-align: center;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: bold;
   color: #a07863;
-  margin: 0 0 16px 0;
+  margin-bottom: 10px;
 }
 
 #rubricaModal .rubrica-close:hover { opacity: 1; }
