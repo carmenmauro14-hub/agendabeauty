@@ -112,8 +112,8 @@ input[type="time"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 10px;
+  margin-bottom: 10px;
+  gap: 8px;
 }
 
 .trattamento-row label {
@@ -130,13 +130,13 @@ input[type="time"] {
 }
 
 .prezzo-input {
-  width: 90px;
+  width: 60px;
   padding: 8px;
   border: 1px solid #e6d9d0;
   border-radius: 10px;
   color: #a07863;
   box-sizing: border-box;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* ───────────────────────────────────────────────
