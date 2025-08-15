@@ -12,8 +12,9 @@ body {
 
 .wizard-container {
   max-width: 600px;
-  margin: 20px;
+  margin: 20px auto;
   padding: 20px;
+  margin-top: 20px;
 }
 
 .step {
