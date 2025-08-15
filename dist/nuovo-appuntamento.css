@@ -304,8 +304,6 @@ input[type="time"] {
 }
 
 html { -webkit-text-size-adjust: 100%; }
-input, select, textarea { font-size: 16px; }
-.prezzo-input { font-size: 18px; }
 
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
