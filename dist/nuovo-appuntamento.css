@@ -258,11 +258,20 @@ input[type="time"] {
 }
 
 .sheet-header {
-  position: relative;
-  padding: 8px 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  z-index: 3;
+  background: transparent;
+  padding: 0;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .sheet-grabber {
