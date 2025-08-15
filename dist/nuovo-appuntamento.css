@@ -270,17 +270,24 @@ input[type="time"] {
   height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
+  margin: 0;
+  cursor: grab;
 }
 
 #sheetClose {
   position: absolute;
-  right: 12px;
-  top: 4px;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
   background: transparent;
-  border: none;
-  font-size: 20px;
+  font-size: 22px;
+  line-height: 32px;
   color: #a07863;
+  opacity: .85;
   cursor: pointer;
+  z-index: 4;
 }
 
 html { -webkit-text-size-adjust: 100%; }
