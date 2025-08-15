@@ -1,8 +1,6 @@
 /* ───────────────────────────────────────────────
-   Base + reset mobile
+   Base
 ─────────────────────────────────────────────── */
-html { -webkit-text-size-adjust: 100%; }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
@@ -10,56 +8,43 @@ body {
   margin: 0;
   padding: 0;
   background: #fff;
-  color: #a07863;
 }
 
-/* Contenitore step
-   - su pagina normale: top 56
-   - dentro il foglio modale: top 16 */
 .wizard-container {
   max-width: 600px;
-  margin: 56px auto 80px;
+  margin: 80px auto;
   padding: 20px;
 }
-.page-modal .wizard-container { margin: 16px auto 24px; }
 
-/* Card step */
 .step {
   background: #f9f9f9;
   padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-
-/* Titolo pagina */
-.wizard-title {
-  margin: 0 0 12px 0;              /* meno spazio sotto il titolo */
-  font-size: 28px;
-  line-height: 1.15;
-  font-weight: 900;
-  color: #a07863;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 /* Titoli step */
-.step > h2 {
-  margin: 0 0 16px 0;
-  font-size: 26px;
-  line-height: 1.2;
-  font-weight: 800;
+.step h2 {
+  font-size: 18px;
+  font-weight: bold;
   color: #a07863;
+  margin-bottom: 10px;
 }
 
 /* ───────────────────────────────────────────────
    Navigazione step / Pulsanti
 ─────────────────────────────────────────────── */
 .wizard-nav {
-  margin-top: 18px;
+  margin-top: 20px;
   display: flex;
   gap: 12px;
   justify-content: space-between;
 }
 
-.btn {
+/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
+.btn,
+.btn-primary,        /* retro-compatibilità */
+.btn-secondary {     /* retro-compatibilità */
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -77,22 +62,26 @@ body {
   text-decoration: none;
   user-select: none;
 }
-.btn:hover   { opacity: .95; }
-.btn:active  { transform: scale(.98); }
-.btn:disabled{
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover { opacity: .95; }
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active { transform: scale(.98); }
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled {
   opacity: .55;
   cursor: not-allowed;
   filter: grayscale(10%);
 }
 
 /* ───────────────────────────────────────────────
-   Campi input
+   Campi input date/ora
 ─────────────────────────────────────────────── */
 select,
 input[type="date"],
-input[type="time"],
-input[type="text"],
-input[type="number"] {
+input[type="time"] {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
@@ -102,17 +91,54 @@ input[type="number"] {
   border-radius: 12px;
   background: #fff;
   color: #a07863;
-  font-size: 16px;                 /* >=16px per evitare zoom iOS */
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(210,184,163,.30); /* alone beige */
+  font-size: 16px;
 }
 
 /* ───────────────────────────────────────────────
-   Picker cliente “finto input”
+   Trattamenti
+─────────────────────────────────────────────── */
+#trattamentiWrapper {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+}
+
+.trattamento-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.trattamento-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1;
+  color: #a07863;
+}
+
+.trattamento-row .icona-trattamento {
+  width: 24px;
+  height: 24px;
+}
+
+.prezzo-input {
+  width: 90px;
+  padding: 8px;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  color: #a07863;
+  box-sizing: border-box;
+  font-size: 18px;
+}
+
+/* ───────────────────────────────────────────────
+   “Input finto” che apre la rubrica (step 1)
 ─────────────────────────────────────────────── */
 .picker-input{
   display:flex;
@@ -134,113 +160,16 @@ select:focus {
   outline:none;
   box-shadow:0 0 0 4px rgba(210,184,163,.25);
 }
-.picker-input .value{ font-weight:600; color:#a07863; }
+.picker-input .value{
+  font-weight:600;
+  color:#a07863;
+}
 .picker-input.empty .value{ display:none; }
 .picker-input.empty #pickerPlaceholder{ opacity:.6; }
 
 /* ───────────────────────────────────────────────
-   Trattamenti
-   (no scroll interno; righe ben allineate)
+   Modale Rubrica
 ─────────────────────────────────────────────── */
-#trattamentiWrapper {
-  /* nessun max-height => niente scroll interno */
-  max-height: none;
-  overflow: visible;
-  border: 1px solid #e6d9d0;
-  border-radius: 14px;
-  padding: 16px;
-  background: #fff;
-}
-
-/* Riga trattamento: label a sinistra (checkbox, icona, nome)
-   prezzo a destra con larghezza fissa */
-.trattamento-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 8px;
-  border-radius: 12px;
-}
-.trattamento-row + .trattamento-row { margin-top: 8px; }
-
-/* Colonna sinistra (checkbox + icona + nome) */
-.trattamento-row label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1 1 auto;                  /* si allarga */
-  min-width: 0;                    /* abilita ellissi se serve */
-  color: #a07863;
-  font-weight: 700;
-}
-
-/* Icona piccola */
-.trattamento-row .icona-trattamento {
-  width: 24px;
-  height: 24px;
-  opacity: .95;
-}
-
-/* Prezzo: stessa misura per tutte, non si restringe */
-.prezzo-input {
-  flex: 0 0 112px;                 /* larghezza costante */
-  width: 112px;
-  padding: 10px 12px;
-  border: 1px solid #e6d9d0;
-  border-radius: 12px;
-  color: #a07863;
-  font-size: 18px;                 /* niente zoom iOS */
-  text-align: right;
-  background: #fff;
-}
-.prezzo-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(210,184,163,.30);
-}
-
-/* Checkbox personalizzato, coerente con la palette */
-.trattamento-checkbox{
-  -webkit-appearance: none;
-  appearance: none;
-  width: 28px;
-  height: 28px;
-  border: 2px solid #d2b8a3;
-  border-radius: 8px;
-  background: #fff;
-  display: inline-block;
-  position: relative;
-  cursor: pointer;
-  flex: 0 0 28px;
-}
-.trattamento-checkbox:focus{
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(210,184,163,.25);
-}
-.trattamento-checkbox:checked{
-  background: #d2b8a3;
-  border-color: #d2b8a3;
-}
-.trattamento-checkbox:checked::after{
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    url("data:image/svg+xml;utf8,\
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
-      <path fill='white' d='M9.2 16.6 4.8 12.2l1.6-1.6 2.8 2.8 8.4-8.4 1.6 1.6z'/>\
-    </svg>") center/20px 20px no-repeat;
-}
-
-/* Stato evidenziato della riga quando la checkbox è on */
-.trattamento-row:has(.trattamento-checkbox:checked){
-  background: #f9f1ec;
-}
-
-/* ───────────────────────────────────────────────
-   Modale rubrica (riuso in questa pagina)
-─────────────────────────────────────────────── */
-
-/* pannello della modale: spazio per topbar (grabber + X) */
 #rubricaModal .rubrica-container {
   position: relative;
   padding-top: 56px;
@@ -248,12 +177,15 @@ select:focus {
   transform: translateY(0);
   transition: transform 200ms ease;
 }
-#rubricaModal .rubrica-container.swipe-out-down { transform: translateY(100%); }
+#rubricaModal .rubrica-container.swipe-out-down {
+  transform: translateY(100%);
+}
 
-/* header con grabber centrato */
 #rubricaModal .rubrica-header {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 44px;
   display: flex;
   align-items: center;
@@ -265,29 +197,41 @@ select:focus {
   -webkit-user-select: none;
   user-select: none;
 }
+
 #rubricaModal .rubrica-grabber {
-  width: 48px; height: 5px;
+  width: 48px;
+  height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
+  margin: 0;
+  cursor: grab;
 }
 
-/* X */
 #rubricaModal .rubrica-close {
   position: absolute;
-  top: 6px; right: 8px;
-  width: 32px; height: 32px;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
   border: 0;
   background: transparent;
-  font-size: 22px; line-height: 32px;
+  font-size: 22px;
+  line-height: 32px;
   color: #a07863;
   opacity: .85;
-  cursor: pointer; z-index: 4;
+  cursor: pointer;
+  z-index: 4;
 }
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
+
+.wizard-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #a07863;
+  margin-bottom: 10px;
+}
 
 /* ───────────────────────────────────────────────
-   “Pagina-modale” (foglio dall’alto) — opzionale
+   Pagina-modale
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -298,6 +242,7 @@ select:focus {
   align-items: flex-end;
   z-index: 1000;
 }
+
 #wizardSheet {
   background: #fff;
   width: 100%;
@@ -307,27 +252,40 @@ select:focus {
   transform: translateY(0);
   transition: transform 0.25s ease;
 }
-#wizardSheet.swipe-out-down { transform: translateY(100%); }
 
-/* header del foglio (grabber + chiudi) */
+#wizardSheet.swipe-out-down {
+  transform: translateY(100%);
+}
+
 .sheet-header {
   position: relative;
-  padding: 8px 0 4px;
+  padding: 8px 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .sheet-grabber {
-  width: 48px; height: 5px;
+  width: 48px;
+  height: 5px;
   border-radius: 3px;
   background: #e6d9d0;
 }
+
 #sheetClose {
   position: absolute;
-  right: 12px; top: 2px;
+  right: 12px;
+  top: 4px;
   background: transparent;
   border: none;
-  font-size: 22px;
+  font-size: 20px;
   color: #a07863;
   cursor: pointer;
 }
+
+html { -webkit-text-size-adjust: 100%; }
+input, select, textarea { font-size: 16px; }
+.prezzo-input { font-size: 18px; }
+
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
