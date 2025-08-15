@@ -100,7 +100,7 @@ input[type="time"] {
    Trattamenti
 ─────────────────────────────────────────────── */
 #trattamentiWrapper {
-  max-height: 350px;
+  max-height: none;
   overflow-y: auto;
   border: 1px solid #e6d9d0;
   border-radius: 10px;
