@@ -1,59 +1,291 @@
+/* ───────────────────────────────────────────────
+   Base
+─────────────────────────────────────────────── */
 body {
-  margin: 0;
-  padding: 0;
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
                "Helvetica Neue", sans-serif;
-  background: #ffffff;
-  color: #333;
+  margin: 0;
+  padding: 0;
+  background: #fff;
 }
 
-.reminder-container {
+.wizard-container {
+  max-width: 600px;
+  margin: 80px auto;
   padding: 20px;
 }
 
-.reminder-title {
-  font-size: 22px;
+.step {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Titoli step */
+.step h2 {
+  font-size: 18px;
   font-weight: bold;
-  margin-bottom: 15px;
+  color: #a07863;
+  margin-bottom: 10px;
 }
 
-.info-text {
+/* ───────────────────────────────────────────────
+   Navigazione step / Pulsanti
+─────────────────────────────────────────────── */
+.wizard-nav {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
+.btn,
+.btn-primary,        /* retro-compatibilità */
+.btn-secondary {     /* retro-compatibilità */
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 14px;
+  background: #d2b8a3;
+  color: #fff;
   font-size: 16px;
-  margin-bottom: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
+  text-decoration: none;
+  user-select: none;
+}
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover { opacity: .95; }
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active { transform: scale(.98); }
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(10%);
 }
 
-.reminder-list {
-  list-style: none;
-  padding: 0;
-}
-
-.reminder-list li {
-  padding: 12px 0;
+/* ───────────────────────────────────────────────
+   Campi input date/ora
+─────────────────────────────────────────────── */
+select,
+input[type="date"],
+input[type="time"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #e6d9d0;
+  border-radius: 12px;
+  background: #fff;
+  color: #a07863;
   font-size: 16px;
-  border-bottom: 1px solid #eee;
 }
 
-select {
-  font-size: 16px;
-  padding: 6px;
-  border: 1px solid #d2b8a3;
-  border-radius: 6px;
-  margin-left: 10px;
+/* ───────────────────────────────────────────────
+   Trattamenti
+─────────────────────────────────────────────── */
+#trattamentiWrapper {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
 }
 
-.back-header {
+.trattamento-row {
   display: flex;
   align-items: center;
-  font-size: 18px;
-  font-weight: 500;
-  color: #d2b8a3;
-  padding: 15px 20px 10px;
-  cursor: pointer;
-  background-color: white;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
 }
 
-.back-arrow {
-  font-size: 24px;
-  margin-right: 6px;
+.trattamento-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1;
+  color: #a07863;
 }
+
+.trattamento-row .icona-trattamento {
+  width: 24px;
+  height: 24px;
+}
+
+.prezzo-input {
+  width: 90px;
+  padding: 8px;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  color: #a07863;
+  box-sizing: border-box;
+  font-size: 18px;
+}
+
+/* ───────────────────────────────────────────────
+   “Input finto” che apre la rubrica (step 1)
+─────────────────────────────────────────────── */
+.picker-input{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:12px 16px;
+  border:1px solid #e6d9d0;
+  border-radius:14px;
+  background:#fff;
+  color:#a07863;
+  cursor:text;
+  user-select:none;
+}
+.picker-input:focus{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+}
+.picker-input .value{
+  font-weight:600;
+  color:#a07863;
+}
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
+
+/* ───────────────────────────────────────────────
+   Modale Rubrica
+─────────────────────────────────────────────── */
+#rubricaModal .rubrica-container {
+  position: relative;
+  padding-top: 56px;
+  will-change: transform;
+  transform: translateY(0);
+  transition: transform 200ms ease;
+}
+#rubricaModal .rubrica-container.swipe-out-down {
+  transform: translateY(100%);
+}
+
+#rubricaModal .rubrica-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  background: transparent;
+  padding: 0;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#rubricaModal .rubrica-grabber {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+  margin: 0;
+  cursor: grab;
+}
+
+#rubricaModal .rubrica-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 32px;
+  color: #a07863;
+  opacity: .85;
+  cursor: pointer;
+  z-index: 4;
+}
+
+.wizard-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #a07863;
+  margin-bottom: 10px;
+}
+
+/* ───────────────────────────────────────────────
+   Pagina-modale
+─────────────────────────────────────────────── */
+.page-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+#wizardSheet {
+  background: #fff;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  transform: translateY(0);
+  transition: transform 0.25s ease;
+}
+
+#wizardSheet.swipe-out-down {
+  transform: translateY(100%);
+}
+
+.sheet-header {
+  position: relative;
+  padding: 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sheet-grabber {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+}
+
+#sheetClose {
+  position: absolute;
+  right: 12px;
+  top: 4px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: #a07863;
+  cursor: pointer;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+input, select, textarea { font-size: 16px; }
+.prezzo-input { font-size: 18px; }
+
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
