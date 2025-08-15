@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────
-   Modale Nuovo Appuntamento - Full CSS
+   Modale Nuovo Appuntamento - CSS Adattato
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -20,7 +20,7 @@
   box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
   transform: translateY(0);
   transition: transform 0.25s ease;
-  padding-top: 56px; /* spazio per header */
+  padding-top: 56px; /* spazio per maniglia e X */
 }
 
 #wizardSheet.swipe-out-down {
@@ -89,7 +89,7 @@
 }
 
 /* Titoli step */
-.wizard-step h2 {
+.step h2 {
   font-size: 18px;
   font-weight: bold;
   color: #a07863;
@@ -97,13 +97,13 @@
 }
 
 /* Contenuto step */
-.wizard-step {
+.step {
   padding: 20px;
 }
 
 /* Input e select */
-.wizard-step input,
-.wizard-step select {
+.step input,
+.step select {
   width: 100%;
   padding: 10px;
   border: 1px solid #e6d9d0;
@@ -113,15 +113,15 @@
   color: #a07863;
 }
 
-/* Pulsanti */
-.wizard-buttons {
+/* Pulsanti navigazione */
+.wizard-nav {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   margin-top: 10px;
 }
 
-.wizard-buttons button {
+.wizard-nav button {
   flex: 1;
   padding: 10px;
   border: none;
@@ -133,7 +133,7 @@
   cursor: pointer;
 }
 
-.wizard-buttons button:disabled {
+.wizard-nav button:disabled {
   background-color: #d2b8a3;
   opacity: 0.5;
   cursor: not-allowed;
