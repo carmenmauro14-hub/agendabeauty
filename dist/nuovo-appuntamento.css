@@ -132,13 +132,19 @@ input[type="time"] {
 .prezzo-input {
   width: 80px;
   padding: 2px 8px;
-  border: 1px solid #e6d9d0;
+  border: 1px solid #d2b8a3;
   border-radius: 10px;
   color: #a07863;
   box-sizing: border-box;
   font-size: 16px;
   transform: scale(0.9);
   transform-origin: left center;
+}
+
+.prezzo-input:focus {
+  outline: none;
+  border-color: #a07863; /* bordo un po’ più scuro in focus */
+  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
 }
 
 input[type="checkbox"] {
