@@ -146,10 +146,12 @@ body {
   margin: 0;
 }
 
+/* Riga trattamento con layout a 3 colonne */
 .trattamento-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
 }
@@ -161,6 +163,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1; /* prende lo spazio restante */
 }
 
 .icona-trattamento {
@@ -175,13 +178,19 @@ body {
 }
 
 .prezzo-trattamento {
-  color: #666666;
-  margin-left: 10px;
+  min-width: 92px; /* stessa larghezza per tutte le righe */
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums; /* cifre monospazio */
+  color: #6d584b;
 }
 
 .azioni-trattamento {
   display: flex;
+  align-items: center;
   gap: 10px;
+  min-width: 68px;
+  justify-content: flex-end;
 }
 
 .azioni-trattamento i {
