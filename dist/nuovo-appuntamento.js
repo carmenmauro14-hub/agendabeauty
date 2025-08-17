@@ -226,28 +226,6 @@ function trovaIcona(nome) {
   return "icone_uniformate_colore/setting.png";
 }
 
-/* Formatter prezzi: "25" -> "25,00" (live + blur) */
-function abilitaFormatterPrezzi() {
-  document.querySelectorAll(".prezzo-input").forEach(inp => {
-    // input live: consenti solo numeri e separatore , .
-    inp.addEventListener("input", () => {
-      let val = inp.value.replace(",", ".").replace(/[^0-9.]/g, "");
-      if (val === "") { inp.value = ""; return; }
-      const parts = val.split(".");
-      if (parts[1]) parts[1] = parts[1].slice(0, 2); // max 2 decimali
-      // mostriamo la virgola in UI
-      inp.value = parts.join(","); 
-    });
-
-    // al blur: forza sempre due decimali
-    inp.addEventListener("blur", () => {
-      let v = inp.value.replace(",", ".").trim();
-      if (v === "" || isNaN(v)) { inp.value = ""; return; }
-      inp.value = parseFloat(v).toFixed(2).replace(".", ",");
-    });
-  });
-}
-
 /**
  * Carica il listino “trattamenti” e, se passi selectedMap,
  * spunta e imposta i prezzi di quelli già presenti nell’appuntamento.
@@ -272,25 +250,22 @@ async function caricaTrattamenti(selectedMap = null) {
                         ? Number(selectedMap.get(t.nome)) || 0
                         : prezzoListino;
 
-      row.innerHTML = `
-        <label>
-          <input type="checkbox" class="trattamento-checkbox"
-                 ${checked ? "checked" : ""}
-                 data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
-          <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
-          ${t.nome}
-        </label>
-        <input type="text" class="prezzo-input"
-               placeholder="€${prezzoListino.toFixed(2).replace('.', ',')}"
-               value="${prezzoSel.toFixed(2).replace('.', ',')}"
-               inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
-      `;
+row.innerHTML = `
+  <label>
+    <input type="checkbox" class="trattamento-checkbox"
+           ${checked ? "checked" : ""}
+           data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
+    <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
+    ${t.nome}
+  </label>
+  <input type="number" class="prezzo-input"
+         placeholder="€${prezzoListino}"
+         value="${prezzoSel}"
+         min="0" step="0.01"
+         inputmode="decimal">
+`;
       wrapperTratt.appendChild(row);
     }
-
-    // attiva il formatter dopo aver creato gli input
-    abilitaFormatterPrezzi();
-
   } catch (e) {
     console.error("Errore caricamento trattamenti:", e);
     alert("Errore nel caricamento dei trattamenti.");
@@ -332,14 +307,10 @@ btnSalva?.addEventListener("click", async () => {
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
-
-    // accetta virgola o punto
-    let prezzoVal = parseFloat(prezzoInput.value.replace(',', '.'));
-    if (!Number.isFinite(prezzoVal)) prezzoVal = 0;
-
+    const prezzoVal = parseFloat(prezzoInput.value);
     return {
       nome: cb.dataset.nome,
-      prezzo: prezzoVal, // numero puro in Firestore
+      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
       icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
     };
   });
