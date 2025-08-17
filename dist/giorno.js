@@ -68,6 +68,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     try { return x.toLocaleString('it-IT', { style:'currency', currency:'EUR' }); }
     catch { return `€ ${x.toFixed(2)}`; }
   }
+// ---- Formattazione date (da "YYYY-MM-DD")
+function formattaDataBreve(iso) {
+  if (!iso) return "";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;              // 21/08/2025
+}
+function formattaDataLunga(iso) {
+  if (!iso) return "";
+  const mesi = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+                "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+  const [y,m,d] = iso.split("-");
+  return `${parseInt(d,10)} ${mesi[parseInt(m,10)-1]} ${y}`;   // 21 Agosto 2025
+}
 
   // ——— Modale creato a runtime ———
   function ensureModal() {
@@ -220,7 +233,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const els = modal._els;
 
     els.title.textContent = appt.nome || "Appuntamento";
-    els.data.textContent  = appt.data || dataParamFinale;
+    els.data.textContent  = formattaDataBreve(appt.data || dataParamFinale);
     els.ora.textContent   = appt.ora  || "";
 
     els.list.innerHTML = "";
