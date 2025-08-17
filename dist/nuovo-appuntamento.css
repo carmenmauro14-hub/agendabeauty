@@ -85,8 +85,7 @@ select,
 input[type="date"],
 input[type="time"],
 input[type="text"],
-input[type="number"],
-.prezzo-input {
+input[type="number"] {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
@@ -152,10 +151,16 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 24px;
 }
 
+/* Campo prezzo compatto/bloccato */
 .prezzo-input {
   width: 80px;
   padding: 2px 8px;
+  border: 1px solid #e6d9d0;
+  border-radius: 10px;
+  background: #fff;
+  color: #a07863;
   font-size: 16px;
+  box-sizing: border-box;
   transform: scale(0.9);
   transform-origin: left center;
 }
