@@ -19,8 +19,8 @@ const db  = getFirestore(app);
 
 // ─── Lettura modalità (nuovo / modifica) ───────────────────────────
 const params  = new URLSearchParams(location.search);
-const editId  = params.get("edit");
-let apptData  = null;
+const editId  = params.get("edit");   // se presente, siamo in MODIFICA
+let apptData  = null;                 // dati appuntamento in modifica (se edit)
 
 // ─── Riferimenti DOM ───────────────────────────────────────────────
 const wizardTitle        = document.getElementById("wizardTitle");
@@ -56,6 +56,25 @@ const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
 const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
 
+// ─── (Opzionale) modalità “pagina-modale”: overlay/sheet se presenti in HTML ──
+const pageModal   = document.querySelector(".page-modal");  // overlay
+const sheetEl     = document.getElementById("wizardSheet"); // pannello
+const sheetHeader = document.querySelector(".sheet-header");
+const sheetClose  = document.getElementById("sheetClose");
+
+// ─── Funzione tasto ANNULLA ─────────────────────────────────────────
+btnCancel?.addEventListener("click", () => {
+  if (history.length > 1) {
+    history.back();
+  } else {
+    location.href = "calendario.html";
+  }
+});
+
+btnRubricaClose?.addEventListener("click", () => {
+  chiudiRubricaConAnimazioneVert();
+});
+
 // ─── Helpers ───────────────────────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
@@ -70,6 +89,43 @@ function updateNavState() {
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOra.value);
 }
 [inpData, inpOra].forEach(el => el?.addEventListener("input", updateNavState));
+
+rubricaModal?.addEventListener("click", (e) => {
+  if (e.target === rubricaModal) closeModal(rubricaModal);
+});
+
+function chiudiRubricaConAnimazioneVert() {
+  if (!rubricaPanel) return;
+  rubricaPanel.classList.add("swipe-out-down");
+  rubricaPanel.addEventListener("transitionend", () => {
+    rubricaPanel.classList.remove("swipe-out-down");
+    closeModal(rubricaModal);
+  }, { once: true });
+}
+
+// Swipe verticale (rubrica)
+const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
+if (rubricaHeader) {
+  abilitaSwipeVerticale(
+    rubricaHeader,
+    () => {},
+    () => chiudiRubricaConAnimazioneVert(),
+    true,
+    45
+  );
+}
+
+// ─── (Opzionale) Chiusura “pagina-modale” nuova/modifica appuntamento ───────
+function chiudiSheet() {
+  const doClose = () => document.getElementById("cancelWizard")?.click();
+  if (!sheetEl) return doClose();
+  sheetEl.classList.add("swipe-out-down");
+  sheetEl.addEventListener("transitionend", doClose, { once: true });
+}
+sheetClose?.addEventListener("click", chiudiSheet);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
+pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
+if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
 // ─── Rubrica ───────────────────────────────────────────────────────
 let clientiCache = null;
@@ -170,6 +226,11 @@ function trovaIcona(nome) {
   return "icone_uniformate_colore/setting.png";
 }
 
+/**
+ * Carica il listino “trattamenti” e, se passi selectedMap,
+ * spunta e imposta i prezzi di quelli già presenti nell’appuntamento.
+ * selectedMap: Map(nomeTrattamento -> prezzoSalvato)
+ */
 async function caricaTrattamenti(selectedMap = null) {
   wrapperTratt.innerHTML = "";
   try {
@@ -183,26 +244,26 @@ async function caricaTrattamenti(selectedMap = null) {
       const row = document.createElement("div");
       row.classList.add("trattamento-row");
 
+      // valore precompilato in MODIFICA (se presente nella mappa)
       const checked   = selectedMap ? selectedMap.has(t.nome) : false;
       const prezzoSel = selectedMap && selectedMap.has(t.nome)
                         ? Number(selectedMap.get(t.nome)) || 0
                         : prezzoListino;
 
-      // 🔹 formatto sempre con due decimali e virgola
-      const prezzoFormatted = prezzoSel.toFixed(2).replace(".", ",");
-
-      row.innerHTML = `
-        <label>
-          <input type="checkbox" class="trattamento-checkbox"
-                 ${checked ? "checked" : ""}
-                 data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
-          <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
-          ${t.nome}
-        </label>
-        <input type="text" class="prezzo-input"
-               value="${prezzoFormatted}"
-               inputmode="decimal">
-      `;
+row.innerHTML = `
+  <label>
+    <input type="checkbox" class="trattamento-checkbox"
+           ${checked ? "checked" : ""}
+           data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
+    <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
+    ${t.nome}
+  </label>
+  <input type="number" class="prezzo-input"
+         placeholder="€${prezzoListino}"
+         value="${prezzoSel}"
+         min="0" step="0.01"
+         inputmode="decimal">
+`;
       wrapperTratt.appendChild(row);
     }
   } catch (e) {
@@ -210,6 +271,26 @@ async function caricaTrattamenti(selectedMap = null) {
     alert("Errore nel caricamento dei trattamenti.");
   }
 }
+
+// ─── Navigazione step ──────────────────────────────────────────────
+btnToStep2?.addEventListener("click", () => {
+  if (!clienteIdHidden.value) return alert("Seleziona un cliente");
+  step1.style.display = "none";
+  step2.style.display = "block";
+});
+btnBackToStep1?.addEventListener("click", () => {
+  step2.style.display = "none";
+  step1.style.display = "block";
+});
+btnToStep3?.addEventListener("click", () => {
+  if (!(inpData.value && inpOra.value)) return alert("Inserisci data e ora");
+  step2.style.display = "none";
+  step3.style.display = "block";
+});
+btnBackToStep2?.addEventListener("click", () => {
+  step3.style.display = "none";
+  step2.style.display = "block";
+});
 
 // ─── Salvataggio appuntamento ──────────────────────────────────────
 btnSalva?.addEventListener("click", async () => {
@@ -226,13 +307,10 @@ btnSalva?.addEventListener("click", async () => {
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
-
-    let prezzoVal = parseFloat(prezzoInput.value.replace(",", "."));
-    if (!Number.isFinite(prezzoVal)) prezzoVal = 0;
-
+    const prezzoVal = parseFloat(prezzoInput.value);
     return {
       nome: cb.dataset.nome,
-      prezzo: prezzoVal,
+      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
       icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
     };
   });
@@ -284,9 +362,11 @@ btnSalva?.addEventListener("click", async () => {
       }
       apptData = apptDoc.data();
 
+      // Precompila data/ora
       if (inpData) inpData.value = apptData.data || "";
       if (inpOra)  inpOra.value  = apptData.ora  || "";
 
+      // Precompila cliente
       if (apptData.clienteId) {
         clienteIdHidden.value = apptData.clienteId;
         try {
@@ -299,6 +379,7 @@ btnSalva?.addEventListener("click", async () => {
         } catch {}
       }
 
+      // Precompila trattamenti
       const selectedMap = new Map(
         (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
           .map(t => [t.nome, Number(t.prezzo) || 0])
@@ -307,7 +388,7 @@ btnSalva?.addEventListener("click", async () => {
 
     } catch (e) {
       console.error("Errore caricamento appuntamento:", e);
-      alert("Errore nel caricamento. Procedo come 'Nuovo'.");
+      alert("Errore nel caricamento dell'appuntamento. Procedo come 'Nuovo'.");
       setPageTitle("Nuovo Appuntamento");
       await caricaTrattamenti();
     }
@@ -318,12 +399,14 @@ btnSalva?.addEventListener("click", async () => {
 
   updateNavState();
 
+  // Se arrivi con ?data=YYYY-MM-DD preimposta la data (solo in "Nuovo")
   const fromDate = new URLSearchParams(location.search).get("data");
   if (!editId && fromDate && inpData && !inpData.value) {
     inpData.value = fromDate;
     updateNavState();
   }
 
+  // Mantieni stato picker se già valorizzato
   if (clienteIdHidden.value && pickerValue && openRubricaField) {
     openRubricaField.classList.remove("empty");
     if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
