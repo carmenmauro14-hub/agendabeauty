@@ -141,6 +141,9 @@ input[type="time"] {
   transform-origin: left center;
 }
 
+input[type="checkbox"] {
+  accent-color: #d2b8a3;
+}
 /* ───────────────────────────────────────────────
    “Input finto” che apre la rubrica (step 1)
 ─────────────────────────────────────────────── */
