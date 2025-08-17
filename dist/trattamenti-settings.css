@@ -178,9 +178,9 @@ body {
 }
 
 .prezzo-trattamento {
-  min-width: 92px; /* stessa larghezza per tutte le righe */
-  text-align: right;
-  white-space: nowrap;
+  flex: 0 0 90px;       /* colonna fissa */
+  text-align: right;    /* allinea a destra */
+  white-space: nowrap;  /* evita a capo */
   font-variant-numeric: tabular-nums; /* cifre monospazio */
   color: #6d584b;
 }
