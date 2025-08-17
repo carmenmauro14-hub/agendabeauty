@@ -146,11 +146,14 @@ body {
   margin: 0;
 }
 
-/* Riga trattamento con layout a 3 colonne */
+/* ─────────────────────────
+   RIGA TRATTAMENTO – GRID
+   info | prezzo | azioni
+───────────────────────── */
 .trattamento-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 100px 70px; /* nome, prezzo, azioni */
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
@@ -163,7 +166,6 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1; /* prende lo spazio restante */
 }
 
 .icona-trattamento {
@@ -177,20 +179,19 @@ body {
   color: #a07863;
 }
 
+/* Colonna prezzo perfettamente in colonna */
 .prezzo-trattamento {
-  flex: 0 0 90px;       /* colonna fissa */
-  text-align: right;    /* allinea a destra */
-  white-space: nowrap;  /* evita a capo */
+  text-align: right;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums; /* cifre monospazio */
   color: #6d584b;
 }
 
+/* Colonna azioni a destra */
 .azioni-trattamento {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 68px;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .azioni-trattamento i {
