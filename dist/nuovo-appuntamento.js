@@ -260,7 +260,7 @@ row.innerHTML = `
   </label>
   <input type="number" class="prezzo-input"
          placeholder="€${prezzoListino}"
-         value="${prezzoSel}"
+         value="${prezzoSel.toFixed(2).replace('.', ',')}"
          min="0" step="0.01"
          inputmode="decimal">
 `;
@@ -307,7 +307,7 @@ btnSalva?.addEventListener("click", async () => {
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
-    const prezzoVal = parseFloat(prezzoInput.value);
+    const prezzoVal = parseFloat(prezzoInput.value.replace(',', '.'));
     return {
       nome: cb.dataset.nome,
       prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
