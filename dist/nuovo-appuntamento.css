@@ -79,13 +79,11 @@ body {
 }
 
 /* ───────────────────────────────────────────────
-   Campi input e select
+   Campi input date/ora
 ─────────────────────────────────────────────── */
 select,
 input[type="date"],
-input[type="time"],
-input[type="text"],
-input[type="number"] {
+input[type="time"] {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
@@ -96,26 +94,6 @@ input[type="number"] {
   background: #fff;
   color: #a07863;
   font-size: 16px;
-  caret-color: #a07863;
-  transition: border-color .2s, box-shadow .2s;
-}
-
-input[type="text"]:focus,
-input[type="number"]:focus,
-select:focus,
-input[type="date"]:focus,
-input[type="time"]:focus,
-.prezzo-input:focus {
-  outline: none;
-  border-color: #d2b8a3;
-  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
-}
-
-/* iOS: rimuove spin buttons nei numeri */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 /* ───────────────────────────────────────────────
@@ -151,25 +129,21 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 24px;
 }
 
-/* Campo prezzo compatto/bloccato */
 .prezzo-input {
   width: 80px;
   padding: 2px 8px;
   border: 1px solid #e6d9d0;
   border-radius: 10px;
-  background: #fff;
   color: #a07863;
-  font-size: 16px;
   box-sizing: border-box;
+  font-size: 16px;
   transform: scale(0.9);
   transform-origin: left center;
 }
 
-/* Checkbox uniformi */
 input[type="checkbox"] {
   accent-color: #d2b8a3;
 }
-
 /* ───────────────────────────────────────────────
    “Input finto” che apre la rubrica (step 1)
 ─────────────────────────────────────────────── */
