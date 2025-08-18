@@ -123,7 +123,7 @@ body {
   position: absolute;
   right: 50px;                        /* lascia spazio alla colonna azioni */
   top: 50%; transform: translateY(-50%);
-  width: 80px;
+  width: 60px;
   text-align: right;
   white-space: nowrap;
   color: #6d584b;
@@ -140,7 +140,7 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
 }
 .azioni-trattamento i {
   color: #a07863;
