@@ -104,7 +104,7 @@ body {
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
   min-height: 44px;
-  padding-right: 100px;               /* 110 (prezzo) + 70 (azioni) + ~20 respiro */
+  padding-right: 50px;               /* 110 (prezzo) + 70 (azioni) + ~20 respiro */
 }
 .trattamento-item:hover { background-color: #fdf6f3; }
 
@@ -123,7 +123,7 @@ body {
   position: absolute;
   right: 70px;                        /* lascia spazio alla colonna azioni */
   top: 50%; transform: translateY(-50%);
-  width: 60px;
+  width: 50px;
   text-align: right;
   white-space: nowrap;
   color: #6d584b;
