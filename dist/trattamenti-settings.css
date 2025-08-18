@@ -98,12 +98,12 @@ body {
 /* ===== Lista ===== */
 .settings-list { list-style: none; padding: 0; margin: 0; }
 
-/* Riga a 3 colonne: [icona+nome] [prezzo fisso] [azioni fisse] */
+/* Riga a 3 colonne: [icona+nome] [prezzo] [azioni compatte] */
 .trattamento-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 64px;
+  grid-template-columns: minmax(0, 1fr) auto 50px; /* prezzo auto, azioni strette */
   align-items: center;
-  column-gap: 14px;
+  column-gap: 12px;
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
   min-height: 44px;
@@ -111,23 +111,21 @@ body {
 }
 .trattamento-item:hover { background-color: #fdf6f3; }
 
-/* 🔴 Rimosso highlight al click/tap */
+/* niente highlight al tap/click */
 .trattamento-item:active,
-.trattamento-item:focus {
-  background: none !important;
-}
+.trattamento-item:focus { background: none !important; }
 
 /* Colonna 1: icona + nome */
 .trattamento-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0; /* consente il capo solo se necessario */
+  min-width: 0; /* consente andare a capo solo se serve davvero */
 }
 .icona-trattamento { width: 24px; height: 24px; opacity: .9; flex: 0 0 24px; }
 .nome-trattamento  { font-weight: bold; color: #a07863; line-height: 1.15; }
 
-/* Colonna 2: PREZZO */
+/* Colonna 2: PREZZO (più a destra) */
 .prezzo-trattamento {
   justify-self: end;
   text-align: right;
@@ -135,15 +133,16 @@ body {
   color: #6d584b;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
+  padding-right: 6px; /* piccolo respiro tra prezzo e icone */
 }
 
-/* Colonna 3: AZIONI */
+/* Colonna 3: AZIONI (matita+cestino ravvicinati) */
 .azioni-trattamento {
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 4px;              /* distanza matita–cestino */
-  width: 64px;           /* corrisponde alla 3a colonna */
+  gap: 4px;          /* più vicini tra loro */
+  width: auto;       /* colonna compatta */
 }
 .azioni-trattamento i {
   color: #a07863;
@@ -169,6 +168,6 @@ body {
   .settings-form input,
   .bottoni-form button { font-size: 14px; }
   .trattamento-item {
-    grid-template-columns: minmax(0, 1fr) 100px 60px;
+    grid-template-columns: minmax(0, 1fr) auto 48px; /* ancora più strette le azioni su mobile */
   }
 }
