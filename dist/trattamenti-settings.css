@@ -142,7 +142,7 @@ body {
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 6px;              /* distanza matita–cestino */
+  gap: 4px;              /* distanza matita–cestino */
   width: 64px;           /* corrisponde alla 3a colonna */
 }
 .azioni-trattamento i {
