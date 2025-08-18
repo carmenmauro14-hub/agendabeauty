@@ -146,21 +146,25 @@ body {
   margin: 0;
 }
 
+/* === LISTA TRATTAMENTI === */
 .trattamento-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
+  gap: 12px;
 }
 .trattamento-item:hover {
   background-color: #fdf6f3;
 }
 
+/* Colonna 1 → icona + nome */
 .trattamento-info {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .icona-trattamento {
@@ -172,15 +176,24 @@ body {
 .nome-trattamento {
   font-weight: bold;
   color: #a07863;
+  word-break: break-word;
 }
 
+/* Colonna 2 → prezzo (fisso, allineato) */
 .prezzo-trattamento {
-  color: #666666;
-  margin-left: 10px;
+  flex: 0 0 100px;       /* larghezza fissa, regola qui */
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: #6d584b;
 }
 
+/* Colonna 3 → azioni (fisso) */
 .azioni-trattamento {
+  flex: 0 0 70px;
   display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 10px;
 }
 
