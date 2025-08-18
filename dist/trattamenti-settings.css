@@ -107,8 +107,15 @@ body {
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
   min-height: 44px;
+  user-select: none; /* impedisce selezione testo */
 }
 .trattamento-item:hover { background-color: #fdf6f3; }
+
+/* 🔴 Rimosso highlight al click/tap */
+.trattamento-item:active,
+.trattamento-item:focus {
+  background: none !important;
+}
 
 /* Colonna 1: icona + nome */
 .trattamento-info {
