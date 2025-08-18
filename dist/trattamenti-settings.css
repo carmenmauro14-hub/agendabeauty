@@ -104,7 +104,7 @@ body {
   padding: 14px 0;
   border-bottom: 1px solid #e6d9d0;
   min-height: 44px;
-  padding-right: 200px;               /* 110 (prezzo) + 70 (azioni) + ~20 respiro */
+  padding-right: 140px;               /* 110 (prezzo) + 70 (azioni) + ~20 respiro */
 }
 .trattamento-item:hover { background-color: #fdf6f3; }
 
@@ -121,9 +121,9 @@ body {
 /* Colonna 2: PREZZO – fissa e allineata */
 .prezzo-trattamento {
   position: absolute;
-  right: 70px;                        /* lascia spazio alla colonna azioni */
+  right: 50px;                        /* lascia spazio alla colonna azioni */
   top: 50%; transform: translateY(-50%);
-  width: 110px;
+  width: 80px;
   text-align: right;
   white-space: nowrap;
   color: #6d584b;
@@ -136,11 +136,11 @@ body {
   position: absolute;
   right: 0;
   top: 50%; transform: translateY(-50%);
-  width: 70px;
+  width: 50px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 .azioni-trattamento i {
   color: #a07863;
