@@ -111,9 +111,12 @@ body {
 }
 .trattamento-item:hover { background-color: #fdf6f3; }
 
-/* niente highlight al tap/click */
+/* rimuove qualsiasi evidenziazione al tap/click */
 .trattamento-item:active,
-.trattamento-item:focus { background: none !important; }
+.trattamento-item:focus {
+  background: transparent !important;
+  outline: none !important;
+}
 
 /* Colonna 1: icona + nome */
 .trattamento-info {
