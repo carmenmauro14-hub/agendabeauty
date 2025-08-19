@@ -16,6 +16,7 @@
       margin: 0;
       padding: 0;
       background: #fff;
+      overflow: hidden; /* disattiva scroll su tutta la pagina */
     }
   </style>
 </head>
@@ -54,13 +55,18 @@
   </main>
 
   <script>
-    // carica dinamicamente la navbar e aggiorna altezza
+    // aggiorna variabili CSS con le altezze reali
     function aggiornaAltezzaNav() {
       const nav = document.querySelector('.top-nav');
       const h = nav ? nav.offsetHeight : 0;
       document.documentElement.style.setProperty('--nav-height', h + 'px');
+
+      const back = document.querySelector('.back-header');
+      const hb = back ? back.offsetHeight : 0;
+      document.documentElement.style.setProperty('--back-height', hb + 'px');
     }
 
+    // carica navbar e aggiorna dimensioni
     fetch("navbar.html")
       .then(res => res.text())
       .then(html => {
