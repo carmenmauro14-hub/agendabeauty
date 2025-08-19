@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, getDocs,
-  doc, deleteDoc, setDoc
+  doc, deleteDoc, setDoc, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── Firebase ────────────────────────────────────────
@@ -41,6 +41,12 @@ const editTelefono   = document.getElementById("editTelefono");
 const cancelEdit     = document.getElementById("cancelEdit");
 const viewMode       = document.getElementById("viewMode");
 
+// Statistiche DOM
+const statTotale = document.getElementById("statTotale");
+const statUltimo = document.getElementById("statUltimo");
+const statSpeso  = document.getElementById("statSpeso");
+const statTop    = document.getElementById("statTop");
+
 let currentId = null;
 
 // ─── Helper: apri/chiudi modal ───────────────────────
@@ -57,8 +63,8 @@ async function caricaClienti() {
 function renderList(clienti) {
   const groups = {};
   clienti.forEach(c => {
-    const L = c.nome.charAt(0).toUpperCase();
-    (groups[L] = groups[L]||[]).push(c);
+    const L = (c.nome || "").charAt(0).toUpperCase() || "#";
+    (groups[L] = groups[L] || []).push(c);
   });
 
   clientList.innerHTML = "";
@@ -66,15 +72,18 @@ function renderList(clienti) {
     const sec = document.createElement("li");
     sec.textContent = L;
     sec.className = "section";
-    sec.id = "letter-"+L;
+    sec.id = "letter-" + L;
     clientList.appendChild(sec);
-    groups[L].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(c => {
-      const li = document.createElement("li");
-      li.textContent = `${c.nome}`;
-      li.className = "item";
-      li.onclick = () => openDetail(c);
-      clientList.appendChild(li);
-    });
+
+    groups[L]
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""))
+      .forEach(c => {
+        const li = document.createElement("li");
+        li.textContent = `${c.nome}`;
+        li.className = "item";
+        li.onclick = () => openDetail(c);
+        clientList.appendChild(li);
+      });
   });
   renderLetterNav(Object.keys(groups).sort());
 }
@@ -85,8 +94,8 @@ function renderLetterNav(letters) {
     const el = document.createElement("span");
     el.textContent = L;
     el.onclick = () => {
-      const target = document.getElementById("letter-"+L);
-      target && target.scrollIntoView({behavior:"smooth"});
+      const target = document.getElementById("letter-" + L);
+      target && target.scrollIntoView({ behavior: "smooth" });
     };
     letterNav.appendChild(el);
   });
@@ -120,7 +129,7 @@ closeAddModal.onclick = () => closeModal(addModal);
 
 addForm.onsubmit = async e => {
   e.preventDefault();
-  await addDoc(collection(db,"clienti"), {
+  await addDoc(collection(db, "clienti"), {
     nome: addNome.value.trim(),
     telefono: addTelefono.value.trim()
   });
@@ -128,21 +137,67 @@ addForm.onsubmit = async e => {
   caricaClienti();
 };
 
+// ─── Statistiche per cliente ─────────────────────────
+async function caricaStatisticheCliente(clienteId) {
+  // Legge tutti gli appuntamenti del cliente
+  const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+  const snap = await getDocs(q);
+
+  let totale = 0;
+  let ultimo = null;
+  let speso = 0;
+  const freq = {}; // { nomeTrattamento: conteggio }
+
+  snap.forEach(d => {
+    const app = d.data();
+    totale++;
+
+    // data ultimo appuntamento
+    const dataApp = app.data ? new Date(app.data) : null;
+    if (dataApp && (!ultimo || dataApp > ultimo)) ultimo = dataApp;
+
+    // totale speso
+    speso += Number(app.totale || 0);
+
+    // conteggio per trattamento
+    (app.trattamenti || []).forEach(t => {
+      const nome = (t && t.nome) ? t.nome : "Trattamento";
+      freq[nome] = (freq[nome] || 0) + 1;
+    });
+  });
+
+  // aggiorna UI
+  if (statTotale) statTotale.textContent = String(totale);
+  if (statUltimo) statUltimo.textContent = ultimo ? ultimo.toLocaleDateString("it-IT") : "—";
+  if (statSpeso)  statSpeso.textContent  = speso.toFixed(2);
+
+  if (statTop) {
+    const list = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .map(([nome, count]) => `<li>${nome}: <strong>${count}</strong></li>`)
+      .join("");
+    statTop.innerHTML = list || "<li>—</li>";
+  }
+}
+
 // ─── Dettaglio cliente ───────────────────────────────
 function openDetail(cliente) {
   currentId = cliente.id;
-  detailNome.textContent = cliente.nome;
-  detailTelefono.textContent = cliente.telefono;
+  detailNome.textContent = cliente.nome || "";
+  detailTelefono.textContent = cliente.telefono || "—";
   editForm.classList.add("hidden");
   viewMode.style.display = "block";
   showModal(detailModal);
+
+  // carica statistiche senza toccare il resto
+  caricaStatisticheCliente(cliente.id).catch(console.error);
 }
 closeDetail.onclick = () => closeModal(detailModal);
 
 // Elimina
 deleteBtn.onclick = async () => {
   if (!confirm("Elimina questo cliente?")) return;
-  await deleteDoc(doc(db,"clienti",currentId));
+  await deleteDoc(doc(db, "clienti", currentId));
   closeModal(detailModal);
   caricaClienti();
 };
@@ -162,7 +217,7 @@ cancelEdit.onclick = () => {
 
 editForm.onsubmit = async e => {
   e.preventDefault();
-  await setDoc(doc(db,"clienti",currentId), {
+  await setDoc(doc(db, "clienti", currentId), {
     nome: editNome.value.trim(),
     telefono: editTelefono.value.trim()
   });
