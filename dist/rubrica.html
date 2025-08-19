@@ -51,15 +51,20 @@
       <div id="viewMode">
         <p><strong>Telefono:</strong><br><span id="detailTelefono"></span></p>
 
-        <!-- ⬇️ NUOVA SEZIONE STATISTICHE -->
+        <!-- 🔎 STATISTICHE -->
         <div id="statsCliente" class="stats">
-          <p><strong>Totale appuntamenti:</strong> <span id="statTotale">—</span></p>
-          <p><strong>Ultimo appuntamento:</strong> <span id="statUltimo">—</span></p>
-          <p><strong>Totale speso:</strong> €<span id="statSpeso">0.00</span></p>
-          <p><strong>Appuntamenti per trattamento:</strong></p>
-          <ul id="statTop"><li>—</li></ul>
+          <div class="year-filter">
+            <label for="yearSelect"><strong>Anno:</strong></label>
+            <select id="yearSelect"></select>
+          </div>
+
+          <p><strong>Trattamenti nell’anno:</strong> <span id="yearTreatmentsCount">0</span></p>
+          <p><strong>Spesa nell’anno:</strong> €<span id="yearSpent">0.00</span></p>
+          <p><strong>Totale speso (sempre):</strong> €<span id="lifetimeSpent">0.00</span></p>
+
+          <p style="margin-top:10px;"><strong>Dettaglio per trattamento (anno):</strong></p>
+          <ul id="yearByTreatment"><li>—</li></ul>
         </div>
-        <!-- ⬆️ FINE SEZIONE STATISTICHE -->
 
         <div class="actions">
           <button id="editBtn" class="btn-secondary"><i class="fas fa-pen"></i> Modifica</button>
