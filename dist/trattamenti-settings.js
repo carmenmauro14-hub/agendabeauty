@@ -26,7 +26,7 @@ const iconeDisponibili = [
   "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
 ];
 
-/* ————— Helpers € ————— */
+/* € helpers */
 function parseEuro(str) {
   if (typeof str !== "string") return Number(str) || 0;
   const n = str.replace(/\s/g, "").replace("€", "").replace(/\./g, "").replace(",", ".");
@@ -38,7 +38,7 @@ function formatEuroCompact(n) {
   return "€" + v.toFixed(2).replace(".", ",");
 }
 
-/* ————— Icone ————— */
+/* icone */
 function mostraIcone(container, onSelect, iconaPredefinita = "") {
   container.innerHTML = "";
   iconeDisponibili.forEach(nome => {
@@ -56,7 +56,7 @@ function mostraIcone(container, onSelect, iconaPredefinita = "") {
   });
 }
 
-/* ————— Nuovo trattamento ————— */
+/* nuovo */
 btnNuovo.addEventListener("click", () => {
   form.style.display = "flex";
   form.reset();
@@ -65,17 +65,20 @@ btnNuovo.addEventListener("click", () => {
   azioniAggiunta.style.display = "flex";
   azioniModifica.style.display = "none";
   idModifica = null;
+  setTimeout(() => window.setListMaxHeight?.(), 0);
 });
 btnAnnullaAggiunta.addEventListener("click", () => {
   form.reset();
   form.style.display = "none";
+  window.setListMaxHeight?.();
 });
 
-/* ————— Modifica trattamento ————— */
+/* modifica */
 btnAnnullaModifica.addEventListener("click", () => {
   form.reset();
   form.style.display = "none";
   idModifica = null;
+  window.setListMaxHeight?.();
 });
 btnSalvaModifiche.addEventListener("click", async () => {
   const nome = inputNome.value.trim();
@@ -91,9 +94,10 @@ btnSalvaModifiche.addEventListener("click", async () => {
   form.reset();
   form.style.display = "none";
   idModifica = null;
+  window.setListMaxHeight?.();
 });
 
-/* ————— Submit nuovo ————— */
+/* submit nuovo */
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const nome = inputNome.value.trim();
@@ -108,19 +112,18 @@ form.addEventListener("submit", async e => {
   await caricaTrattamenti();
   form.reset();
   form.style.display = "none";
+  window.setListMaxHeight?.();
 });
 
-/* ————— Carica lista ————— */
+/* load list */
 async function caricaTrattamenti() {
   listaTrattamenti.innerHTML = "";
   const snapshot = await getDocs(collection(db, "trattamenti"));
 
   snapshot.forEach(docSnap => {
     const { nome, prezzo, icona } = docSnap.data();
-
-    // Riga come <div> (niente <li>), 3 colonne in CSS Grid
-    const row = document.createElement("div");
-    row.className = "trattamento-item";
+    const row = document.createElement("div");         // <-- div, non li
+    row.classList.add("trattamento-item");
     row.dataset.id = docSnap.id;
 
     row.innerHTML = `
@@ -136,15 +139,17 @@ async function caricaTrattamenti() {
     `;
     listaTrattamenti.appendChild(row);
   });
+
+  // ricalcola l'altezza disponibile ora che la lista è pronta
+  window.setListMaxHeight?.();
 }
 
-/* ————— Azioni (edit/delete) ————— */
+/* actions */
 listaTrattamenti.addEventListener("click", async e => {
   const row = e.target.closest(".trattamento-item");
   if (!row) return;
   const id = row.dataset.id;
 
-  // elimina
   if (e.target.classList.contains("btn-delete")) {
     if (confirm("Eliminare questo trattamento?")) {
       await deleteDoc(doc(db, "trattamenti", id));
@@ -153,7 +158,6 @@ listaTrattamenti.addEventListener("click", async e => {
     return;
   }
 
-  // modifica
   if (e.target.classList.contains("btn-edit")) {
     const nome = row.querySelector(".nome-trattamento").textContent.trim();
     const prezzoText = row.querySelector(".prezzo-trattamento").textContent.trim();
@@ -169,18 +173,10 @@ listaTrattamenti.addEventListener("click", async e => {
     azioniAggiunta.style.display = "none";
     azioniModifica.style.display = "flex";
     idModifica = id;
+    setTimeout(() => window.setListMaxHeight?.(), 0);
   }
 });
 
-// Accessibilità tastiera su icone azione
-listaTrattamenti.addEventListener("keydown", async e => {
-  if (e.key !== "Enter" && e.key !== " ") return;
-  if (e.target.classList.contains("btn-edit") || e.target.classList.contains("btn-delete")) {
-    e.preventDefault();
-    e.target.click();
-  }
-});
-
-/* ————— Init ————— */
+/* init */
 mostraIcone(selettoreIcone, src => (inputIconaSelezionata.value = src));
 caricaTrattamenti();
