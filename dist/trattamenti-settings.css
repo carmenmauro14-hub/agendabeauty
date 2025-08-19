@@ -106,9 +106,8 @@ body {
   min-height: 44px;
   user-select: none;
 }
-.trattamento-item:hover { background-color: #fdf6f3; }
 
-/* Niente evidenziazione “tap/click” (non c’è più <li>) */
+/* Niente evidenziazione “tap/click” */
 .trattamento-item:active,
 .trattamento-item:focus { background: transparent; outline: none; }
 
@@ -117,12 +116,12 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0; /* consente andare a capo solo se serve davvero */
+  min-width: 0;
 }
 .icona-trattamento { width: 24px; height: 24px; opacity: .9; flex: 0 0 24px; }
 .nome-trattamento  { font-weight: bold; color: #a07863; line-height: 1.15; }
 
-/* Colonna 2: PREZZO (allineato a destra) */
+/* Colonna 2: PREZZO */
 .prezzo-trattamento {
   justify-self: end;
   text-align: right;
@@ -130,10 +129,10 @@ body {
   color: #6d584b;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
-  padding-right: 6px; /* piccolo respiro tra prezzo e icone */
+  padding-right: 6px;
 }
 
-/* Colonna 3: AZIONI (matita+cestino ravvicinati) */
+/* Colonna 3: AZIONI */
 .azioni-trattamento {
   justify-self: end;
   display: inline-flex;
