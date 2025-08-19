@@ -1,25 +1,26 @@
 /* ========== Variabili di layout ========== */
 :root{
-  --nav-height: 84px;     /* aggiornato da JS */
-  --back-height: 48px;    /* aggiornato da JS */
+  --nav-height: 84px;   /* verrà sovrascritta dal tuo JS */
+  --back-height: 48px;  /* verrà sovrascritta dal tuo JS */
 }
 
 /* ========== Base ========== */
+html, body { height: 100%; }
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
   background:#fff;
   color:#d2b8a3;
   margin:0;
   padding:0;
-  overflow:hidden; /* evita scroll pagina intera */
+  overflow:hidden; /* pagina bloccata */
 }
 
-/* contenitore pagina */
+/* contenitore pagina (non scorre) */
 .settings-container{
   padding:20px;
   display:flex;
   flex-direction:column;
-  min-height:calc(100vh - var(--nav-height) - var(--back-height));
+  height:calc(100vh - var(--nav-height) - var(--back-height));
   box-sizing:border-box;
 }
 
@@ -52,7 +53,7 @@ body{
   gap:8px;
   -webkit-tap-highlight-color:transparent;
 }
-#btn-nuovo-trattamento:active{ transform:scale(.96); background:#c7a890; }
+#btn-nuovo-trattamento:active{ transform:scale(.95); }
 
 /* ========== Form ========== */
 .settings-form{
@@ -70,7 +71,7 @@ body{
   border-radius:12px;
   background:#fff;
   color:#a07863;
-  font-size:16px; /* evita zoom iOS */
+  font-size:16px;
   caret-color:#a07863;
   transition:border-color .2s, box-shadow .2s;
 }
@@ -91,38 +92,40 @@ body{
   width:38px; height:38px; cursor:pointer; opacity:.5;
   border:2px solid transparent; border-radius:8px; padding:4px;
   transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
 }
+.icona-selezionabile:hover{ opacity:.8; transform:scale(1.05); }
 .icona-selezionabile.selezionata{ border-color:#d2b8a3; opacity:1; }
 
-/* bottoni form */
 .bottoni-form{ display:flex; justify-content:center; gap:20px; margin-top:10px; }
 .bottoni-form button{
   background:#d2b8a3; color:#fff; border:0; border-radius:10px;
   padding:10px 20px; font-size:15px; cursor:pointer; font-weight:700;
   display:flex; align-items:center; gap:8px;
   -webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease;
 }
-.bottoni-form button:active{ transform:scale(.95); background:#c7a890; }
+.bottoni-form button:active{ transform:scale(.94); }
 
-/* ========== Lista con scroll interno ========== */
+/* ========== Lista con scroll interno (SOLO qui si scorre) ========== */
 .settings-list{
-  flex:1;
+  flex:1 1 auto;
   overflow-y:auto;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;           /* niente scroll della pagina */
+  -webkit-overflow-scrolling:touch;      /* inerzia iOS */
 
-  max-height:calc(100vh - var(--nav-height) - var(--back-height) - 20px);
+  /* altezza massima dinamica */
+  max-height:100%;
 
-  margin-right:calc(-20px - env(safe-area-inset-right));
-  padding-right:calc(20px + env(safe-area-inset-right));
+  /* porta la scrollbar al bordo destro dello schermo */
+  margin-right:calc(-20px - env(safe-area-inset-right, 0px));
+  padding-right:calc(20px + env(safe-area-inset-right, 0px));
   padding-left:0; margin-left:0; border:0;
 }
 
-/* stile scrollbar (iOS-like) */
+/* stile scrollbar (iOS-like / WebKit) */
 .settings-list::-webkit-scrollbar{ width:4px; }
-.settings-list::-webkit-scrollbar-thumb{
-  background:#d9b5a3; border-radius:2px;
-}
+.settings-list::-webkit-scrollbar-thumb{ background:#d9b5a3; border-radius:2px; }
 .settings-list::-webkit-scrollbar-track{ background:transparent; }
 
 /* ========== Riga a 3 colonne ========== */
@@ -137,14 +140,18 @@ body{
   user-select:none;
   -webkit-tap-highlight-color:transparent;
 }
+
+/* Niente hover di sfondo sulla riga */
 .trattamento-item:hover{ background:transparent; }
 
+/* Colonna 1 */
 .trattamento-info{
   display:flex; align-items:center; gap:10px; min-width:0;
 }
 .icona-trattamento{ width:24px; height:24px; opacity:.9; flex:0 0 24px; }
 .nome-trattamento{ font-weight:700; color:#a07863; line-height:1.15; }
 
+/* Colonna 2: prezzo allineato */
 .prezzo-trattamento{
   justify-self:end; text-align:right; white-space:nowrap;
   color:#6d584b;
@@ -153,6 +160,7 @@ body{
   padding-right:6px;
 }
 
+/* Colonna 3: azioni */
 .azioni-trattamento{
   justify-self:end; display:inline-flex; align-items:center;
   gap:4px; width:auto;
@@ -160,14 +168,16 @@ body{
 .azioni-trattamento i{
   color:#a07863; font-size:18px;
   width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center;
-  cursor:pointer; 
-  transition:transform .15s, color .15s;
+  cursor:pointer; transition:transform .12s ease, color .12s ease, opacity .12s ease;
   -webkit-tap-highlight-color:transparent;
 }
-/* effetto tap su iPhone */
-.azioni-trattamento i:active{ 
-  color:#d2b8a3; 
-  transform:scale(.85); 
+/* Effetto click (tap) – sempre visibile anche su iPhone */
+.azioni-trattamento i.is-tapped,
+#btn-nuovo-trattamento.is-tapped,
+.bottoni-form button.is-tapped{
+  transform:scale(.88);
+  color:#d2b8a3;
+  opacity:.9;
 }
 
 /* ========== Back header ========== */
@@ -175,7 +185,6 @@ body{
   display:flex; align-items:center;
   font-size:18px; font-weight:500;
   color:#d2b8a3; padding:15px 20px 10px; background:#fff; cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
 }
 .back-arrow{ font-size:24px; margin-right:6px; }
 
