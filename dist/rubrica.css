@@ -224,51 +224,23 @@ button i {
   display: none;
 }
 
-#clientList,
-#clientListPicker {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#clientList li.section,
-#clientListPicker li.section {
-  padding: 8px 12px;
-  margin: 8px 0 4px;
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 15px;
-  color: #b08b65;
-}
-
-#clientList li.item,
-#clientListPicker li.item {
-  padding: 10px 80px 10px 16px;
-  font-size: 16px;
-  color: #a07863;
-  position: relative;
-  cursor: pointer;
-}
-
-#clientList li.item:hover,
-#clientListPicker li.item:hover {
-  background: #fdf6f3;
-}
-
-#clientList li.item::after,
-#clientListPicker li.item::after {
-  content: "";
-  position: absolute;
-  left: 16px;
-  right: 80px;
-  bottom: 0;
-  height: 1px;
-  background-color: #e6d9d0;
-}
-
 /* Placeholder coerente */
 .top-bar input::placeholder,
 form input::placeholder {
   color: #a07863;
   opacity: 0.6;
+}
+
+/* ─── Statistiche nel dettaglio cliente ─── */
+.stats {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e6d9d0;
+  color: #a07863;
+  font-size: 14px;
+}
+
+.stats ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
 }
