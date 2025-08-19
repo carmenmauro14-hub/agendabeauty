@@ -26,7 +26,7 @@ const iconeDisponibili = [
   "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
 ];
 
-/* € helpers */
+/* ————— Helpers € ————— */
 function parseEuro(str) {
   if (typeof str !== "string") return Number(str) || 0;
   const n = str.replace(/\s/g, "").replace("€", "").replace(/\./g, "").replace(",", ".");
@@ -38,7 +38,7 @@ function formatEuroCompact(n) {
   return "€" + v.toFixed(2).replace(".", ",");
 }
 
-/* icone */
+/* ————— Icone ————— */
 function mostraIcone(container, onSelect, iconaPredefinita = "") {
   container.innerHTML = "";
   iconeDisponibili.forEach(nome => {
@@ -56,12 +56,12 @@ function mostraIcone(container, onSelect, iconaPredefinita = "") {
   });
 }
 
-/* nuovo */
+/* ————— Nuovo trattamento ————— */
 btnNuovo.addEventListener("click", () => {
   form.style.display = "flex";
   form.reset();
   inputIconaSelezionata.value = "";
-  mostraIcone(selettore-icone, src => (inputIconaSelezionata.value = src));
+  mostraIcone(selettoreIcone, src => (inputIconaSelezionata.value = src));
   azioniAggiunta.style.display = "flex";
   azioniModifica.style.display = "none";
   idModifica = null;
@@ -71,7 +71,7 @@ btnAnnullaAggiunta.addEventListener("click", () => {
   form.style.display = "none";
 });
 
-/* modifica */
+/* ————— Modifica trattamento ————— */
 btnAnnullaModifica.addEventListener("click", () => {
   form.reset();
   form.style.display = "none";
@@ -93,7 +93,7 @@ btnSalvaModifiche.addEventListener("click", async () => {
   idModifica = null;
 });
 
-/* submit nuovo */
+/* ————— Submit nuovo ————— */
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const nome = inputNome.value.trim();
@@ -110,15 +110,17 @@ form.addEventListener("submit", async e => {
   form.style.display = "none";
 });
 
-/* load list */
+/* ————— Carica lista ————— */
 async function caricaTrattamenti() {
   listaTrattamenti.innerHTML = "";
   const snapshot = await getDocs(collection(db, "trattamenti"));
 
   snapshot.forEach(docSnap => {
     const { nome, prezzo, icona } = docSnap.data();
-    const row = document.createElement("div");         // <-- div, non li
-    row.classList.add("trattamento-item");
+
+    // Riga come <div> (niente <li>), 3 colonne in CSS Grid
+    const row = document.createElement("div");
+    row.className = "trattamento-item";
     row.dataset.id = docSnap.id;
 
     row.innerHTML = `
@@ -136,12 +138,13 @@ async function caricaTrattamenti() {
   });
 }
 
-/* actions */
+/* ————— Azioni (edit/delete) ————— */
 listaTrattamenti.addEventListener("click", async e => {
   const row = e.target.closest(".trattamento-item");
   if (!row) return;
   const id = row.dataset.id;
 
+  // elimina
   if (e.target.classList.contains("btn-delete")) {
     if (confirm("Eliminare questo trattamento?")) {
       await deleteDoc(doc(db, "trattamenti", id));
@@ -150,6 +153,7 @@ listaTrattamenti.addEventListener("click", async e => {
     return;
   }
 
+  // modifica
   if (e.target.classList.contains("btn-edit")) {
     const nome = row.querySelector(".nome-trattamento").textContent.trim();
     const prezzoText = row.querySelector(".prezzo-trattamento").textContent.trim();
@@ -168,6 +172,15 @@ listaTrattamenti.addEventListener("click", async e => {
   }
 });
 
-/* init */
+// Accessibilità tastiera su icone azione
+listaTrattamenti.addEventListener("keydown", async e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  if (e.target.classList.contains("btn-edit") || e.target.classList.contains("btn-delete")) {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
+/* ————— Init ————— */
 mostraIcone(selettoreIcone, src => (inputIconaSelezionata.value = src));
 caricaTrattamenti();
