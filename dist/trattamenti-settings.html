@@ -7,18 +7,19 @@
 
   <link rel="stylesheet" href="navbar.css" />
   <link rel="stylesheet" href="trattamenti-settings.css" />
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                    Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff;
     }
   </style>
 </head>
 <body>
-  <!-- Navbar viene iniettata qui -->
   <div id="navbar-placeholder"></div>
 
   <div class="back-header" onclick="location.href='settings.html'">
@@ -48,44 +49,26 @@
       </div>
     </form>
 
-    <!-- Lista in <div> (niente <ul>/<li>) — scorre solo questa -->
+    <!-- Lista con scroll interno -->
     <div id="lista-trattamenti" class="settings-list"></div>
   </main>
 
-  <!-- Iniezione navbar + calcolo altezza lista -->
   <script>
-    // Calcola e salva l'altezza della navbar in una CSS var
+    // carica dinamicamente la navbar e aggiorna altezza
     function aggiornaAltezzaNav() {
       const nav = document.querySelector('.top-nav');
       const h = nav ? nav.offsetHeight : 0;
       document.documentElement.style.setProperty('--nav-height', h + 'px');
     }
 
-    // Imposta l'altezza massima della lista in funzione dello spazio visibile
-    function setListMaxHeight() {
-      const list = document.getElementById('lista-trattamenti');
-      if (!list) return;
-      const vh   = window.innerHeight || document.documentElement.clientHeight;
-      const navH = parseFloat(getComputedStyle(document.documentElement)
-                    .getPropertyValue('--nav-height')) || 0;
-      const top  = list.getBoundingClientRect().top;
-      const max  = Math.max(120, vh - navH - top);
-      list.style.maxHeight = max + 'px';
-      list.style.overflowY = 'auto';
-      list.style.webkitOverflowScrolling = 'touch';
-    }
-
-    // Inietta la navbar, poi inizializza misure e listener
-    fetch("navbar.html").then(r => r.text()).then(html => {
-      document.getElementById("navbar-placeholder").innerHTML = html;
-      aggiornaAltezzaNav();
-      setListMaxHeight();
-      window.addEventListener('resize', () => { aggiornaAltezzaNav(); setListMaxHeight(); });
-      window.addEventListener('orientationchange', () => { aggiornaAltezzaNav(); setListMaxHeight(); });
-    });
-
-    // Espone setListMaxHeight per i moduli (lo richiameremo dopo aver popolato la lista)
-    window.setListMaxHeight = setListMaxHeight;
+    fetch("navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-placeholder").innerHTML = html;
+        aggiornaAltezzaNav();
+        window.addEventListener('resize', aggiornaAltezzaNav);
+        window.addEventListener('orientationchange', aggiornaAltezzaNav);
+      });
   </script>
 
   <script src="navbar.js"></script>
