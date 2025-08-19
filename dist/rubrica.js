@@ -4,7 +4,7 @@ import {
   doc, deleteDoc, setDoc, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ─── Firebase ────────────────────────────────────────
+/* ─── Firebase ─────────────────────────────────────── */
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -13,15 +13,14 @@ const firebaseConfig = {
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
-
-// ✅ Protezione contro doppia inizializzazione
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
+const db  = getFirestore(app);
 
-// ─── Elementi DOM ────────────────────────────────────
+/* ─── DOM ──────────────────────────────────────────── */
 const clientList     = document.getElementById("clientList");
 const letterNav      = document.getElementById("letterNav");
 const searchInput    = document.getElementById("searchInput");
+
 const openAddModal   = document.getElementById("openAddModal");
 const addModal       = document.getElementById("addModal");
 const closeAddModal  = document.getElementById("closeAddModal");
@@ -41,19 +40,41 @@ const editTelefono   = document.getElementById("editTelefono");
 const cancelEdit     = document.getElementById("cancelEdit");
 const viewMode       = document.getElementById("viewMode");
 
-// Statistiche DOM
-const statTotale = document.getElementById("statTotale");
-const statUltimo = document.getElementById("statUltimo");
-const statSpeso  = document.getElementById("statSpeso");
-const statTop    = document.getElementById("statTop");
+/* ─── Stats (nuovi elementi) ───────────────────────── */
+const yearSelect            = document.getElementById("yearSelect");
+const yearTreatmentsCountEl = document.getElementById("yearTreatmentsCount");
+const yearSpentEl           = document.getElementById("yearSpent");
+const lifetimeSpentEl       = document.getElementById("lifetimeSpent");
+const yearByTreatmentEl     = document.getElementById("yearByTreatment");
 
+/* ─── Stato ────────────────────────────────────────── */
 let currentId = null;
+let currentClientAppointments = []; // cache appuntamenti del cliente aperto
 
-// ─── Helper: apri/chiudi modal ───────────────────────
+/* ─── Helpers ──────────────────────────────────────── */
 function showModal(m) { m.style.display = "flex"; }
 function closeModal(m) { m.style.display = "none"; }
 
-// ─── Load & render rubrica ───────────────────────────
+function toNumberSafe(v) {
+  if (v == null) return 0;
+  if (typeof v === "number" && isFinite(v)) return v;
+  if (typeof v === "string") {
+    const clean = v.replace(/[€\s]/g, "").replace(",", ".");
+    const n = parseFloat(clean);
+    return isNaN(n) ? 0 : n;
+  }
+  return 0;
+}
+function toDateSafe(v) {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  if (typeof v?.toDate === "function") return v.toDate();
+  if (typeof v === "number") return new Date(v);
+  if (typeof v === "string") return new Date(v);
+  return null;
+}
+
+/* ─── Lista clienti ────────────────────────────────── */
 async function caricaClienti() {
   const snapshot = await getDocs(collection(db, "clienti"));
   const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -101,6 +122,7 @@ function renderLetterNav(letters) {
   });
 }
 
+/* ─── Ricerca live ─────────────────────────────────── */
 searchInput.oninput = () => {
   const f = searchInput.value.toLowerCase();
   letterNav.style.display = f ? "none" : "flex";
@@ -120,11 +142,8 @@ searchInput.oninput = () => {
   });
 };
 
-// ─── Aggiungi cliente ────────────────────────────────
-openAddModal.onclick = () => {
-  addForm.reset();
-  showModal(addModal);
-};
+/* ─── Aggiungi cliente ─────────────────────────────── */
+openAddModal.onclick = () => { addForm.reset(); showModal(addModal); };
 closeAddModal.onclick = () => closeModal(addModal);
 
 addForm.onsubmit = async e => {
@@ -137,50 +156,88 @@ addForm.onsubmit = async e => {
   caricaClienti();
 };
 
-// ─── Statistiche per cliente ─────────────────────────
+/* ─── Statistiche cliente con selezione anno ──────── */
 async function caricaStatisticheCliente(clienteId) {
-  // Legge tutti gli appuntamenti del cliente
+  // 1) leggi tutti gli appuntamenti del cliente
   const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
   const snap = await getDocs(q);
 
-  let totale = 0;
-  let ultimo = null;
-  let speso = 0;
-  const freq = {}; // { nomeTrattamento: conteggio }
+  currentClientAppointments = snap.docs.map(d => d.data());
 
-  snap.forEach(d => {
-    const app = d.data();
-    totale++;
+  // 2) calcola lifetime e anni disponibili
+  let lifetimeSpent = 0;
+  const yearsSet = new Set();
 
-    // data ultimo appuntamento
-    const dataApp = app.data ? new Date(app.data) : null;
-    if (dataApp && (!ultimo || dataApp > ultimo)) ultimo = dataApp;
+  currentClientAppointments.forEach(app => {
+    const tratt = Array.isArray(app.trattamenti) ? app.trattamenti : [];
+    const apptTotal = tratt.reduce((sum, t) => sum + toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price), 0);
+    lifetimeSpent += apptTotal;
 
-    // totale speso
-    speso += Number(app.totale || 0);
+    const dt = toDateSafe(app.data || app.date || app.dateTime);
+    if (dt) yearsSet.add(dt.getFullYear());
+  });
 
-    // conteggio per trattamento
-    (app.trattamenti || []).forEach(t => {
-      const nome = (t && t.nome) ? t.nome : "Trattamento";
-      freq[nome] = (freq[nome] || 0) + 1;
+  // aggiorna lifetime
+  lifetimeSpentEl.textContent = lifetimeSpent.toFixed(2);
+
+  // 3) popola select anni (desc). default: anno corrente se presente, altrimenti il max
+  const years = Array.from(yearsSet).sort((a,b)=>b-a);
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("") || `<option value="">—</option>`;
+  const currentYear = (new Date()).getFullYear();
+  if (years.includes(currentYear)) {
+    yearSelect.value = String(currentYear);
+  } else if (years.length) {
+    yearSelect.value = String(years[0]);
+  }
+
+  // 4) render iniziale per l'anno selezionato
+  renderStatsForYear(Number(yearSelect.value || years[0] || currentYear));
+
+  // 5) change handler
+  yearSelect.onchange = () => renderStatsForYear(Number(yearSelect.value));
+}
+
+function renderStatsForYear(year) {
+  if (!year || !currentClientAppointments.length) {
+    yearTreatmentsCountEl.textContent = "0";
+    yearSpentEl.textContent = "0.00";
+    yearByTreatmentEl.innerHTML = "<li>—</li>";
+    return;
+  }
+
+  const freq = {}; // { nome: {count, spend} }
+  let totalTreatments = 0;
+  let totalSpentYear = 0;
+
+  currentClientAppointments.forEach(app => {
+    const dt = toDateSafe(app.data || app.date || app.dateTime);
+    if (!dt || dt.getFullYear() !== year) return;
+
+    const tratt = Array.isArray(app.trattamenti) ? app.trattamenti : [];
+    tratt.forEach(t => {
+      const nome = t?.nome || t?.titolo || t?.trattamento || "Trattamento";
+      const prezzo = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
+      if (!freq[nome]) freq[nome] = { count: 0, spend: 0 };
+      freq[nome].count += 1;
+      freq[nome].spend += prezzo;
+      totalTreatments += 1;
+      totalSpentYear += prezzo;
     });
   });
 
   // aggiorna UI
-  if (statTotale) statTotale.textContent = String(totale);
-  if (statUltimo) statUltimo.textContent = ultimo ? ultimo.toLocaleDateString("it-IT") : "—";
-  if (statSpeso)  statSpeso.textContent  = speso.toFixed(2);
+  yearTreatmentsCountEl.textContent = String(totalTreatments);
+  yearSpentEl.textContent = totalSpentYear.toFixed(2);
 
-  if (statTop) {
-    const list = Object.entries(freq)
-      .sort((a, b) => b[1] - a[1])
-      .map(([nome, count]) => `<li>${nome}: <strong>${count}</strong></li>`)
-      .join("");
-    statTop.innerHTML = list || "<li>—</li>";
-  }
+  const items = Object.entries(freq)
+    .sort((a,b)=> b[1].count - a[1].count || b[1].spend - a[1].spend)
+    .map(([nome, v]) => `<li>${nome}: <strong>${v.count}</strong> × — €${v.spend.toFixed(2)}</li>`)
+    .join("");
+
+  yearByTreatmentEl.innerHTML = items || "<li>—</li>";
 }
 
-// ─── Dettaglio cliente ───────────────────────────────
+/* ─── Dettaglio cliente ────────────────────────────── */
 function openDetail(cliente) {
   currentId = cliente.id;
   detailNome.textContent = cliente.nome || "";
@@ -189,12 +246,11 @@ function openDetail(cliente) {
   viewMode.style.display = "block";
   showModal(detailModal);
 
-  // carica statistiche senza toccare il resto
   caricaStatisticheCliente(cliente.id).catch(console.error);
 }
 closeDetail.onclick = () => closeModal(detailModal);
 
-// Elimina
+/* ─── Elimina / Modifica ───────────────────────────── */
 deleteBtn.onclick = async () => {
   if (!confirm("Elimina questo cliente?")) return;
   await deleteDoc(doc(db, "clienti", currentId));
@@ -202,7 +258,6 @@ deleteBtn.onclick = async () => {
   caricaClienti();
 };
 
-// Modifica
 editBtn.onclick = () => {
   viewMode.style.display = "none";
   editForm.classList.remove("hidden");
@@ -225,5 +280,5 @@ editForm.onsubmit = async e => {
   caricaClienti();
 };
 
-// ─── Avvio iniziale ──────────────────────────────────
+/* ─── Avvio ────────────────────────────────────────── */
 caricaClienti();
