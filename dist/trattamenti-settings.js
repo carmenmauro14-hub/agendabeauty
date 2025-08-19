@@ -122,7 +122,7 @@ async function caricaTrattamenti() {
 
   snapshot.forEach(docSnap => {
     const { nome, prezzo, icona } = docSnap.data();
-    const row = document.createElement("div");         // <-- div, non li
+    const row = document.createElement("div"); // div, non li
     row.classList.add("trattamento-item");
     row.dataset.id = docSnap.id;
 
@@ -140,11 +140,11 @@ async function caricaTrattamenti() {
     listaTrattamenti.appendChild(row);
   });
 
-  // ricalcola l'altezza disponibile ora che la lista è pronta
+  // ricalcola l'altezza disponibile ora che la lista è pronta (se presente)
   window.setListMaxHeight?.();
 }
 
-/* actions */
+/* actions (click) */
 listaTrattamenti.addEventListener("click", async e => {
   const row = e.target.closest(".trattamento-item");
   if (!row) return;
@@ -177,6 +177,48 @@ listaTrattamenti.addEventListener("click", async e => {
   }
 });
 
+/* accessibilità tastiera su icone azione */
+listaTrattamenti.addEventListener("keydown", async e => {
+  if (!e.target.matches('.btn-edit, .btn-delete')) return;
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  e.target.click();
+});
+
 /* init */
 mostraIcone(selettoreIcone, src => (inputIconaSelezionata.value = src));
 caricaTrattamenti();
+
+/* ===== feedback tap (iOS/Android/Web) =====
+   Aggiunge/rimuove la classe .is-tapped sugli elementi interattivi
+   per far vedere SUBITO l’effetto al tocco (anche su iPhone). */
+(function initTapFeedback(){
+  const SELECTOR_TAPPABLE = '.azioni-trattamento i, #btn-nuovo-trattamento, .bottoni-form button';
+
+  const addTap = (el) => el.classList.add('is-tapped');
+  const remTap = (el) => el.classList.remove('is-tapped');
+
+  document.addEventListener('pointerdown', (e) => {
+    const t = e.target.closest(SELECTOR_TAPPABLE);
+    if (!t) return;
+    addTap(t);
+  }, { passive: true });
+
+  document.addEventListener('pointerup', (e) => {
+    const t = e.target.closest(SELECTOR_TAPPABLE);
+    if (!t) return;
+    remTap(t);
+  }, { passive: true });
+
+  document.addEventListener('pointercancel', (e) => {
+    const t = e.target.closest(SELECTOR_TAPPABLE);
+    if (!t) return;
+    remTap(t);
+  }, { passive: true });
+
+  document.addEventListener('pointerleave', (e) => {
+    const t = e.target.closest(SELECTOR_TAPPABLE);
+    if (!t) return;
+    remTap(t);
+  }, { passive: true });
+})();
