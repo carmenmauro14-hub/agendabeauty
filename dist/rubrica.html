@@ -26,11 +26,11 @@
   </main>
 
   <!-- Modal Aggiungi Cliente -->
-  <div id="addModal" class="modal">
+  <div id="addModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <header>
         <h2>Nuovo Cliente</h2>
-        <button class="close" id="closeAddModal">&times;</button>
+        <button class="close" id="closeAddModal" aria-label="Chiudi">&times;</button>
       </header>
       <form id="addForm">
         <input id="addNome" type="text" placeholder="Nome cliente" required>
@@ -41,19 +41,32 @@
   </div>
 
   <!-- Modal Dettaglio Cliente -->
-  <div id="detailModal" class="modal">
+  <div id="detailModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <header>
         <h2 id="detailNome"></h2>
-        <button class="close" id="closeDetailModal">&times;</button>
+        <button class="close" id="closeDetailModal" aria-label="Chiudi">&times;</button>
       </header>
+
       <div id="viewMode">
         <p><strong>Telefono:</strong><br><span id="detailTelefono"></span></p>
+
+        <!-- ⬇️ NUOVA SEZIONE STATISTICHE -->
+        <div id="statsCliente" class="stats">
+          <p><strong>Totale appuntamenti:</strong> <span id="statTotale">—</span></p>
+          <p><strong>Ultimo appuntamento:</strong> <span id="statUltimo">—</span></p>
+          <p><strong>Totale speso:</strong> €<span id="statSpeso">0.00</span></p>
+          <p><strong>Appuntamenti per trattamento:</strong></p>
+          <ul id="statTop"><li>—</li></ul>
+        </div>
+        <!-- ⬆️ FINE SEZIONE STATISTICHE -->
+
         <div class="actions">
           <button id="editBtn" class="btn-secondary"><i class="fas fa-pen"></i> Modifica</button>
           <button id="deleteBtn" class="btn-danger"><i class="fas fa-trash"></i> Elimina</button>
         </div>
       </div>
+
       <form id="editForm" class="hidden">
         <input id="editNome" type="text" required>
         <input id="editTelefono" type="tel" required inputmode="numeric">
