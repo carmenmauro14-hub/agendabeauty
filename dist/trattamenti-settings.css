@@ -7,7 +7,12 @@ body {
   padding: 0;
 }
 
-.settings-container { padding: 20px; }
+.settings-container {
+  padding: 20px;
+  padding-bottom: calc(var(--nav-height, 60px) + 20px); /* spazio extra sotto la lista */
+  overflow-y: auto; /* abilita scroll verticale */
+  box-sizing: border-box;
+}
 
 .settings-title {
   font-size: 22px;
@@ -106,10 +111,7 @@ body {
   min-height: 44px;
   user-select: none;
 }
-
-/* Niente evidenziazione tap/click */
-.trattamento-item:active,
-.trattamento-item:focus { background: transparent; outline: none; }
+/* tolto hover di evidenziazione, non serve più */
 
 /* Colonna 1: icona + nome */
 .trattamento-info {
@@ -121,7 +123,7 @@ body {
 .icona-trattamento { width: 24px; height: 24px; opacity: .9; flex: 0 0 24px; }
 .nome-trattamento  { font-weight: bold; color: #a07863; line-height: 1.15; }
 
-/* Colonna 2: PREZZO */
+/* Colonna 2: prezzo */
 .prezzo-trattamento {
   justify-self: end;
   text-align: right;
@@ -132,7 +134,7 @@ body {
   padding-right: 6px;
 }
 
-/* Colonna 3: AZIONI (solo hover sulle icone) */
+/* Colonna 3: azioni */
 .azioni-trattamento {
   justify-self: end;
   display: inline-flex;
