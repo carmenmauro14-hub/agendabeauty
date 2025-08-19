@@ -244,3 +244,8 @@ form input::placeholder {
   margin: 6px 0 0;
   padding-left: 18px;
 }
+
+.year-filter { display:flex; align-items:center; gap:10px; margin:8px 0; }
+#yearSelect { padding:8px 12px; border:1px solid #e6d9d0; border-radius:10px; color:#a07863; background:#fff; font-size:15px; }
+#yearByTreatment { margin:6px 0 0; padding-left:18px; }
+#yearByTreatment li { margin:2px 0; }
