@@ -51,9 +51,21 @@
   </main>
 
   <script>
-    fetch("navbar.html").then(r => r.text()).then(html => {
-      document.getElementById("navbar-placeholder").innerHTML = html;
-    });
+    function aggiornaAltezzaNav() {
+      const nav = document.querySelector('.top-nav');
+      const h = nav ? nav.offsetHeight : 0;
+      document.documentElement.style.setProperty('--nav-height', h + 'px');
+    }
+
+    // Carico la navbar UNA volta sola e poi aggiorno l’altezza
+    fetch("navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-placeholder").innerHTML = html;
+        aggiornaAltezzaNav();
+        window.addEventListener('resize', aggiornaAltezzaNav);
+        window.addEventListener('orientationchange', aggiornaAltezzaNav);
+      });
   </script>
 
   <script src="navbar.js"></script>
