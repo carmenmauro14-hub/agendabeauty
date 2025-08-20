@@ -13,18 +13,19 @@
   <div id="navbar-placeholder"></div>
 
   <main class="cliente-page">
-    <!-- HEADER -->
+    <!-- HEADER pulito -->
     <header class="page-header">
-      <button class="back-btn" id="backBtn" aria-label="Indietro">
+      <button class="icon-btn" id="backBtn" aria-label="Indietro">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <h1 id="nomeCliente">Cliente</h1>
       <div class="header-actions">
-        <button class="link-btn" id="editBtnTop">Modifica</button>
+        <button class="icon-btn" id="editBtnTop" aria-label="Modifica">
+          <i class="fa-solid fa-pen"></i>
+        </button>
       </div>
     </header>
 
-    <!-- HERO -->
+    <!-- HERO con avatar / nome / telefono -->
     <section class="hero">
       <div class="avatar" id="avatarIniziali">AA</div>
       <div class="identity">
@@ -33,7 +34,7 @@
       </div>
     </section>
 
-    <!-- QUICK ACTIONS -->
+    <!-- QUICK ACTIONS (5) -->
     <section class="card quick-actions">
       <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
       <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
@@ -42,7 +43,7 @@
       <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
     </section>
 
-    <!-- INFO CARD -->
+    <!-- INFO -->
     <section class="card form-list">
       <div class="row">
         <div class="label">Cellulare</div>
@@ -81,16 +82,10 @@
       </div>
     </section>
 
-    <!-- STORICO APPUNTAMENTI -->
+    <!-- STORICO -->
     <section class="card history-card">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
-    </section>
-
-    <!-- AZIONI -->
-    <section class="actions-foot">
-      <button class="btn-secondary" id="editBtn"><i class="fa-solid fa-pen"></i> Modifica</button>
-      <button class="btn-danger" id="deleteBtn"><i class="fa-solid fa-trash"></i> Elimina</button>
     </section>
 
     <!-- EDIT SHEET -->
