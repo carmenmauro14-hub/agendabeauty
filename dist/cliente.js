@@ -16,7 +16,8 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 // ================== Utility ==================
-const € = (n) => Number(n || 0).toLocaleString("it-IT", { style:"currency", currency:"EUR" });
+const formatEuro = (n) =>
+  Number(n || 0).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
 
 function getClienteId() {
   const url = new URLSearchParams(location.search);
@@ -31,39 +32,39 @@ function safeDate(d) {
 }
 
 // ================== DOM ==================
-const backBtn       = document.getElementById("backBtn");
-const editBtnTop    = document.getElementById("editBtnTop");
+const backBtn        = document.getElementById("backBtn");
+const editBtnTop     = document.getElementById("editBtnTop");
 
-const avatarIniziali= document.getElementById("avatarIniziali");
-const displayName   = document.getElementById("displayName");
-const displayPhone  = document.getElementById("displayPhone");
-const infoPhone     = document.getElementById("infoPhone");
-const infoEmail     = document.getElementById("infoEmail");
-const rowEmail      = document.getElementById("rowEmail");
+const avatarIniziali = document.getElementById("avatarIniziali");
+const displayName    = document.getElementById("displayName");
+const displayPhone   = document.getElementById("displayPhone");
+const infoPhone      = document.getElementById("infoPhone");
+const infoEmail      = document.getElementById("infoEmail");
+const rowEmail       = document.getElementById("rowEmail");
 
-const yearSelect    = document.getElementById("yearSelect");
-const valAnno       = document.getElementById("valAnno");
-const valTotale     = document.getElementById("valTotale");
-const barAnno       = document.getElementById("barAnno");
-const barTotale     = document.getElementById("barTotale");
-const yearByTreatment = document.getElementById("yearByTreatment");
+const yearSelect     = document.getElementById("yearSelect");
+const valAnno        = document.getElementById("valAnno");
+const valTotale      = document.getElementById("valTotale");
+const barAnno        = document.getElementById("barAnno");
+const barTotale      = document.getElementById("barTotale");
+const yearByTreatment= document.getElementById("yearByTreatment");
 
-const historyList   = document.getElementById("historyList");
+const historyList    = document.getElementById("historyList");
 
-const editSheet     = document.getElementById("editSheet");
-const closeEdit     = document.getElementById("closeEdit");
-const editForm      = document.getElementById("editForm");
-const editNome      = document.getElementById("editNome");
-const editTelefono  = document.getElementById("editTelefono");
-const editEmail     = document.getElementById("editEmail");
-const cancelEdit    = document.getElementById("cancelEdit");
+const editSheet      = document.getElementById("editSheet");
+const closeEdit      = document.getElementById("closeEdit");
+const editForm       = document.getElementById("editForm");
+const editNome       = document.getElementById("editNome");
+const editTelefono   = document.getElementById("editTelefono");
+const editEmail      = document.getElementById("editEmail");
+const cancelEdit     = document.getElementById("cancelEdit");
 
 // Quick actions
-const btnSms        = document.getElementById("btnSms");
-const btnCall       = document.getElementById("btnCall");
-const btnWa         = document.getElementById("btnWa");
-const btnApp        = document.getElementById("btnApp");
-const btnRem        = document.getElementById("btnRem");
+const btnSms         = document.getElementById("btnSms");
+const btnCall        = document.getElementById("btnCall");
+const btnWa          = document.getElementById("btnWa");
+const btnApp         = document.getElementById("btnApp");
+const btnRem         = document.getElementById("btnRem");
 
 // ================== Stato ==================
 let clienteId   = null;
@@ -117,7 +118,6 @@ async function caricaCliente() {
   if (tel) {
     btnSms.href = `sms:${tel}`;
     btnCall.href = `tel:${tel}`;
-    // rimuovo spazi/simboli dal tel per wa.me
     const waNumber = tel.replace(/[^\d]/g, "");
     btnWa.href = `https://wa.me/${waNumber}`;
   } else {
@@ -178,13 +178,13 @@ async function caricaStoricoETotale() {
         <div class="h-date">${it.dt ? fmt.format(it.dt) : "—"}</div>
         <div class="h-tratt">${it.tratt}</div>
       </div>
-      <div class="h-amt">${€(it.prezzo)}</div>
+      <div class="h-amt">${formatEuro(it.prezzo)}</div>
     `;
     historyList.appendChild(li);
   });
 
   // Totale sempre
-  valTotale.textContent = €(totaleSempre);
+  valTotale.textContent = formatEuro(totaleSempre);
   barTotale.style.width = "100%";
 }
 
@@ -242,7 +242,7 @@ async function aggiornaStatistiche(anno) {
     });
   });
 
-  valAnno.textContent = €(totAnno);
+  valAnno.textContent = formatEuro(totAnno);
 
   // percentuale anno vs totale sempre
   const totalSempreNum = Number(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
@@ -257,7 +257,7 @@ async function aggiornaStatistiche(anno) {
     ? entries.map(([nome,v]) => `
         <li>
           <div class="qta-nome">${v.count} ${nome}</div>
-          <div class="totale">Tot. ${€(v.sum)}</div>
+          <div class="totale">Tot. ${formatEuro(v.sum)}</div>
         </li>
       `).join("")
     : "<li>—</li>";
