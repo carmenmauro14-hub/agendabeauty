@@ -19,16 +19,43 @@ const db  = getFirestore(app);
 const formatEuro = (n) =>
   Number(n || 0).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
 
-function getClienteId() {
-  const url = new URLSearchParams(location.search);
-  return url.get("id") || sessionStorage.getItem("clienteId") || null;
+function toNumberSafe(v){
+  if (v == null) return 0;
+  if (typeof v === "number" && isFinite(v)) return v;
+  if (typeof v === "string"){
+    const n = parseFloat(v.replace(/[€\s]/g,"").replace(",","."));
+    return isNaN(n) ? 0 : n;
+  }
+  return 0;
 }
+
 function safeDate(d) {
   if (!d) return null;
   if (d.toDate) return d.toDate();
   if (typeof d === "number") return new Date(d);
   if (typeof d === "string") return new Date(d);
   return d instanceof Date ? d : null;
+}
+
+/** Somma correttamente il totale appuntamento. */
+function getApptTotal(app){
+  // 1) se c'è una lista di trattamenti -> sommo i singoli prezzi
+  if (Array.isArray(app.trattamenti) && app.trattamenti.length){
+    return app.trattamenti.reduce((s,t)=>{
+      const p = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
+      return s + p;
+    },0);
+  }
+  // 2) altrimenti fallback a campi singoli
+  return toNumberSafe(app.prezzo ?? app.totale ?? app.price ?? app.costo);
+}
+
+/** Restituisce i nomi dei trattamenti dell'appuntamento (per lo storico). */
+function getApptNames(app){
+  if (Array.isArray(app.trattamenti) && app.trattamenti.length){
+    return app.trattamenti.map(t => (t?.nome || t?.titolo || t)).join(", ");
+  }
+  return app.trattamento || app.titolo || "";
 }
 
 // ================== DOM ==================
@@ -70,30 +97,28 @@ const btnRem         = document.getElementById("btnRem");
 let clienteId   = null;
 let clienteData = null;
 
+function getClienteId() {
+  const url = new URLSearchParams(location.search);
+  return url.get("id") || sessionStorage.getItem("clienteId") || null;
+}
+
 // ================== Caricamento Cliente ==================
 async function caricaCliente() {
   clienteId = getClienteId();
-  if (!clienteId) {
-    console.warn("Nessun id cliente nell’URL o in sessionStorage.");
-    return;
-  }
+  if (!clienteId) return;
 
   const ref  = doc(db, "clienti", clienteId);
   const snap = await getDoc(ref);
-  if (!snap.exists()) {
-    console.warn("Cliente non trovato:", clienteId);
-    return;
-  }
+  if (!snap.exists()) return;
+
   clienteData = snap.data();
 
-  // Nome, telefono, email
   const nome = clienteData.nome || "—";
   const tel  = (clienteData.telefono || "").toString().trim();
   const mail = (clienteData.email || "").toString().trim();
 
   displayName.textContent = nome;
   displayPhone.textContent = tel || "—";
-
   infoPhone.textContent = tel || "—";
   infoPhone.href = tel ? `tel:${tel}` : "#";
 
@@ -105,36 +130,21 @@ async function caricaCliente() {
     rowEmail.style.display = "none";
   }
 
-  // Avatar iniziali
-  const iniziali = nome
-    .split(" ")
-    .filter(Boolean)
-    .map(w => w[0].toUpperCase())
-    .slice(0,2)
-    .join("") || "AA";
+  const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
 
-  // Quick actions
   if (tel) {
     btnSms.href = `sms:${tel}`;
     btnCall.href = `tel:${tel}`;
-    const waNumber = tel.replace(/[^\d]/g, "");
-    btnWa.href = `https://wa.me/${waNumber}`;
+    btnWa.href   = `https://wa.me/${tel.replace(/[^\d]/g,"")}`;
   } else {
     btnSms.removeAttribute("href");
     btnCall.removeAttribute("href");
     btnWa.removeAttribute("href");
   }
-  // Nuovo appuntamento: passa id cliente
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
+  btnRem.onclick = (e)=>{ e.preventDefault(); alert("Promemoria WhatsApp: funzione in sviluppo."); };
 
-  // Promemoria (placeholder)
-  btnRem.onclick = (e) => {
-    e.preventDefault();
-    alert("Promemoria WhatsApp: funzione in sviluppo.");
-  };
-
-  // Storico + Statistiche
   await caricaStoricoETotale();
   await popolaAnniERender();
 }
@@ -150,23 +160,18 @@ async function caricaStoricoETotale() {
   let totaleSempre = 0;
 
   qs.forEach(s => {
-    const a = s.data();
-    const dt = safeDate(a.data || a.date || a.dateTime);
-    const tratt = Array.isArray(a.trattamenti)
-      ? a.trattamenti.map(t => (t?.nome || t)).join(", ")
-      : (a.trattamento || a.titolo || "");
-    const prezzo = Number(a.prezzo || a.totale || 0);
-
-    if (!isNaN(prezzo)) totaleSempre += prezzo;
+    const a   = s.data();
+    const dt  = safeDate(a.data || a.date || a.dateTime);
+    const tot = getApptTotal(a);
+    totaleSempre += tot;
 
     items.push({
       dt,
-      tratt: tratt || "—",
-      prezzo
+      tratt: getApptNames(a) || "—",
+      prezzo: tot
     });
   });
 
-  // Ordina per data desc
   items.sort((a,b) => (b.dt?.getTime?.()||0) - (a.dt?.getTime?.()||0));
 
   const fmt = new Intl.DateTimeFormat("it-IT", { day:"2-digit", month:"2-digit", year:"2-digit" });
@@ -183,14 +188,12 @@ async function caricaStoricoETotale() {
     historyList.appendChild(li);
   });
 
-  // Totale sempre
   valTotale.textContent = formatEuro(totaleSempre);
   barTotale.style.width = "100%";
 }
 
 // ================== Statistiche per anno ==================
 async function popolaAnniERender() {
-  // raccogli anni presenti
   const q  = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
   const qs = await getDocs(q);
   const anni = new Set();
@@ -202,14 +205,11 @@ async function popolaAnniERender() {
 
   const arr = [...anni].sort((a,b)=>b-a);
   const current = new Date().getFullYear();
-  yearSelect.innerHTML = (arr.length ? arr : [current])
-    .map(y => `<option value="${y}">${y}</option>`)
-    .join("");
-
+  yearSelect.innerHTML = (arr.length ? arr : [current]).map(y=>`<option value="${y}">${y}</option>`).join("");
   yearSelect.value = arr.includes(current) ? current : (arr[0] || current);
-  await aggiornaStatistiche(Number(yearSelect.value));
 
-  yearSelect.onchange = () => aggiornaStatistiche(Number(yearSelect.value));
+  await aggiornaStatistiche(Number(yearSelect.value));
+  yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
 }
 
 async function aggiornaStatistiche(anno) {
@@ -220,36 +220,37 @@ async function aggiornaStatistiche(anno) {
   const perTratt = {}; // nome -> {count, sum}
 
   qs.forEach(s => {
-    const a = s.data();
+    const a  = s.data();
     const dt = safeDate(a.data || a.date || a.dateTime);
     if (!dt || dt.getFullYear() !== anno) return;
 
-    // trattamenti (array o stringa singola)
-    let trattList = [];
-    if (Array.isArray(a.trattamenti)) {
-      trattList = a.trattamenti.map(t => (t?.nome || t?.titolo || t)).filter(Boolean);
-    } else if (a.trattamento || a.titolo) {
-      trattList = [a.trattamento || a.titolo];
+    // sommo il totale appuntamento all'anno
+    const apptTotal = getApptTotal(a);
+    totAnno += apptTotal;
+
+    // conteggio per trattamento (nome + prezzo singolo)
+    if (Array.isArray(a.trattamenti) && a.trattamenti.length){
+      a.trattamenti.forEach(t => {
+        const nome = t?.nome || t?.titolo || "Trattamento";
+        const p    = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
+        if (!perTratt[nome]) perTratt[nome] = {count:0, sum:0};
+        perTratt[nome].count += 1;
+        perTratt[nome].sum   += p;
+      });
+    } else if (a.trattamento || a.titolo){
+      const nome = a.trattamento || a.titolo;
+      if (!perTratt[nome]) perTratt[nome] = {count:0, sum:0};
+      perTratt[nome].count += 1;
+      perTratt[nome].sum   += apptTotal;
     }
-
-    const prezzo = Number(a.prezzo || a.totale || 0);
-    totAnno += isNaN(prezzo) ? 0 : prezzo;
-
-    trattList.forEach(n => {
-      if (!perTratt[n]) perTratt[n] = { count: 0, sum: 0 };
-      perTratt[n].count += 1;
-      perTratt[n].sum   += isNaN(prezzo) ? 0 : prezzo;
-    });
   });
 
   valAnno.textContent = formatEuro(totAnno);
 
-  // percentuale anno vs totale sempre
   const totalSempreNum = Number(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
   const perc = totalSempreNum > 0 ? Math.max(0, Math.min(100, (totAnno / totalSempreNum) * 100)) : 0;
   barAnno.style.width = `${perc.toFixed(0)}%`;
 
-  // lista per trattamento
   const entries = Object.entries(perTratt)
     .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum);
 
@@ -263,7 +264,7 @@ async function aggiornaStatistiche(anno) {
     : "<li>—</li>";
 }
 
-// ================== Header events ==================
+// ================== Header / Edit ==================
 backBtn.addEventListener("click", () => history.back());
 
 editBtnTop.addEventListener("click", () => {
@@ -274,7 +275,6 @@ editBtnTop.addEventListener("click", () => {
   editSheet.classList.remove("hidden");
 });
 
-// ================== Edit form ==================
 closeEdit.addEventListener("click", () => editSheet.classList.add("hidden"));
 cancelEdit.addEventListener("click", () => editSheet.classList.add("hidden"));
 
