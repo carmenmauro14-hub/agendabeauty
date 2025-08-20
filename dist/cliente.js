@@ -1,242 +1,255 @@
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, getDocs, getDoc, doc, setDoc, deleteDoc, query, where
+  getFirestore, doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* Firebase */
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = getFirestore(getApp());
 
-/* DOM */
-const h1Nome = document.getElementById("nomeCliente");
-const avatar = document.getElementById("avatarIniziali");
+// === ELEMENTI DOM ===
+const backBtn = document.getElementById("backBtn");
+const editBtnTop = document.getElementById("editBtnTop");
+
+const avatarIniziali = document.getElementById("avatarIniziali");
 const displayName = document.getElementById("displayName");
 const displayPhone = document.getElementById("displayPhone");
-
 const infoPhone = document.getElementById("infoPhone");
 const infoEmail = document.getElementById("infoEmail");
-const rowEmail  = document.getElementById("rowEmail");
-
-const btnSms = document.getElementById("btnSms");
-const btnCall = document.getElementById("btnCall");
-const btnWa   = document.getElementById("btnWa");
-const btnMail = document.getElementById("btnMail");
+const rowEmail = document.getElementById("rowEmail");
 
 const yearSelect = document.getElementById("yearSelect");
-const valAnnoEl  = document.getElementById("valAnno");
-const valTotEl   = document.getElementById("valTotale");
-const barAnno    = document.getElementById("barAnno");
-const barTotale  = document.getElementById("barTotale");
-const byTreatmentEl = document.getElementById("yearByTreatment");
+const valAnno = document.getElementById("valAnno");
+const valTotale = document.getElementById("valTotale");
+const barAnno = document.getElementById("barAnno");
+const barTotale = document.getElementById("barTotale");
+const yearByTreatment = document.getElementById("yearByTreatment");
+
 const historyList = document.getElementById("historyList");
 
-const editBtnTop = document.getElementById("editBtnTop");
-const editBtn    = document.getElementById("editBtn");
-const deleteBtn  = document.getElementById("deleteBtn");
-const backBtn    = document.getElementById("backBtn");
-
-const editSheet  = document.getElementById("editSheet");
-const closeEdit  = document.getElementById("closeEdit");
+const editSheet = document.getElementById("editSheet");
+const closeEdit = document.getElementById("closeEdit");
+const editForm = document.getElementById("editForm");
+const editNome = document.getElementById("editNome");
+const editTelefono = document.getElementById("editTelefono");
+const editEmail = document.getElementById("editEmail");
 const cancelEdit = document.getElementById("cancelEdit");
-const editForm   = document.getElementById("editForm");
-const editNome   = document.getElementById("editNome");
-const editTel    = document.getElementById("editTelefono");
-const editEmail  = document.getElementById("editEmail");
 
-/* Helpers */
-const qs = new URLSearchParams(location.search);
-const id = qs.get("id");
+// Bottoni quick actions
+const btnSms = document.getElementById("btnSms");
+const btnCall = document.getElementById("btnCall");
+const btnWa = document.getElementById("btnWa");
+const btnApp = document.getElementById("btnApp");
+const btnRem = document.getElementById("btnRem");
 
-function formatEuro(n){return Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"})}
-function toNumberSafe(v){
-  if (v == null) return 0;
-  if (typeof v === "number" && isFinite(v)) return v;
-  if (typeof v === "string") {
-    const clean = v.replace(/[€\s]/g,"").replace(",",".");
-    const n = parseFloat(clean); return isNaN(n) ? 0 : n;
-  }
-  return 0;
-}
-function toDateSafe(v){
-  if (!v) return null;
-  if (v instanceof Date) return v;
-  if (typeof v?.toDate === "function") return v.toDate();
-  if (typeof v === "number") return new Date(v);
-  if (typeof v === "string") return new Date(v);
-  return null;
-}
-function initialsFromName(n=""){
-  const parts = n.trim().split(/\s+/).slice(0,2);
-  return parts.map(p=>p[0]?.toUpperCase()||"").join("") || "AA";
+// === DATI ===
+let clienteId = null;
+let clienteData = null;
+
+// === FUNZIONI ===
+function getQueryParam(param) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
 }
 
-/* Load */
-(async function init(){
-  if (!id){ history.back(); return; }
+async function caricaCliente() {
+  clienteId = getQueryParam("id");
+  if (!clienteId) return;
 
-  // Cliente
-  const snap = await getDoc(doc(db,"clienti",id));
-  if (!snap.exists()){ history.back(); return; }
-  const cliente = { id, ...snap.data() };
+  const ref = doc(db, "clienti", clienteId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
 
-  // UI base
-  const nome = cliente.nome || "Cliente";
-  const tel  = (cliente.telefono || "").toString().trim();
-  const mail = (cliente.email || "").toString().trim();
+  clienteData = snap.data();
 
-  h1Nome.textContent = nome;
-  displayName.textContent = nome;
-  avatar.textContent = initialsFromName(nome);
-  displayPhone.textContent = tel || "—";
+  // Mostra dati
+  displayName.textContent = clienteData.nome || "—";
+  displayPhone.textContent = clienteData.telefono || "—";
 
-  // Azioni rapide
-  if (tel){
-    const telPlain = tel.replace(/\D+/g,"");
-    infoPhone.textContent = tel;
-    infoPhone.href = `tel:${telPlain}`;
-    btnSms.href  = `sms:${telPlain}`;
-    btnCall.href = `tel:${telPlain}`;
-    btnWa.href   = `https://wa.me/${telPlain}`;
-  } else {
-    infoPhone.textContent = "—";
-    infoPhone.removeAttribute("href");
-    btnSms.href = btnCall.href = btnWa.href = "#";
-  }
+  infoPhone.href = "tel:" + (clienteData.telefono || "");
+  infoPhone.textContent = clienteData.telefono || "—";
 
-  if (mail){
+  if (clienteData.email) {
     rowEmail.style.display = "";
-    infoEmail.textContent = mail;
-    infoEmail.href = `mailto:${mail}`;
-    btnMail.href = `mailto:${mail}`;
+    infoEmail.textContent = clienteData.email;
+    infoEmail.href = "mailto:" + clienteData.email;
   } else {
     rowEmail.style.display = "none";
-    btnMail.href = "#";
   }
 
-  // Appuntamenti del cliente
-  const q = query(collection(db,"appuntamenti"), where("clienteId","==",id));
-  const apptsSnap = await getDocs(q);
-  const appts = apptsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  // Avatar iniziali
+  avatarIniziali.textContent = (clienteData.nome || "??")
+    .split(" ")
+    .map(w => w.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join("");
 
-  // Statistiche: anni disponibili + lifetime
-  const yearsSet = new Set();
-  let lifetime = 0;
-  appts.forEach(a=>{
-    const dt = toDateSafe(a.data || a.date || a.dateTime);
-    if (dt) yearsSet.add(dt.getFullYear());
-    const tratt = Array.isArray(a.trattamenti)? a.trattamenti : [];
-    lifetime += tratt.reduce((s,t)=>s + toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price),0);
+  // Imposta quick actions
+  if (clienteData.telefono) {
+    btnSms.href = `sms:${clienteData.telefono}`;
+    btnCall.href = `tel:${clienteData.telefono}`;
+    btnWa.href = `https://wa.me/${clienteData.telefono}`;
+  } else {
+    btnSms.removeAttribute("href");
+    btnCall.removeAttribute("href");
+    btnWa.removeAttribute("href");
+  }
+
+  // (Nuovo App.) → già ha href a nuovo-appuntamento.html, ma possiamo passare id cliente
+  btnApp.href = `nuovo-appuntamento.html?cliente=${clienteId}`;
+
+  // Promemoria (non implementato ancora)
+  btnRem.addEventListener("click", () => {
+    alert("Funzione promemoria WhatsApp in sviluppo");
   });
-  valTotEl.textContent = formatEuro(lifetime);
 
-  const years = Array.from(yearsSet).sort((a,b)=>b-a);
-  const currentYear = new Date().getFullYear();
-  yearSelect.innerHTML = years.length
-    ? years.map(y=>`<option value="${y}">${y}</option>`).join("")
-    : `<option value="${currentYear}">${currentYear}</option>`;
-  if (years.includes(currentYear)) yearSelect.value = String(currentYear);
+  // Carica storico e statistiche
+  await caricaStorico();
+  popolaAnni();
+}
 
-  function renderYear(y){
-    // per anno
-    const freq = {};
-    let yearTotal = 0;
+async function caricaStorico() {
+  historyList.innerHTML = "";
 
-    appts.forEach(a=>{
-      const dt = toDateSafe(a.data || a.date || a.dateTime);
-      if (!dt || dt.getFullYear() !== y) return;
-      const tratt = Array.isArray(a.trattamenti)? a.trattamenti : [];
-      tratt.forEach(t=>{
-        const nome = t?.nome || t?.titolo || t?.trattamento || "Trattamento";
-        const prezzo = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
-        yearTotal += prezzo;
-        if (!freq[nome]) freq[nome] = {count:0, spend:0};
-        freq[nome].count += 1;
-        freq[nome].spend += prezzo;
-      });
-    });
+  const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+  const qs = await getDocs(q);
 
-    valAnnoEl.textContent = formatEuro(yearTotal);
+  let totaleSempre = 0;
+  let appuntamenti = [];
 
-    // barre proporzionali
-    const maxVal = Math.max(yearTotal, lifetime, 1);
-    barAnno.style.width   = `${Math.round((yearTotal/maxVal)*100)}%`;
-    barTotale.style.width = `${Math.round((lifetime/maxVal)*100)}%`;
+  qs.forEach(docSnap => {
+    const data = docSnap.data();
+    appuntamenti.push(data);
 
-    // lista per trattamento stile "2 Microblading   Tot. € 700,00"
-    const items = Object.entries(freq)
-      .sort((a,b)=> b[1].count - a[1].count || b[1].spend - a[1].spend)
-      .map(([nome,v])=>`
-        <li><span class="qta-nome">${v.count} ${nome}</span>
-            <span class="totale">Tot. ${formatEuro(v.spend)}</span></li>
-      `).join("");
-    byTreatmentEl.innerHTML = items || "<li>—</li>";
+    if (data.prezzo) totaleSempre += Number(data.prezzo);
+  });
+
+  // Ordina per data discendente
+  appuntamenti.sort((a,b) => (b.data?.seconds||0) - (a.data?.seconds||0));
+
+  appuntamenti.forEach(app => {
+    const li = document.createElement("li");
+
+    const dataObj = app.data?.toDate ? app.data.toDate() : null;
+    const dataStr = dataObj
+      ? dataObj.toLocaleDateString("it-IT", { day:"2-digit", month:"2-digit", year:"2-digit" })
+      : "—";
+
+    const tratt = Array.isArray(app.trattamenti) ? app.trattamenti.join(", ") : (app.trattamento || "");
+    const prezzo = app.prezzo ? `€ ${Number(app.prezzo).toFixed(2)}` : "";
+
+    li.innerHTML = `
+      <div>
+        <div class="h-date">${dataStr}</div>
+        <div class="h-tratt">${tratt}</div>
+      </div>
+      <div class="h-amt">${prezzo}</div>
+    `;
+    historyList.appendChild(li);
+  });
+
+  // Totale di sempre
+  valTotale.textContent = `€ ${totaleSempre.toFixed(2)}`;
+  barTotale.style.width = "100%"; // sempre pieno come baseline
+}
+
+function popolaAnni() {
+  const annoCorrente = new Date().getFullYear();
+  yearSelect.innerHTML = "";
+
+  for (let a = annoCorrente; a >= annoCorrente - 5; a--) {
+    const opt = document.createElement("option");
+    opt.value = a;
+    opt.textContent = a;
+    yearSelect.appendChild(opt);
   }
 
-  renderYear(Number(yearSelect.value || currentYear));
-  yearSelect.onchange = () => renderYear(Number(yearSelect.value));
+  yearSelect.value = annoCorrente;
+  aggiornaStatistiche(annoCorrente);
 
-  // Storico appuntamenti (ultimi per primi)
-  const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"short",year:"numeric"});
-  const hist = appts
-    .map(a=>{
-      const dt = toDateSafe(a.data || a.date || a.dateTime);
-      const tratt = Array.isArray(a.trattamenti)? a.trattamenti : [];
-      const names = tratt.map(t=>t?.nome || t?.titolo || t?.trattamento).filter(Boolean).join(", ");
-      const total = tratt.reduce((s,t)=>s + toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price),0);
-      return { dt, names, total };
-    })
-    .filter(x=>x.dt)
-    .sort((a,b)=> b.dt - a.dt);
+  yearSelect.addEventListener("change", () => {
+    aggiornaStatistiche(Number(yearSelect.value));
+  });
+}
 
-  historyList.innerHTML = hist.map(h=>`
-      <li>
-        <div>
-          <div class="h-date">${fmt.format(h.dt)}</div>
-          <div class="h-tratt">${namesOrDash(h.names)}</div>
-        </div>
-        <div class="h-amt">${formatEuro(h.total)}</div>
-      </li>
-  `).join("");
+async function aggiornaStatistiche(anno) {
+  if (!clienteId) return;
 
-  function namesOrDash(s){ return s && s.trim() ? s : "—"; }
+  const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+  const qs = await getDocs(q);
 
-  /* Edit/Delete */
-  function openEdit(){
-    editNome.value = nome;
-    editTel.value  = tel;
-    editEmail.value= mail || "";
-    editSheet.classList.remove("hidden");
+  let totaleAnno = 0;
+  let perTratt = {};
+
+  qs.forEach(docSnap => {
+    const app = docSnap.data();
+    if (!app.data?.toDate) return;
+
+    const d = app.data.toDate();
+    if (d.getFullYear() === anno) {
+      if (app.prezzo) totaleAnno += Number(app.prezzo);
+
+      if (Array.isArray(app.trattamenti)) {
+        app.trattamenti.forEach(t => {
+          perTratt[t] = (perTratt[t] || 0) + Number(app.prezzo || 0);
+        });
+      } else if (app.trattamento) {
+        perTratt[app.trattamento] = (perTratt[app.trattamento] || 0) + Number(app.prezzo || 0);
+      }
+    }
+  });
+
+  valAnno.textContent = `€ ${totaleAnno.toFixed(2)}`;
+  // barra: percentuale rispetto al totale di sempre
+  const totaleSempre = parseFloat(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
+  let perc = totaleSempre > 0 ? (totaleAnno / totaleSempre) * 100 : 0;
+  barAnno.style.width = perc.toFixed(0) + "%";
+
+  // Dettaglio per trattamento
+  yearByTreatment.innerHTML = "";
+  if (Object.keys(perTratt).length === 0) {
+    yearByTreatment.innerHTML = "<li>—</li>";
+  } else {
+    for (let [nome, spesa] of Object.entries(perTratt)) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="qta-nome">${nome}</div>
+        <div class="totale">€ ${spesa.toFixed(2)}</div>
+      `;
+      yearByTreatment.appendChild(li);
+    }
   }
-  function closeEditSheet(){ editSheet.classList.add("hidden"); }
+}
 
-  editBtnTop.onclick = openEdit;
-  editBtn.onclick    = openEdit;
-  cancelEdit.onclick = closeEditSheet;
-  closeEdit.onclick  = closeEditSheet;
+// === EVENTI HEADER ===
+backBtn.addEventListener("click", () => {
+  window.history.back();
+});
 
-  editForm.onsubmit = async (e)=>{
-    e.preventDefault();
-    await setDoc(doc(db,"clienti",id), {
-      nome: editNome.value.trim(),
-      telefono: editTel.value.trim(),
-      email: editEmail.value.trim()
-    }, { merge:true });
-    location.reload();
-  };
+editBtnTop.addEventListener("click", () => {
+  if (!clienteData) return;
+  editNome.value = clienteData.nome || "";
+  editTelefono.value = clienteData.telefono || "";
+  editEmail.value = clienteData.email || "";
+  editSheet.classList.remove("hidden");
+});
 
-  deleteBtn.onclick = async ()=>{
-    if (!confirm("Eliminare questo cliente?")) return;
-    await deleteDoc(doc(db,"clienti",id));
-    location.href = "rubrica.html";
-  };
+// === EDIT FORM ===
+closeEdit.addEventListener("click", () => editSheet.classList.add("hidden"));
+cancelEdit.addEventListener("click", () => editSheet.classList.add("hidden"));
 
-  backBtn.onclick = ()=> history.back();
-})();
+editForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!clienteId) return;
+
+  const ref = doc(db, "clienti", clienteId);
+  await updateDoc(ref, {
+    nome: editNome.value.trim(),
+    telefono: editTelefono.value.trim(),
+    email: editEmail.value.trim()
+  });
+
+  editSheet.classList.add("hidden");
+  caricaCliente();
+});
+
+// === AVVIO ===
+caricaCliente();
