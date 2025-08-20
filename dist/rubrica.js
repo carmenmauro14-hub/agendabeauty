@@ -1,7 +1,6 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs,
-  doc, deleteDoc, setDoc
+  getFirestore, collection, addDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── Firebase ────────────────────────────────────────
@@ -13,41 +12,25 @@ const firebaseConfig = {
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
-
-// ✅ Protezione contro doppia inizializzazione
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
+const db  = getFirestore(app);
 
 // ─── Elementi DOM ────────────────────────────────────
-const clientList     = document.getElementById("clientList");
-const letterNav      = document.getElementById("letterNav");
-const searchInput    = document.getElementById("searchInput");
-const openAddModal   = document.getElementById("openAddModal");
-const addModal       = document.getElementById("addModal");
-const closeAddModal  = document.getElementById("closeAddModal");
-const addForm        = document.getElementById("addForm");
-const addNome        = document.getElementById("addNome");
-const addTelefono    = document.getElementById("addTelefono");
+const clientList   = document.getElementById("clientList");
+const letterNav    = document.getElementById("letterNav");
+const searchInput  = document.getElementById("searchInput");
+const openAddModal = document.getElementById("openAddModal");
+const addModal     = document.getElementById("addModal");
+const closeAddModal= document.getElementById("closeAddModal");
+const addForm      = document.getElementById("addForm");
+const addNome      = document.getElementById("addNome");
+const addTelefono  = document.getElementById("addTelefono");
 
-const detailModal    = document.getElementById("detailModal");
-const closeDetail    = document.getElementById("closeDetailModal");
-const detailNome     = document.getElementById("detailNome");
-const detailTelefono = document.getElementById("detailTelefono");
-const editBtn        = document.getElementById("editBtn");
-const deleteBtn      = document.getElementById("deleteBtn");
-const editForm       = document.getElementById("editForm");
-const editNome       = document.getElementById("editNome");
-const editTelefono   = document.getElementById("editTelefono");
-const cancelEdit     = document.getElementById("cancelEdit");
-const viewMode       = document.getElementById("viewMode");
-
-let currentId = null;
-
-// ─── Helper: apri/chiudi modal ───────────────────────
+// ─── Helper: modal ───────────────────────────────────
 function showModal(m) { m.style.display = "flex"; }
-function closeModal(m) { m.style.display = "none"; }
+function closeModal(m){ m.style.display = "none"; }
 
-// ─── Load & render rubrica ───────────────────────────
+// ─── Carica & render rubrica ─────────────────────────
 async function caricaClienti() {
   const snapshot = await getDocs(collection(db, "clienti"));
   const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -57,8 +40,8 @@ async function caricaClienti() {
 function renderList(clienti) {
   const groups = {};
   clienti.forEach(c => {
-    const L = c.nome.charAt(0).toUpperCase();
-    (groups[L] = groups[L]||[]).push(c);
+    const L = (c.nome || "").charAt(0).toUpperCase() || "#";
+    (groups[L] = groups[L] || []).push(c);
   });
 
   clientList.innerHTML = "";
@@ -66,16 +49,23 @@ function renderList(clienti) {
     const sec = document.createElement("li");
     sec.textContent = L;
     sec.className = "section";
-    sec.id = "letter-"+L;
+    sec.id = "letter-" + L;
     clientList.appendChild(sec);
-    groups[L].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(c => {
-      const li = document.createElement("li");
-      li.textContent = `${c.nome}`;
-      li.className = "item";
-      li.onclick = () => openDetail(c);
-      clientList.appendChild(li);
-    });
+
+    groups[L]
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""))
+      .forEach(c => {
+        const li = document.createElement("li");
+        li.textContent = `${c.nome}`;
+        li.className = "item";
+        li.onclick = () => {
+          // ➜ Apri la pagina stile rubrica iPhone
+          location.href = `cliente.html?id=${c.id}`;
+        };
+        clientList.appendChild(li);
+      });
   });
+
   renderLetterNav(Object.keys(groups).sort());
 }
 
@@ -85,13 +75,14 @@ function renderLetterNav(letters) {
     const el = document.createElement("span");
     el.textContent = L;
     el.onclick = () => {
-      const target = document.getElementById("letter-"+L);
-      target && target.scrollIntoView({behavior:"smooth"});
+      const target = document.getElementById("letter-" + L);
+      target && target.scrollIntoView({ behavior: "smooth" });
     };
     letterNav.appendChild(el);
   });
 }
 
+// ─── Ricerca live ────────────────────────────────────
 searchInput.oninput = () => {
   const f = searchInput.value.toLowerCase();
   letterNav.style.display = f ? "none" : "flex";
@@ -112,15 +103,12 @@ searchInput.oninput = () => {
 };
 
 // ─── Aggiungi cliente ────────────────────────────────
-openAddModal.onclick = () => {
-  addForm.reset();
-  showModal(addModal);
-};
+openAddModal.onclick = () => { addForm.reset(); showModal(addModal); };
 closeAddModal.onclick = () => closeModal(addModal);
 
 addForm.onsubmit = async e => {
   e.preventDefault();
-  await addDoc(collection(db,"clienti"), {
+  await addDoc(collection(db, "clienti"), {
     nome: addNome.value.trim(),
     telefono: addTelefono.value.trim()
   });
@@ -128,47 +116,5 @@ addForm.onsubmit = async e => {
   caricaClienti();
 };
 
-// ─── Dettaglio cliente ───────────────────────────────
-function openDetail(cliente) {
-  currentId = cliente.id;
-  detailNome.textContent = cliente.nome;
-  detailTelefono.textContent = cliente.telefono;
-  editForm.classList.add("hidden");
-  viewMode.style.display = "block";
-  showModal(detailModal);
-}
-closeDetail.onclick = () => closeModal(detailModal);
-
-// Elimina
-deleteBtn.onclick = async () => {
-  if (!confirm("Elimina questo cliente?")) return;
-  await deleteDoc(doc(db,"clienti",currentId));
-  closeModal(detailModal);
-  caricaClienti();
-};
-
-// Modifica
-editBtn.onclick = () => {
-  viewMode.style.display = "none";
-  editForm.classList.remove("hidden");
-  editNome.value = detailNome.textContent;
-  editTelefono.value = detailTelefono.textContent;
-};
-
-cancelEdit.onclick = () => {
-  editForm.classList.add("hidden");
-  viewMode.style.display = "block";
-};
-
-editForm.onsubmit = async e => {
-  e.preventDefault();
-  await setDoc(doc(db,"clienti",currentId), {
-    nome: editNome.value.trim(),
-    telefono: editTelefono.value.trim()
-  });
-  closeModal(detailModal);
-  caricaClienti();
-};
-
-// ─── Avvio iniziale ──────────────────────────────────
+// ─── Avvio ───────────────────────────────────────────
 caricaClienti();
