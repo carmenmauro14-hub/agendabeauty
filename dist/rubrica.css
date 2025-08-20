@@ -224,7 +224,6 @@ button i {
   display: none;
 }
 
-/* Placeholder coerente */
 .top-bar input::placeholder,
 form input::placeholder {
   color: #a07863;
@@ -242,10 +241,36 @@ form input::placeholder {
 
 .stats ul {
   margin: 6px 0 0;
-  padding-left: 18px;
+  padding-left: 0;
+  list-style: none;
 }
 
-.year-filter { display:flex; align-items:center; gap:10px; margin:8px 0; }
-#yearSelect { padding:8px 12px; border:1px solid #e6d9d0; border-radius:10px; color:#a07863; background:#fff; font-size:15px; }
-#yearByTreatment { margin:6px 0 0; padding-left:18px; }
-#yearByTreatment li { margin:2px 0; }
+/* Stile righe trattamenti */
+#yearByTreatment .riga-trattamento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #e6d9d0;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 6px;
+}
+#yearByTreatment .qta-nome {
+  font-weight: 600;
+  color: #a07863;
+}
+#yearByTreatment .totale {
+  font-weight: 700;
+  color: #a07863;
+}
+
+/* Bottoni azioni più distanziati */
+#detailModal .actions {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid #e6d9d0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
