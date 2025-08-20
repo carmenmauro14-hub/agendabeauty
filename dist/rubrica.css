@@ -224,6 +224,7 @@ button i {
   display: none;
 }
 
+/* (Selezori duplicati presenti in originale mantenuti) */
 #clientList,
 #clientListPicker {
   list-style: none;
