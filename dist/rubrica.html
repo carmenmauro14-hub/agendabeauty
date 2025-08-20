@@ -26,11 +26,11 @@
   </main>
 
   <!-- Modal Aggiungi Cliente -->
-  <div id="addModal" class="modal" aria-hidden="true">
+  <div id="addModal" class="modal">
     <div class="modal-content">
       <header>
         <h2>Nuovo Cliente</h2>
-        <button class="close" id="closeAddModal" aria-label="Chiudi">&times;</button>
+        <button class="close" id="closeAddModal">&times;</button>
       </header>
       <form id="addForm">
         <input id="addNome" type="text" placeholder="Nome cliente" required>
@@ -41,37 +41,19 @@
   </div>
 
   <!-- Modal Dettaglio Cliente -->
-  <div id="detailModal" class="modal" aria-hidden="true">
+  <div id="detailModal" class="modal">
     <div class="modal-content">
       <header>
         <h2 id="detailNome"></h2>
-        <button class="close" id="closeDetailModal" aria-label="Chiudi">&times;</button>
+        <button class="close" id="closeDetailModal">&times;</button>
       </header>
-
       <div id="viewMode">
         <p><strong>Telefono:</strong><br><span id="detailTelefono"></span></p>
-
-        <!-- 🔎 STATISTICHE -->
-        <div id="statsCliente" class="stats">
-          <div class="year-filter">
-            <label for="yearSelect"><strong>Anno:</strong></label>
-            <select id="yearSelect"></select>
-          </div>
-
-          <p><strong>Trattamenti nell’anno:</strong> <span id="yearTreatmentsCount">0</span></p>
-          <p><strong>Spesa nell’anno:</strong> €<span id="yearSpent">0,00</span></p>
-          <p><strong>Totale speso (sempre):</strong> €<span id="lifetimeSpent">0,00</span></p>
-
-          <p style="margin-top:10px;"><strong>Dettaglio per trattamento (anno):</strong></p>
-          <ul id="yearByTreatment"><li>—</li></ul>
-        </div>
-
         <div class="actions">
           <button id="editBtn" class="btn-secondary"><i class="fas fa-pen"></i> Modifica</button>
           <button id="deleteBtn" class="btn-danger"><i class="fas fa-trash"></i> Elimina</button>
         </div>
       </div>
-
       <form id="editForm" class="hidden">
         <input id="editNome" type="text" required>
         <input id="editTelefono" type="tel" required inputmode="numeric">
