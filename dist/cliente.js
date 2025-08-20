@@ -1,255 +1,295 @@
-import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// ================== Firebase setup (autonomo) ==================
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where
+  getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const db = getFirestore(getApp());
+const firebaseConfig = {
+  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
+  authDomain: "agenda-carmenmauro.firebaseapp.com",
+  projectId: "agenda-carmenmauro",
+  storageBucket: "agenda-carmenmauro.appspot.com",
+  messagingSenderId: "959324976221",
+  appId: "1:959324976221:web:780c8e9195965cea0749b4"
+};
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db  = getFirestore(app);
 
-// === ELEMENTI DOM ===
-const backBtn = document.getElementById("backBtn");
-const editBtnTop = document.getElementById("editBtnTop");
+// ================== Utility ==================
+const € = (n) => Number(n || 0).toLocaleString("it-IT", { style:"currency", currency:"EUR" });
 
-const avatarIniziali = document.getElementById("avatarIniziali");
-const displayName = document.getElementById("displayName");
-const displayPhone = document.getElementById("displayPhone");
-const infoPhone = document.getElementById("infoPhone");
-const infoEmail = document.getElementById("infoEmail");
-const rowEmail = document.getElementById("rowEmail");
-
-const yearSelect = document.getElementById("yearSelect");
-const valAnno = document.getElementById("valAnno");
-const valTotale = document.getElementById("valTotale");
-const barAnno = document.getElementById("barAnno");
-const barTotale = document.getElementById("barTotale");
-const yearByTreatment = document.getElementById("yearByTreatment");
-
-const historyList = document.getElementById("historyList");
-
-const editSheet = document.getElementById("editSheet");
-const closeEdit = document.getElementById("closeEdit");
-const editForm = document.getElementById("editForm");
-const editNome = document.getElementById("editNome");
-const editTelefono = document.getElementById("editTelefono");
-const editEmail = document.getElementById("editEmail");
-const cancelEdit = document.getElementById("cancelEdit");
-
-// Bottoni quick actions
-const btnSms = document.getElementById("btnSms");
-const btnCall = document.getElementById("btnCall");
-const btnWa = document.getElementById("btnWa");
-const btnApp = document.getElementById("btnApp");
-const btnRem = document.getElementById("btnRem");
-
-// === DATI ===
-let clienteId = null;
-let clienteData = null;
-
-// === FUNZIONI ===
-function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+function getClienteId() {
+  const url = new URLSearchParams(location.search);
+  return url.get("id") || sessionStorage.getItem("clienteId") || null;
+}
+function safeDate(d) {
+  if (!d) return null;
+  if (d.toDate) return d.toDate();
+  if (typeof d === "number") return new Date(d);
+  if (typeof d === "string") return new Date(d);
+  return d instanceof Date ? d : null;
 }
 
+// ================== DOM ==================
+const backBtn       = document.getElementById("backBtn");
+const editBtnTop    = document.getElementById("editBtnTop");
+
+const avatarIniziali= document.getElementById("avatarIniziali");
+const displayName   = document.getElementById("displayName");
+const displayPhone  = document.getElementById("displayPhone");
+const infoPhone     = document.getElementById("infoPhone");
+const infoEmail     = document.getElementById("infoEmail");
+const rowEmail      = document.getElementById("rowEmail");
+
+const yearSelect    = document.getElementById("yearSelect");
+const valAnno       = document.getElementById("valAnno");
+const valTotale     = document.getElementById("valTotale");
+const barAnno       = document.getElementById("barAnno");
+const barTotale     = document.getElementById("barTotale");
+const yearByTreatment = document.getElementById("yearByTreatment");
+
+const historyList   = document.getElementById("historyList");
+
+const editSheet     = document.getElementById("editSheet");
+const closeEdit     = document.getElementById("closeEdit");
+const editForm      = document.getElementById("editForm");
+const editNome      = document.getElementById("editNome");
+const editTelefono  = document.getElementById("editTelefono");
+const editEmail     = document.getElementById("editEmail");
+const cancelEdit    = document.getElementById("cancelEdit");
+
+// Quick actions
+const btnSms        = document.getElementById("btnSms");
+const btnCall       = document.getElementById("btnCall");
+const btnWa         = document.getElementById("btnWa");
+const btnApp        = document.getElementById("btnApp");
+const btnRem        = document.getElementById("btnRem");
+
+// ================== Stato ==================
+let clienteId   = null;
+let clienteData = null;
+
+// ================== Caricamento Cliente ==================
 async function caricaCliente() {
-  clienteId = getQueryParam("id");
-  if (!clienteId) return;
+  clienteId = getClienteId();
+  if (!clienteId) {
+    console.warn("Nessun id cliente nell’URL o in sessionStorage.");
+    return;
+  }
 
-  const ref = doc(db, "clienti", clienteId);
+  const ref  = doc(db, "clienti", clienteId);
   const snap = await getDoc(ref);
-  if (!snap.exists()) return;
-
+  if (!snap.exists()) {
+    console.warn("Cliente non trovato:", clienteId);
+    return;
+  }
   clienteData = snap.data();
 
-  // Mostra dati
-  displayName.textContent = clienteData.nome || "—";
-  displayPhone.textContent = clienteData.telefono || "—";
+  // Nome, telefono, email
+  const nome = clienteData.nome || "—";
+  const tel  = (clienteData.telefono || "").toString().trim();
+  const mail = (clienteData.email || "").toString().trim();
 
-  infoPhone.href = "tel:" + (clienteData.telefono || "");
-  infoPhone.textContent = clienteData.telefono || "—";
+  displayName.textContent = nome;
+  displayPhone.textContent = tel || "—";
 
-  if (clienteData.email) {
+  infoPhone.textContent = tel || "—";
+  infoPhone.href = tel ? `tel:${tel}` : "#";
+
+  if (mail) {
     rowEmail.style.display = "";
-    infoEmail.textContent = clienteData.email;
-    infoEmail.href = "mailto:" + clienteData.email;
+    infoEmail.textContent = mail;
+    infoEmail.href = `mailto:${mail}`;
   } else {
     rowEmail.style.display = "none";
   }
 
   // Avatar iniziali
-  avatarIniziali.textContent = (clienteData.nome || "??")
+  const iniziali = nome
     .split(" ")
-    .map(w => w.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join("");
+    .filter(Boolean)
+    .map(w => w[0].toUpperCase())
+    .slice(0,2)
+    .join("") || "AA";
+  avatarIniziali.textContent = iniziali;
 
-  // Imposta quick actions
-  if (clienteData.telefono) {
-    btnSms.href = `sms:${clienteData.telefono}`;
-    btnCall.href = `tel:${clienteData.telefono}`;
-    btnWa.href = `https://wa.me/${clienteData.telefono}`;
+  // Quick actions
+  if (tel) {
+    btnSms.href = `sms:${tel}`;
+    btnCall.href = `tel:${tel}`;
+    // rimuovo spazi/simboli dal tel per wa.me
+    const waNumber = tel.replace(/[^\d]/g, "");
+    btnWa.href = `https://wa.me/${waNumber}`;
   } else {
     btnSms.removeAttribute("href");
     btnCall.removeAttribute("href");
     btnWa.removeAttribute("href");
   }
+  // Nuovo appuntamento: passa id cliente
+  btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
 
-  // (Nuovo App.) → già ha href a nuovo-appuntamento.html, ma possiamo passare id cliente
-  btnApp.href = `nuovo-appuntamento.html?cliente=${clienteId}`;
+  // Promemoria (placeholder)
+  btnRem.onclick = (e) => {
+    e.preventDefault();
+    alert("Promemoria WhatsApp: funzione in sviluppo.");
+  };
 
-  // Promemoria (non implementato ancora)
-  btnRem.addEventListener("click", () => {
-    alert("Funzione promemoria WhatsApp in sviluppo");
-  });
-
-  // Carica storico e statistiche
-  await caricaStorico();
-  popolaAnni();
+  // Storico + Statistiche
+  await caricaStoricoETotale();
+  await popolaAnniERender();
 }
 
-async function caricaStorico() {
+// ================== Storico & Totale ==================
+async function caricaStoricoETotale() {
   historyList.innerHTML = "";
 
-  const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+  const q  = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
   const qs = await getDocs(q);
 
+  const items = [];
   let totaleSempre = 0;
-  let appuntamenti = [];
 
-  qs.forEach(docSnap => {
-    const data = docSnap.data();
-    appuntamenti.push(data);
+  qs.forEach(s => {
+    const a = s.data();
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    const tratt = Array.isArray(a.trattamenti)
+      ? a.trattamenti.map(t => (t?.nome || t)).join(", ")
+      : (a.trattamento || a.titolo || "");
+    const prezzo = Number(a.prezzo || a.totale || 0);
 
-    if (data.prezzo) totaleSempre += Number(data.prezzo);
+    if (!isNaN(prezzo)) totaleSempre += prezzo;
+
+    items.push({
+      dt,
+      tratt: tratt || "—",
+      prezzo
+    });
   });
 
-  // Ordina per data discendente
-  appuntamenti.sort((a,b) => (b.data?.seconds||0) - (a.data?.seconds||0));
+  // Ordina per data desc
+  items.sort((a,b) => (b.dt?.getTime?.()||0) - (a.dt?.getTime?.()||0));
 
-  appuntamenti.forEach(app => {
+  const fmt = new Intl.DateTimeFormat("it-IT", { day:"2-digit", month:"2-digit", year:"2-digit" });
+
+  items.forEach(it => {
     const li = document.createElement("li");
-
-    const dataObj = app.data?.toDate ? app.data.toDate() : null;
-    const dataStr = dataObj
-      ? dataObj.toLocaleDateString("it-IT", { day:"2-digit", month:"2-digit", year:"2-digit" })
-      : "—";
-
-    const tratt = Array.isArray(app.trattamenti) ? app.trattamenti.join(", ") : (app.trattamento || "");
-    const prezzo = app.prezzo ? `€ ${Number(app.prezzo).toFixed(2)}` : "";
-
     li.innerHTML = `
       <div>
-        <div class="h-date">${dataStr}</div>
-        <div class="h-tratt">${tratt}</div>
+        <div class="h-date">${it.dt ? fmt.format(it.dt) : "—"}</div>
+        <div class="h-tratt">${it.tratt}</div>
       </div>
-      <div class="h-amt">${prezzo}</div>
+      <div class="h-amt">${€(it.prezzo)}</div>
     `;
     historyList.appendChild(li);
   });
 
-  // Totale di sempre
-  valTotale.textContent = `€ ${totaleSempre.toFixed(2)}`;
-  barTotale.style.width = "100%"; // sempre pieno come baseline
+  // Totale sempre
+  valTotale.textContent = €(totaleSempre);
+  barTotale.style.width = "100%";
 }
 
-function popolaAnni() {
-  const annoCorrente = new Date().getFullYear();
-  yearSelect.innerHTML = "";
+// ================== Statistiche per anno ==================
+async function popolaAnniERender() {
+  // raccogli anni presenti
+  const q  = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+  const qs = await getDocs(q);
+  const anni = new Set();
 
-  for (let a = annoCorrente; a >= annoCorrente - 5; a--) {
-    const opt = document.createElement("option");
-    opt.value = a;
-    opt.textContent = a;
-    yearSelect.appendChild(opt);
-  }
-
-  yearSelect.value = annoCorrente;
-  aggiornaStatistiche(annoCorrente);
-
-  yearSelect.addEventListener("change", () => {
-    aggiornaStatistiche(Number(yearSelect.value));
+  qs.forEach(s => {
+    const dt = safeDate(s.data().data || s.data().date || s.data().dateTime);
+    if (dt) anni.add(dt.getFullYear());
   });
+
+  const arr = [...anni].sort((a,b)=>b-a);
+  const current = new Date().getFullYear();
+  yearSelect.innerHTML = (arr.length ? arr : [current])
+    .map(y => `<option value="${y}">${y}</option>`)
+    .join("");
+
+  yearSelect.value = arr.includes(current) ? current : (arr[0] || current);
+  await aggiornaStatistiche(Number(yearSelect.value));
+
+  yearSelect.onchange = () => aggiornaStatistiche(Number(yearSelect.value));
 }
 
 async function aggiornaStatistiche(anno) {
-  if (!clienteId) return;
-
-  const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+  const q  = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
   const qs = await getDocs(q);
 
-  let totaleAnno = 0;
-  let perTratt = {};
+  let totAnno = 0;
+  const perTratt = {}; // nome -> {count, sum}
 
-  qs.forEach(docSnap => {
-    const app = docSnap.data();
-    if (!app.data?.toDate) return;
+  qs.forEach(s => {
+    const a = s.data();
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    if (!dt || dt.getFullYear() !== anno) return;
 
-    const d = app.data.toDate();
-    if (d.getFullYear() === anno) {
-      if (app.prezzo) totaleAnno += Number(app.prezzo);
-
-      if (Array.isArray(app.trattamenti)) {
-        app.trattamenti.forEach(t => {
-          perTratt[t] = (perTratt[t] || 0) + Number(app.prezzo || 0);
-        });
-      } else if (app.trattamento) {
-        perTratt[app.trattamento] = (perTratt[app.trattamento] || 0) + Number(app.prezzo || 0);
-      }
+    // trattamenti (array o stringa singola)
+    let trattList = [];
+    if (Array.isArray(a.trattamenti)) {
+      trattList = a.trattamenti.map(t => (t?.nome || t?.titolo || t)).filter(Boolean);
+    } else if (a.trattamento || a.titolo) {
+      trattList = [a.trattamento || a.titolo];
     }
+
+    const prezzo = Number(a.prezzo || a.totale || 0);
+    totAnno += isNaN(prezzo) ? 0 : prezzo;
+
+    trattList.forEach(n => {
+      if (!perTratt[n]) perTratt[n] = { count: 0, sum: 0 };
+      perTratt[n].count += 1;
+      perTratt[n].sum   += isNaN(prezzo) ? 0 : prezzo;
+    });
   });
 
-  valAnno.textContent = `€ ${totaleAnno.toFixed(2)}`;
-  // barra: percentuale rispetto al totale di sempre
-  const totaleSempre = parseFloat(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
-  let perc = totaleSempre > 0 ? (totaleAnno / totaleSempre) * 100 : 0;
-  barAnno.style.width = perc.toFixed(0) + "%";
+  valAnno.textContent = €(totAnno);
 
-  // Dettaglio per trattamento
-  yearByTreatment.innerHTML = "";
-  if (Object.keys(perTratt).length === 0) {
-    yearByTreatment.innerHTML = "<li>—</li>";
-  } else {
-    for (let [nome, spesa] of Object.entries(perTratt)) {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div class="qta-nome">${nome}</div>
-        <div class="totale">€ ${spesa.toFixed(2)}</div>
-      `;
-      yearByTreatment.appendChild(li);
-    }
-  }
+  // percentuale anno vs totale sempre
+  const totalSempreNum = Number(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
+  const perc = totalSempreNum > 0 ? Math.max(0, Math.min(100, (totAnno / totalSempreNum) * 100)) : 0;
+  barAnno.style.width = `${perc.toFixed(0)}%`;
+
+  // lista per trattamento
+  const entries = Object.entries(perTratt)
+    .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum);
+
+  yearByTreatment.innerHTML = entries.length
+    ? entries.map(([nome,v]) => `
+        <li>
+          <div class="qta-nome">${v.count} ${nome}</div>
+          <div class="totale">Tot. ${€(v.sum)}</div>
+        </li>
+      `).join("")
+    : "<li>—</li>";
 }
 
-// === EVENTI HEADER ===
-backBtn.addEventListener("click", () => {
-  window.history.back();
-});
+// ================== Header events ==================
+backBtn.addEventListener("click", () => history.back());
 
 editBtnTop.addEventListener("click", () => {
   if (!clienteData) return;
-  editNome.value = clienteData.nome || "";
+  editNome.value     = clienteData.nome || "";
   editTelefono.value = clienteData.telefono || "";
-  editEmail.value = clienteData.email || "";
+  editEmail.value    = clienteData.email || "";
   editSheet.classList.remove("hidden");
 });
 
-// === EDIT FORM ===
+// ================== Edit form ==================
 closeEdit.addEventListener("click", () => editSheet.classList.add("hidden"));
 cancelEdit.addEventListener("click", () => editSheet.classList.add("hidden"));
 
 editForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!clienteId) return;
-
   const ref = doc(db, "clienti", clienteId);
   await updateDoc(ref, {
     nome: editNome.value.trim(),
     telefono: editTelefono.value.trim(),
     email: editEmail.value.trim()
   });
-
   editSheet.classList.add("hidden");
-  caricaCliente();
+  caricaCliente(); // refresh
 });
 
-// === AVVIO ===
+// ================== Avvio ==================
 caricaCliente();
