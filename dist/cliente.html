@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scheda Cliente</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="cliente.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <!-- navbar bottom come nel resto dell’app -->
+  <div id="navbar-placeholder"></div>
+
+  <main class="cliente-page">
+    <!-- HEADER stile iOS -->
+    <header class="page-header">
+      <button class="back-btn" id="backBtn" aria-label="Indietro">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <h1 id="nomeCliente">Cliente</h1>
+      <div class="header-actions">
+        <button class="link-btn" id="editBtnTop">Modifica</button>
+      </div>
+    </header>
+
+    <!-- HERO con avatar / iniziali -->
+    <section class="hero">
+      <div class="avatar" id="avatarIniziali">AA</div>
+      <div class="identity">
+        <div class="display-name" id="displayName">—</div>
+        <div class="sub" id="displayPhone">—</div>
+      </div>
+    </section>
+
+    <!-- QUICK ACTIONS -->
+    <section class="card quick-actions">
+      <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
+      <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
+      <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
+      <a id="btnMail" class="qa" href="#"><i class="fa-regular fa-envelope"></i><span>Email</span></a>
+    </section>
+
+    <!-- INFO CARD -->
+    <section class="card form-list">
+      <div class="row">
+        <div class="label">Cellulare</div>
+        <a class="value link" id="infoPhone" href="#">—</a>
+      </div>
+      <div class="row" id="rowEmail" style="display:none;">
+        <div class="label">Email</div>
+        <a class="value link" id="infoEmail" href="#">—</a>
+      </div>
+    </section>
+
+    <!-- STATISTICHE -->
+    <section class="card stats-card">
+      <div class="card-title">
+        <h2>Statistiche</h2>
+        <div class="year-select">
+          <label for="yearSelect" class="sr-only">Anno</label>
+          <select id="yearSelect"></select>
+        </div>
+      </div>
+
+      <div class="bars">
+        <div class="bar">
+          <div class="bar-top"><span>Anno</span><strong id="valAnno">€ 0,00</strong></div>
+          <div class="bar-track"><div class="bar-fill" id="barAnno"></div></div>
+        </div>
+        <div class="bar">
+          <div class="bar-top"><span>Totale</span><strong id="valTotale">€ 0,00</strong></div>
+          <div class="bar-track"><div class="bar-fill" id="barTotale"></div></div>
+        </div>
+      </div>
+
+      <div class="by-treatment">
+        <div class="bt-title">Dettaglio per trattamento (anno)</div>
+        <ul id="yearByTreatment" class="bt-list"><li>—</li></ul>
+      </div>
+    </section>
+
+    <!-- STORICO APPUNTAMENTI -->
+    <section class="card history-card">
+      <h2>Storico appuntamenti</h2>
+      <ul id="historyList" class="history"></ul>
+    </section>
+
+    <!-- AZIONI -->
+    <section class="actions-foot">
+      <button class="btn-secondary" id="editBtn"><i class="fa-solid fa-pen"></i> Modifica</button>
+      <button class="btn-danger" id="deleteBtn"><i class="fa-solid fa-trash"></i> Elimina</button>
+    </section>
+
+    <!-- MODIFICA INLINE (sheet semplice) -->
+    <section id="editSheet" class="edit-sheet hidden">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div class="title">Modifica cliente</div>
+          <button class="close" id="closeEdit"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="editForm">
+          <label>Nome</label>
+          <input id="editNome" type="text" required>
+          <label>Telefono</label>
+          <input id="editTelefono" type="tel" required inputmode="numeric">
+          <label>Email (opzionale)</label>
+          <input id="editEmail" type="email" inputmode="email">
+          <div class="sheet-actions">
+            <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Salva</button>
+            <button type="button" class="btn-secondary" id="cancelEdit"><i class="fa-solid fa-times"></i> Annulla</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
+  </script>
+  <script type="module" src="cliente.js"></script>
+</body>
+</html>
