@@ -39,14 +39,12 @@ function safeDate(d) {
 
 /** Somma correttamente il totale appuntamento. */
 function getApptTotal(app){
-  // 1) se c'è una lista di trattamenti -> sommo i singoli prezzi
   if (Array.isArray(app.trattamenti) && app.trattamenti.length){
     return app.trattamenti.reduce((s,t)=>{
       const p = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
       return s + p;
     },0);
   }
-  // 2) altrimenti fallback a campi singoli
   return toNumberSafe(app.prezzo ?? app.totale ?? app.price ?? app.costo);
 }
 
@@ -64,7 +62,6 @@ const editBtnTop     = document.getElementById("editBtnTop");
 
 const avatarIniziali = document.getElementById("avatarIniziali");
 const displayName    = document.getElementById("displayName");
-const displayPhone   = document.getElementById("displayPhone");
 const infoPhone      = document.getElementById("infoPhone");
 const infoEmail      = document.getElementById("infoEmail");
 const rowEmail       = document.getElementById("rowEmail");
@@ -118,7 +115,6 @@ async function caricaCliente() {
   const mail = (clienteData.email || "").toString().trim();
 
   displayName.textContent = nome;
-  displayPhone.textContent = tel || "—";
   infoPhone.textContent = tel || "—";
   infoPhone.href = tel ? `tel:${tel}` : "#";
 
@@ -224,11 +220,9 @@ async function aggiornaStatistiche(anno) {
     const dt = safeDate(a.data || a.date || a.dateTime);
     if (!dt || dt.getFullYear() !== anno) return;
 
-    // sommo il totale appuntamento all'anno
     const apptTotal = getApptTotal(a);
     totAnno += apptTotal;
 
-    // conteggio per trattamento (nome + prezzo singolo)
     if (Array.isArray(a.trattamenti) && a.trattamenti.length){
       a.trattamenti.forEach(t => {
         const nome = t?.nome || t?.titolo || "Trattamento";
