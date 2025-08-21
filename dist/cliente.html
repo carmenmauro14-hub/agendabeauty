@@ -7,20 +7,6 @@
   <link rel="stylesheet" href="navbar.css">
   <link rel="stylesheet" href="cliente.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    /* Bottone Modifica (icona + testo) */
-    .btn-modifica {
-      display:inline-flex; align-items:center; gap:6px;
-      background: var(--prim, #d2b8a3);
-      color:#fff; border:none; border-radius:12px;
-      padding:8px 14px; font-size:14px; font-weight:600; cursor:pointer;
-      box-shadow:0 2px 6px rgba(0,0,0,.08);
-      transition: background .2s ease, transform .1s ease;
-    }
-    .btn-modifica i { font-size:14px; }
-    .btn-modifica:hover { background:#c6a995; }
-    .btn-modifica:active { transform:scale(.97); }
-  </style>
 </head>
 <body>
   <!-- navbar bottom -->
@@ -33,14 +19,14 @@
         <i class="fa-solid fa-chevron-left"></i>
       </button>
       <div class="header-actions">
-        <button class="btn-modifica" id="editBtnTop" aria-label="Modifica">
+        <button class="icon-btn text-btn" id="editBtnTop" aria-label="Modifica">
           <i class="fa-solid fa-pen"></i>
           <span>Modifica</span>
         </button>
       </div>
     </header>
 
-    <!-- HERO con avatar / solo nome -->
+    <!-- HERO -->
     <section class="hero">
       <div class="avatar" id="avatarIniziali">AA</div>
       <div class="identity">
@@ -126,10 +112,7 @@
   </main>
 
   <script>
-    // Carica navbar
-    fetch("navbar.html")
-      .then(r => r.text())
-      .then(h => document.getElementById("navbar-placeholder").innerHTML = h);
+    fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
   </script>
   <script type="module" src="cliente.js"></script>
 </body>
