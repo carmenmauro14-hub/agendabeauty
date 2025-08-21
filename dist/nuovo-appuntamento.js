@@ -13,7 +13,6 @@ const firebaseConfig = {
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
-
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db  = getFirestore(app);
 
@@ -56,31 +55,17 @@ const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
 const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
 
-// ─── (Opzionale) modalità “pagina-modale”: overlay/sheet se presenti in HTML ──
-const pageModal   = document.querySelector(".page-modal");  // overlay
-const sheetEl     = document.getElementById("wizardSheet"); // pannello
+// ─── (Opzionale) modalità “pagina-modale”: overlay/sheet ───────────
+const pageModal   = document.querySelector(".page-modal");
+const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
-
-// ─── Funzione tasto ANNULLA ─────────────────────────────────────────
-btnCancel?.addEventListener("click", () => {
-  if (history.length > 1) {
-    history.back();
-  } else {
-    location.href = "calendario.html";
-  }
-});
-
-btnRubricaClose?.addEventListener("click", () => {
-  chiudiRubricaConAnimazioneVert();
-});
 
 // ─── Helpers ───────────────────────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
   document.title = text;
 }
-
 function showModal(m) { m.style.display = "flex"; }
 function closeModal(m) { m.style.display = "none"; }
 
@@ -115,7 +100,7 @@ if (rubricaHeader) {
   );
 }
 
-// ─── (Opzionale) Chiusura “pagina-modale” nuova/modifica appuntamento ───────
+// ─── (Opzionale) Chiusura sheet ────────────────────────────────────
 function chiudiSheet() {
   const doClose = () => document.getElementById("cancelWizard")?.click();
   if (!sheetEl) return doClose();
@@ -141,7 +126,6 @@ async function apriRubrica() {
   if (letterNavPicker) letterNavPicker.style.display = "flex";
   showModal(rubricaModal);
 }
-
 openRubrica?.addEventListener("click", apriRubrica);
 if (openRubricaField) {
   openRubricaField.addEventListener("click", apriRubrica);
@@ -217,7 +201,6 @@ const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
   "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
 ];
-
 function trovaIcona(nome) {
   const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
   for (const base of iconeDisponibili) {
@@ -226,11 +209,7 @@ function trovaIcona(nome) {
   return "icone_uniformate_colore/setting.png";
 }
 
-/**
- * Carica il listino “trattamenti” e, se passi selectedMap,
- * spunta e imposta i prezzi di quelli già presenti nell’appuntamento.
- * selectedMap: Map(nomeTrattamento -> prezzoSalvato)
- */
+/** Carica il listino “trattamenti” e pre-spunta quelli dell’appuntamento (edit). */
 async function caricaTrattamenti(selectedMap = null) {
   wrapperTratt.innerHTML = "";
   try {
@@ -244,13 +223,12 @@ async function caricaTrattamenti(selectedMap = null) {
       const row = document.createElement("div");
       row.classList.add("trattamento-row");
 
-      // valore precompilato in MODIFICA (se presente nella mappa)
       const checked   = selectedMap ? selectedMap.has(t.nome) : false;
       const prezzoSel = selectedMap && selectedMap.has(t.nome)
                         ? Number(selectedMap.get(t.nome)) || 0
                         : prezzoListino;
 
-row.innerHTML = `
+      row.innerHTML = `
   <label>
     <input type="checkbox" class="trattamento-checkbox"
            ${checked ? "checked" : ""}
@@ -292,14 +270,14 @@ btnBackToStep2?.addEventListener("click", () => {
   step2.style.display = "block";
 });
 
-// ─── Salvataggio appuntamento ──────────────────────────────────────
+// ─── Salvataggio appuntamento (Timestamp) ──────────────────────────
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
-  const data = inpData.value;
-  const ora  = inpOra.value;
+  const dataISO   = inpData.value;            // "YYYY-MM-DD"
+  const ora       = inpOra.value;             // "HH:mm"
 
   if (!clienteId) return alert("Seleziona un cliente");
-  if (!(data && ora)) return alert("Inserisci data e ora");
+  if (!(dataISO && ora)) return alert("Inserisci data e ora");
 
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
@@ -315,16 +293,23 @@ btnSalva?.addEventListener("click", async () => {
     };
   });
 
-  const [y, m, d] = data.split("-").map(n => parseInt(n, 10));
-  const [hh, mm]  = ora.split(":").map(n => parseInt(n, 10));
-  const localDate = new Date(y, m - 1, d, hh, mm, 0, 0);
-  const dateTime  = Timestamp.fromDate(localDate);
+  // ⬇️ SALVATAGGIO CONSIGLIATO
+  // dataTs = mezzanotte locale del giorno selezionato
+  const dateMidnight = new Date(dataISO + "T00:00:00");
+  const dataTs = Timestamp.fromDate(dateMidnight);
+
+  // opzionale: timestamp combinato (se in futuro ti serve)
+  const [hh, mm] = ora.split(":").map(n => parseInt(n,10));
+  const dateWithTime = new Date(dateMidnight);
+  dateWithTime.setHours(hh || 0, mm || 0, 0, 0);
+  const dateTime = Timestamp.fromDate(dateWithTime);
 
   try {
     if (editId) {
       await updateDoc(doc(db, "appuntamenti", editId), {
         clienteId,
-        data,
+        data: dataTs,          // ⬅️ ora è Timestamp (non più stringa)
+        dataISO: dataISO,      // (opzionale) utile per debug/test
         ora,
         dateTime,
         trattamenti
@@ -333,7 +318,8 @@ btnSalva?.addEventListener("click", async () => {
     } else {
       await addDoc(collection(db, "appuntamenti"), {
         clienteId,
-        data,
+        data: dataTs,          // ⬅️ Timestamp
+        dataISO: dataISO,      // (opzionale)
         ora,
         dateTime,
         trattamenti
@@ -362,9 +348,23 @@ btnSalva?.addEventListener("click", async () => {
       }
       apptData = apptDoc.data();
 
-      // Precompila data/ora
-      if (inpData) inpData.value = apptData.data || "";
-      if (inpOra)  inpOra.value  = apptData.ora  || "";
+      // 🔁 Retro-compatibilità: precompila data/ora da Timestamp o da stringa
+      let iso = "";
+      if (apptData.data && typeof apptData.data.toDate === "function") {
+        const d = apptData.data.toDate();
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,"0");
+        const da= String(d.getDate()).padStart(2,"0");
+        iso = `${y}-${m}-${da}`;
+      } else if (typeof apptData.data === "string") {
+        iso = apptData.data.slice(0,10);
+      } else if (typeof apptData.dataISO === "string") {
+        iso = apptData.dataISO.slice(0,10);
+      }
+      if (inpData) inpData.value = iso || "";
+
+      // ora
+      if (inpOra) inpOra.value = apptData.ora || "";
 
       // Precompila cliente
       if (apptData.clienteId) {
@@ -411,4 +411,17 @@ btnSalva?.addEventListener("click", async () => {
     openRubricaField.classList.remove("empty");
     if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
   }
+
+  // ─── Tasto ANNULLA ───────────────────────────────────────────────
+  btnCancel?.addEventListener("click", () => {
+    if (history.length > 1) {
+      history.back();
+    } else {
+      location.href = "calendario.html";
+    }
+  });
+
+  btnRubricaClose?.addEventListener("click", () => {
+    chiudiRubricaConAnimazioneVert();
+  });
 })();
