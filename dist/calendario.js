@@ -1,5 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, query, where, getDocs, doc, getDoc,
+  orderBy, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { abilitaSwipe } from './swipe.js';
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -12,12 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
     appId: "1:959324976221:web:780c8e9195965cea0749b4"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db  = getFirestore(app);
 
-  const griglia = document.getElementById("grigliaCalendario");
-  const meseCorrente = document.getElementById("meseCorrente");
-  const annoCorrente = document.getElementById("annoCorrente");
-  const mesiBar = document.getElementById("mesiBar");
+  const griglia       = document.getElementById("grigliaCalendario");
+  const meseCorrente  = document.getElementById("meseCorrente");
+  const annoCorrente  = document.getElementById("annoCorrente");
+  const mesiBar       = document.getElementById("mesiBar");
 
   const btnOggi = document.createElement("button");
   const oggi = new Date();
@@ -26,60 +29,93 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector(".top-bar").appendChild(btnOggi);
 
   let dataCorrente = new Date();
-  let eventi = {};
+  let eventi = {}; // { "YYYY-MM-DD": [{ora, nome}, ...] }
 
+  // ---------- Helpers Timestamp / Date ----------
+  const isoFromDate = (d) => d.toISOString().slice(0,10);
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const tsFromDate = (d) => Timestamp.fromDate(d);
+
+  // [start, end) per range Firestore
+  function dayRange(date) {
+    const s = startOfDay(date);
+    const e = new Date(s);
+    e.setDate(e.getDate() + 1);
+    return { start: tsFromDate(s), end: tsFromDate(e) };
+  }
+
+  function monthGridRange(anno, mese) {
+    // griglia 6x7 -> 42 giorni, partenza dal lun (ISO-8601)
+    const primo = new Date(anno, mese, 1);
+    const dow = primo.getDay() === 0 ? 7 : primo.getDay(); // 1..7 (lun..dom)
+    const inizioGriglia = new Date(primo);
+    inizioGriglia.setDate(1 - (dow - 1)); // porta a lunedì precedente/uguale
+    const fineGriglia = new Date(inizioGriglia);
+    fineGriglia.setDate(fineGriglia.getDate() + 42); // esclusivo
+
+    return {
+      start: tsFromDate(startOfDay(inizioGriglia)),
+      end:   tsFromDate(startOfDay(fineGriglia)),     // esclusivo
+      inizioGriglia,
+    };
+  }
+
+  // ---------- Header ----------
+  function aggiornaHeader() {
+    meseCorrente.textContent = dataCorrente.toLocaleDateString('it-IT', { month: 'long' });
+    annoCorrente.textContent = dataCorrente.getFullYear();
+  }
+
+  // ---------- Caricamento eventi (range su Timestamp) ----------
   async function caricaEventiDaFirebase(anno, mese) {
     eventi = {};
 
-    const inizio = new Date(anno, mese, 1);
-    const giorniTotali = 42;
-    const inizioSettimana = inizio.getDay() === 0 ? 6 : inizio.getDay() - 1;
-    const giornoInizioGriglia = new Date(inizio);
-    giornoInizioGriglia.setDate(giornoInizioGriglia.getDate() - inizioSettimana);
-
-    const giornoFineGriglia = new Date(giornoInizioGriglia);
-    giornoFineGriglia.setDate(giornoFineGriglia.getDate() + giorniTotali - 1);
+    const { start, end, inizioGriglia } = monthGridRange(anno, mese);
 
     const appuntamentiRef = collection(db, "appuntamenti");
-    const q = query(
+    const qy = query(
       appuntamentiRef,
-      where("data", ">=", giornoInizioGriglia.toISOString().split("T")[0]),
-      where("data", "<=", giornoFineGriglia.toISOString().split("T")[0])
+      where("data", ">=", start),
+      where("data", "<",  end),
+      orderBy("data", "asc")
     );
 
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(qy);
     const clientiCache = {};
 
     for (const docSnap of snapshot.docs) {
       const dati = docSnap.data();
-      const key = dati.data;
+
+      // data come Timestamp → Date → ISO
+      let dateObj;
+      if (dati.data && typeof dati.data.toDate === "function") {
+        dateObj = dati.data.toDate();
+      } else if (typeof dati.data === "string") {
+        // fallback legacy: supporto stringa "YYYY-MM-DD"
+        dateObj = new Date(dati.data + "T00:00:00");
+      } else {
+        continue;
+      }
+      const key = isoFromDate(dateObj);
+
       if (!eventi[key]) eventi[key] = [];
 
-      let nomeCliente = "";
+      // risolvi nome cliente con cache
       const idCliente = dati.clienteId;
-
-      if (clientiCache[idCliente]) {
-        nomeCliente = clientiCache[idCliente];
-      } else {
+      let nomeCliente = clientiCache[idCliente];
+      if (!nomeCliente) {
         const clienteDoc = await getDoc(doc(db, "clienti", idCliente));
-        if (clienteDoc.exists()) {
-          nomeCliente = clienteDoc.data().nome || "";
-          clientiCache[idCliente] = nomeCliente;
-        }
+        nomeCliente = clienteDoc.exists() ? (clienteDoc.data().nome || "") : "";
+        clientiCache[idCliente] = nomeCliente;
       }
 
-      eventi[key].push({ ora: dati.ora, nome: nomeCliente });
+      eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
     }
 
-    generaGriglia();
+    generaGriglia(inizioGriglia);
   }
 
-  function aggiornaHeader() {
-    const opzioni = { month: 'long' };
-    meseCorrente.textContent = dataCorrente.toLocaleDateString('it-IT', opzioni);
-    annoCorrente.textContent = dataCorrente.getFullYear();
-  }
-
+  // ---------- Barra mesi ----------
   function generaBarraMesiCompleta() {
     mesiBar.innerHTML = "";
     let annoPrecedente = null;
@@ -95,9 +131,9 @@ document.addEventListener("DOMContentLoaded", () => {
           annoPrecedente = anno;
         }
 
-        const data = new Date(anno, mese);
+        const label = new Date(anno, mese).toLocaleDateString('it-IT', { month: 'short' });
         const span = document.createElement("span");
-        span.textContent = data.toLocaleDateString('it-IT', { month: 'short' });
+        span.textContent = label;
         span.dataset.mese = mese;
         span.dataset.anno = anno;
 
@@ -118,9 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     setTimeout(() => {
-      if (currentSpan) {
-        currentSpan.scrollIntoView({ behavior: "smooth", inline: "center" });
-      }
+      if (currentSpan) currentSpan.scrollIntoView({ behavior: "smooth", inline: "center" });
     }, 50);
   }
 
@@ -137,20 +171,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function generaGriglia() {
+  // ---------- Griglia 6x7 ----------
+  function generaGriglia(inizioGrigliaOpt) {
     griglia.innerHTML = "";
 
     const anno = dataCorrente.getFullYear();
     const mese = dataCorrente.getMonth();
+
     const primoGiorno = new Date(anno, mese, 1);
     const inizioSettimana = primoGiorno.getDay() === 0 ? 6 : primoGiorno.getDay() - 1;
-    const giornoInizioGriglia = new Date(anno, mese, 1 - inizioSettimana);
+    const giornoInizioGriglia = inizioGrigliaOpt
+      ? new Date(inizioGrigliaOpt)
+      : new Date(anno, mese, 1 - inizioSettimana);
 
     for (let i = 0; i < 42; i++) {
       const dataCella = new Date(giornoInizioGriglia);
       dataCella.setDate(giornoInizioGriglia.getDate() + i);
 
-      const giorno = dataCella.getDate();
+      const giorno    = dataCella.getDate();
       const meseCella = dataCella.getMonth();
       const annoCella = dataCella.getFullYear();
 
@@ -172,10 +210,10 @@ document.addEventListener("DOMContentLoaded", () => {
       cella.appendChild(giornoSpan);
 
       const chiaveData = `${annoCella}-${String(meseCella + 1).padStart(2, "0")}-${String(giorno).padStart(2, "0")}`;
-      const appuntamenti = eventi[chiaveData] || [];
+      const lista = eventi[chiaveData] || [];
 
-      appuntamenti
-        .sort((a, b) => a.ora.localeCompare(b.ora))
+      lista
+        .sort((a, b) => (a.ora || "").localeCompare(b.ora || ""))
         .slice(0, 4)
         .forEach(ev => {
           const div = document.createElement("div");
@@ -184,14 +222,14 @@ document.addEventListener("DOMContentLoaded", () => {
           cella.appendChild(div);
         });
 
-      if (appuntamenti.length > 4) {
+      if (lista.length > 4) {
         const extra = document.createElement("div");
         extra.className = "evento";
-        extra.textContent = `+${appuntamenti.length - 4} altri`;
+        extra.textContent = `+${lista.length - 4} altri`;
         cella.appendChild(extra);
       }
 
-      // ✅ CLICK SU CELLA PER APRIRE GIORNO
+      // click → vai alla vista giorno
       cella.addEventListener("click", () => {
         window.location.href = `giorno.html?data=${chiaveData}`;
       });
@@ -200,6 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ---------- UI: toggle mesi bar ----------
   document.getElementById("meseSwitch").addEventListener("click", () => {
     mesiBar.classList.toggle("visibile");
     if (mesiBar.classList.contains("visibile")) {
@@ -218,6 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
     caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
   });
 
+  // Swipe mese ← →
   abilitaSwipe(
     griglia,
     () => {
@@ -234,6 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   );
 
+  // init
   aggiornaHeader();
   generaBarraMesiCompleta();
   caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
