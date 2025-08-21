@@ -1,4 +1,4 @@
-// giorno.js — COMPLETO (Timestamp-based)
+// giorno.js — COMPLETO (Timestamp-based) + fix area swipe
 
 // Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -33,11 +33,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   const lblAnno        = document.getElementById("annoCorrente");
   const btnOggi        = document.getElementById("btnTornaOggi");
 
+  // 🔸 garantisce sempre una superficie “toccabile” per lo swipe
+  function ensureMinHeight() {
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    // ~ somma di header + barra mesi + mini-cal + navbar bottom (adatta se serve)
+    const extra = 220;
+    contenuto.style.minHeight = (vh - extra) + "px";
+  }
+  ensureMinHeight();
+  window.addEventListener("resize", ensureMinHeight);
+
   // ---- Stato iniziale ----
-  const params         = new URLSearchParams(location.search);
-  const dataParam      = params.get("data"); // "YYYY-MM-DD"
-  const oggi           = new Date();
-  dataCorrente         = dataParam ? new Date(dataParam) : oggi;
+  const params          = new URLSearchParams(location.search);
+  const dataParam       = params.get("data"); // "YYYY-MM-DD"
+  const oggi            = new Date();
+  dataCorrente          = dataParam ? new Date(dataParam) : oggi;
   const dataParamFinale = dataParam || oggi.toISOString().slice(0,10);
 
   // ---- Header iniziale ----
@@ -274,9 +284,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     items.sort((A,B) => (A.ora||"").localeCompare(B.ora||""));
 
     if (items.length === 0) {
-      contenuto.innerHTML += "<p>Nessun appuntamento per questo giorno.</p>";
+      contenuto.innerHTML += '<p class="no-appt">Nessun appuntamento per questo giorno.</p>';
+      ensureMinHeight();
       return;
     }
+
     items.forEach(app => {
       const row = document.createElement("div");
       row.className = "evento-giorno";
@@ -312,6 +324,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       row.addEventListener("click", () => openModal(row._appt));
     });
+
+    ensureMinHeight();
   }
 
   async function caricaAppuntamentiGiorno() {
@@ -338,6 +352,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     contenuto.innerHTML = "";
     contenuto.appendChild(titolo);
+    ensureMinHeight();
 
     caricaAppuntamentiGiornoISO(iso);
 
@@ -396,8 +411,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     import("./swipe.js").then(({ abilitaSwipe }) => {
       abilitaSwipe(container,
         () => { const nx=new Date(anno, mese+1); mostraMiniCalendario(nx.getFullYear(), nx.getMonth()); },
-        () => { const pv=new Date(anno, mese-1); mostraMiniCalendario(pv.getFullYear(), pv.getMonth()); },
-        true
+        () => { const pv=new Date(anno, mese-1); mostraMiniCalendario(pv.getFullYear(), pv.getMonth()); }
       );
     });
 
@@ -466,9 +480,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   generaBarraMesiCompleta();
   await caricaAppuntamentiGiorno();
 
-  // swipe giorno precedente/successivo sulla lista
-  abilitaSwipe(contenuto,
+  // swipe giorno precedente/successivo sull'intera area contenuto
+  abilitaSwipe(
+    contenuto,
     () => { const nd=new Date(dataCorrente); nd.setDate(nd.getDate()+1); aggiornaVistaGiorno(nd,"slide-left"); },
     () => { const nd=new Date(dataCorrente); nd.setDate(nd.getDate()-1); aggiornaVistaGiorno(nd,"slide-right"); }
+    // Se hai aggiornato swipe.js con la guardia sui bordi, puoi passare anche: , { minStartEdge:24, minDelta:60 }
   );
 });
