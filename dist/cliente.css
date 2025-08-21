@@ -17,7 +17,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 
 .cliente-page{max-width:520px;margin:0 auto;padding-bottom:110px}
 
-/* ===== Header pulito (niente titolo centrale) ===== */
+/* ===== Header pulito ===== */
 .page-header{
   position:sticky; top:0; z-index:5;
   display:flex; align-items:center; justify-content:space-between;
@@ -34,17 +34,27 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   cursor:pointer;
 }
 .icon-btn i{font-size:16px}
+.header-actions{display:flex;align-items:center;gap:6px}
+.header-actions span{font-size:15px;font-weight:600;color:var(--text)}
 
 /* ===== Hero ===== */
-.hero{display:flex;align-items:center;gap:12px;padding:16px}
+.hero{
+  display:flex;align-items:center;gap:16px;
+  padding:20px 16px;
+}
 .avatar{
   width:80px;height:80px;border-radius:50%;background:#f4e5dc;
   display:flex;align-items:center;justify-content:center;
   color:#fff;font-weight:800;font-size:28px;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.identity .display-name{font-size:24px;font-weight:800;color:var(--text)}
-.identity .sub{color:var(--muted);font-size:15px}
+.identity{display:flex;flex-direction:column;justify-content:center}
+.identity .display-name{
+  font-size:26px;
+  font-weight:800;
+  color:var(--text);
+  line-height:1.2;
+}
 
 /* ===== Card base ===== */
 .card{
@@ -54,7 +64,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 }
 .card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
 
-/* ===== Quick actions (5) ===== */
+/* ===== Quick actions ===== */
 .quick-actions{
   display:grid; grid-template-columns:repeat(5,1fr);
   gap:12px; padding:14px;
