@@ -13,35 +13,38 @@
   <div id="navbar-placeholder"></div>
 
   <main class="cliente-page">
-    <!-- HEADER -->
-    <header class="page-header">
-      <button class="icon-btn" id="backBtn" aria-label="Indietro">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-      <div class="header-actions">
-        <button class="icon-btn pill-btn" id="editBtnTop" aria-label="Modifica">
-          <i class="fa-solid fa-pen"></i>
-          <span>Modifica</span>
+    <!-- AREA SUPERIORE TINTA: header + hero + quick actions -->
+    <div class="top-area">
+      <!-- HEADER -->
+      <header class="page-header">
+        <button class="icon-btn" id="backBtn" aria-label="Indietro">
+          <i class="fa-solid fa-chevron-left"></i>
         </button>
-      </div>
-    </header>
+        <div class="header-actions">
+          <button class="icon-btn pill-btn" id="editBtnTop" aria-label="Modifica">
+            <i class="fa-solid fa-pen"></i>
+            <span>Modifica</span>
+          </button>
+        </div>
+      </header>
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="avatar" id="avatarIniziali">AA</div>
-      <div class="identity">
-        <div class="display-name" id="displayName">—</div>
-      </div>
-    </section>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="avatar" id="avatarIniziali">AA</div>
+        <div class="identity">
+          <div class="display-name" id="displayName">—</div>
+        </div>
+      </section>
 
-    <!-- QUICK ACTIONS (nascoste in edit) -->
-    <section class="card quick-actions hide-on-edit">
-      <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
-      <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
-      <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
-      <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
-      <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
-    </section>
+      <!-- QUICK ACTIONS (nascoste in edit) -->
+      <section class="card quick-actions hide-on-edit">
+        <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
+        <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
+        <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
+        <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
+        <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
+      </section>
+    </div>
 
     <!-- INFO (view + inline edit) -->
     <section class="card form-list" id="infoCard">
