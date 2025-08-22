@@ -1,49 +1,64 @@
-/* ===== Palette ===== */
+/* ===== Palette coerente con Trattamenti ===== */
 :root{
   --nav-height: 84px;
-  --prim:#d2b8a3;      /* primario (barre/pulsanti) */
-  --text:#a07863;      /* testo principale */
-  --muted:#666;        /* testo secondario */
-  --line:#e6d9d0;      /* bordi */
-  --bg:#fff;           /* sfondo */
-  --card:#fff;         /* card */
+  --back-height: 48px;
+
+  --prim:#d2b8a3;   /* primario (bottoni) */
+  --text:#a07863;   /* testo/titoli */
+  --muted:#666;     /* testo secondario */
+  --line:#e6d9d0;   /* bordi/linee */
+  --bg:#fff;        /* sfondo pagina bianco */
+  --card:#fff;      /* card bianche */
 }
 
 *{box-sizing:border-box}
 html,body{
-  margin:0; background:var(--bg); color:var(--text);
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
-.cliente-page{max-width:520px;margin:0 auto;padding-bottom:110px}
+.cliente-page{
+  max-width:520px;
+  margin:0 auto;
+  padding-bottom:110px
+}
 
-/* ===== Header ===== */
+/* ===== Header pulito (back + modifica) ===== */
 .page-header{
   position:sticky; top:0; z-index:5;
   display:flex; align-items:center; justify-content:space-between;
   padding:10px 14px; background:#fff; border-bottom:1px solid var(--line);
 }
+.page-header h1{ display:none; }
 
-/* freccia: bottone tondo */
-.page-header .icon-btn{
+/* bottone freccia indietro */
+.icon-btn{
   width:38px;height:38px;border-radius:50%;
   border:1px solid var(--line); background:#fff; color:var(--text);
   display:inline-flex;align-items:center;justify-content:center;
-  box-shadow:0 1px 2px rgba(0,0,0,.04); cursor:pointer;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+  cursor:pointer;
 }
-.page-header .icon-btn i{font-size:16px;line-height:1}
+.page-header .icon-btn i{
+  font-size:14px;   /* ridotto */
+  line-height:1;
+}
 
-/* Modifica: pill rettangolare con icona + testo stessa altezza della freccia */
-.header-actions{display:flex;align-items:center;gap:8px}
+/* bottone Modifica */
 .page-header .text-btn{
-  height:38px; padding:0 14px;
-  border-radius:999px; border:1px solid var(--line);
+  display:inline-flex; align-items:center; gap:6px;
+  height:36px; padding:0 12px;
+  border:1px solid var(--line); border-radius:18px;
   background:#fff; color:var(--text);
-  display:inline-flex; align-items:center; gap:8px;
-  font-size:16px; font-weight:700; line-height:1;
-  box-shadow:0 1px 2px rgba(0,0,0,.04); cursor:pointer;
+  font-size:14px; font-weight:600; cursor:pointer;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
 }
-.page-header .text-btn i{font-size:16px;line-height:1}
+.page-header .text-btn i{
+  font-size:14px;   /* ridotto */
+  line-height:1;
+}
 
 /* ===== Hero ===== */
 .hero{display:flex;align-items:center;gap:12px;padding:16px}
@@ -53,7 +68,8 @@ html,body{
   color:#fff;font-weight:800;font-size:28px;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.identity .display-name{font-size:28px;font-weight:800;color:var(--text)}
+.identity .display-name{font-size:24px;font-weight:800;color:var(--text)}
+.identity .sub{color:var(--muted);font-size:15px}
 
 /* ===== Card base ===== */
 .card{
@@ -63,7 +79,7 @@ html,body{
 }
 .card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
 
-/* ===== Quick actions ===== */
+/* ===== Quick actions (5) ===== */
 .quick-actions{
   display:grid; grid-template-columns:repeat(5,1fr);
   gap:12px; padding:14px;
@@ -93,12 +109,8 @@ html,body{
 .link{ color:var(--text); text-decoration:none; }
 
 /* ===== Statistiche ===== */
-.stats-card .card-title{
-  display:flex;align-items:center;justify-content:space-between;margin-bottom:8px
-}
-.year-select select{
-  padding:6px 10px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#fff
-}
+.stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.year-select select{padding:6px 10px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#fff}
 .bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .bar-top span{ color:var(--muted); }
@@ -153,5 +165,5 @@ a.qa:focus, button:focus, select:focus, .link:focus{
   .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
 }
 
-/* Nasconde eventuali vecchi bottoni fondo pagina */
+/* ===== Rimuovo i vecchi bottoni fondo pagina ===== */
 .actions-foot{ display:none !important; }
