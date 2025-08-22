@@ -10,10 +10,8 @@
 }
 
 *{box-sizing:border-box}
-html,body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
-}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}
 .cliente-page{max-width:520px;margin:0 auto;padding-bottom:110px}
 
 /* ===== Header ===== */
@@ -32,45 +30,15 @@ html,body{
 .icon-btn span{font-size:14px; font-weight:700;}
 .pill-btn{ padding:8px 14px; }
 
-/* ===== Blocco superiore tinteggiato ===== */
-.hero-block{
-  background:#f9f4f1;
-  padding:20px 16px 18px;
-  border-bottom:1px solid var(--line);
-}
-.hero-block .hero-top{
-  display:flex; align-items:center; gap:12px;
-}
-.hero-block .avatar{
-  width:86px;height:86px;border-radius:50%;
-  background:#f4e5dc; color:#fff; font-weight:800; font-size:30px;
+/* ===== Hero ===== */
+.hero{display:flex;align-items:center;gap:12px;padding:16px}
+.avatar{
+  width:86px;height:86px;border-radius:50%;background:#f4e5dc;
   display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:30px;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.hero-block .display-name{font-size:28px;font-weight:900;color:var(--text)}
-
-/* ===== Quick actions (riusate nel blocco) ===== */
-.quick-actions{
-  display:grid; grid-template-columns:repeat(3,1fr);
-  gap:12px; padding:14px;
-}
-@media (min-width:420px){ .quick-actions{ grid-template-columns:repeat(5,1fr); } }
-
-.quick-actions.in-hero{
-  margin-top:14px; padding:0; border:0; background:transparent; box-shadow:none;
-}
-.quick-actions .qa{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-decoration:none; color:var(--text);
-  background:#fff; border:1px solid var(--line); border-radius:16px;
-  padding:12px 6px; min-height:72px; font-size:12px;
-  transition:transform .08s ease, background .2s ease, box-shadow .2s ease;
-  box-shadow:0 4px 10px rgba(0,0,0,.04);
-}
-.quick-actions.in-hero .qa{ border-color:#eadfd8; }
-.quick-actions .qa:hover{ background:#fdf6f3; }
-.quick-actions .qa:active{ transform:scale(.98); }
-.quick-actions .qa i{ font-size:20px; margin-bottom:6px; }
+.identity .display-name{font-size:28px;font-weight:900;color:var(--text)}
 
 /* ===== Card base ===== */
 .card{
@@ -79,6 +47,24 @@ html,body{
   padding:16px;
 }
 .card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
+
+/* ===== Quick actions ===== */
+.quick-actions{
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:12px; padding:14px;
+}
+@media (min-width:420px){ .quick-actions{ grid-template-columns:repeat(5,1fr); } }
+.quick-actions .qa{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-decoration:none; color:var(--text);
+  background:#fff; border:1px solid var(--line); border-radius:16px;
+  padding:12px 6px; min-height:72px; font-size:12px;
+  transition:transform .08s ease, background .2s ease, box-shadow .2s ease;
+  box-shadow:0 4px 10px rgba(0,0,0,.04);
+}
+.quick-actions .qa:hover{ background:#fdf6f3; }
+.quick-actions .qa:active{ transform:scale(.98); }
+.quick-actions .qa i{ font-size:20px; margin-bottom:6px; }
 
 /* ===== Info list (view) ===== */
 .form-list .row{
@@ -90,23 +76,49 @@ html,body{
 .form-list .value{ font-weight:800; letter-spacing:.2px; color:var(--text) }
 .link{ color:var(--text); text-decoration:none; }
 
-/* ===== Edit inline ===== */
-.edit-inline{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+/* ===== Edit inline (nome/tel/email) ===== */
+.edit-inline{
+  display:flex; flex-direction:column; gap:10px; margin-top:6px;
+}
 .edit-inline label{ color:var(--muted); font-size:13px; }
 .edit-inline input{
-  padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--text); background:#fff;
+  font-size:16px; /* evita zoom iOS */
+  line-height:1.3;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  color:var(--text);
+  background:#fff;
+  outline:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.edit-inline input:focus{
+  border-color:#d8c6ba;
+  box-shadow:0 0 0 4px rgba(210,184,163,.18);
 }
 .edit-actions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
 .btn-primary{background:var(--prim);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
 .btn-secondary{background:#f4e5dc;color:var(--text);border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
 
-/* ===== Note ===== */
-.notes-card textarea{
-  width:100%; min-height:110px; resize:vertical;
-  border:1px solid var(--line); border-radius:12px; padding:12px;
-  color:var(--text); background:#fff; font:inherit;
+/* ===== Note (sempre modificabili) ===== */
+.note-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.note-status{color:var(--muted);font-size:12px}
+#noteInput{
+  font-size:16px; /* iOS no-zoom */
+  line-height:1.35;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  color:var(--text);
+  background:#fff;
+  outline:none;
+  min-height:92px;
+  resize:vertical;
 }
-.notes-actions{ display:flex; justify-content:flex-end; margin-top:10px; }
+#noteInput:focus{
+  border-color:#d8c6ba;
+  box-shadow:0 0 0 4px rgba(210,184,163,.18);
+}
 
 /* ===== Statistiche ===== */
 .stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -140,6 +152,9 @@ html,body{
 .h-date{font-weight:800;color:var(--text)}
 .h-tratt{color:var(--muted)}
 .h-amt{font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text)}
+
+/* ===== Nascondi blocchi in edit ===== */
+.editing .hide-on-edit{ display:none !important; }
 
 /* ===== Accessibilità / Safe area ===== */
 .sr-only{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
