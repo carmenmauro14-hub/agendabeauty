@@ -72,7 +72,7 @@
         <input id="editEmail" type="email" inputmode="email" autocomplete="email">
 
         <div class="edit-actions">
-          <!-- invertiti: Annulla a sinistra, Salva a destra -->
+          <!-- Annulla a sinistra, Salva a destra -->
           <button type="button" class="btn-secondary" id="cancelInline">
             <i class="fa-solid fa-times"></i> Annulla
           </button>
@@ -95,11 +95,10 @@
     <!-- STATISTICHE (scompaiono in edit) -->
     <section class="card stats-card hide-on-edit">
       <div class="card-title">
-        <h2>Statistiche</h2>
-        <div class="year-select">
-          <label for="yearSelect" class="sr-only">Anno</label>
-          <select id="yearSelect"></select>
-        </div>
+        <h2 class="stats-title">
+          Statistiche
+          <select id="yearSelect" class="inline-year"></select>
+        </h2>
       </div>
 
       <div class="bars">
