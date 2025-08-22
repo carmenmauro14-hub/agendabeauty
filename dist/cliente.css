@@ -1,17 +1,21 @@
 /* ===== Palette ===== */
 :root{
   --nav-height: 84px;
-  --prim:#d2b8a3;
-  --text:#a07863;
-  --muted:#7c6a60;
-  --line:#e6d9d0;
-  --bg:#fff;
-  --card:#fff;
+
+  --prim:#d2b8a3;   /* primario */
+  --text:#a07863;   /* testo/titoli */
+  --muted:#776a62;  /* testo secondario */
+  --line:#e6d9d0;   /* bordi/linee */
+  --bg:#fff;        /* sfondo pagina */
+  --card:#fff;      /* card */
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}
+html,body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
 .cliente-page{max-width:520px;margin:0 auto;padding-bottom:110px}
 
 /* ===== Header ===== */
@@ -21,26 +25,30 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   padding:10px 14px; background:#fff; border-bottom:1px solid var(--line);
 }
 .icon-btn{
-  height:36px; min-width:36px; padding:0 12px;
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--text);
-  box-shadow:0 1px 2px rgba(0,0,0,.04); cursor:pointer;
+  width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--line); background:#fff; color:var(--text);
+  display:inline-flex;align-items:center;justify-content:center;
 }
-.icon-btn i{font-size:14px; line-height:1;}
-.icon-btn span{font-size:14px; font-weight:700;}
+.icon-btn i{font-size:14px}
 
-/* “pill” per Modifica */
-.pill-btn{ padding:8px 14px; }
+/* chip Modifica (rettangolare morbida) */
+.chip-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  height:36px; padding:0 14px; border-radius:18px;
+  border:1px solid var(--line); background:#fff; color:var(--text);
+  font-weight:700; font-size:14px;
+}
+.chip-btn i{font-size:14px}
 
 /* ===== Hero ===== */
 .hero{display:flex;align-items:center;gap:12px;padding:16px}
 .avatar{
-  width:86px;height:86px;border-radius:50%;background:#f4e5dc;
+  width:84px;height:84px;border-radius:50%;background:#f4e5dc;
   display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:800;font-size:30px;
+  color:#fff;font-weight:800;font-size:28px;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.identity .display-name{font-size:28px;font-weight:900;color:var(--text)}
+.identity .display-name{font-size:28px;font-weight:800;color:var(--text)}
 
 /* ===== Card base ===== */
 .card{
@@ -52,45 +60,29 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 
 /* ===== Quick actions ===== */
 .quick-actions{
-  display:grid; grid-template-columns:repeat(3,1fr);
+  display:grid; grid-template-columns:repeat(5,1fr);
   gap:12px; padding:14px;
 }
-@media (min-width:420px){ .quick-actions{ grid-template-columns:repeat(5,1fr); } }
+@media (max-width:420px){ .quick-actions{ grid-template-columns:repeat(3,1fr); } }
 
 .quick-actions .qa{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-decoration:none; color:var(--text);
   background:#fff; border:1px solid var(--line); border-radius:16px;
   padding:12px 6px; min-height:72px; font-size:12px;
-  transition:transform .08s ease, background .2s ease, box-shadow .2s ease;
   box-shadow:0 4px 10px rgba(0,0,0,.04);
 }
-.quick-actions .qa:hover{ background:#fdf6f3; }
-.quick-actions .qa:active{ transform:scale(.98); }
 .quick-actions .qa i{ font-size:20px; margin-bottom:6px; }
 
-/* ===== Info list (view) ===== */
+/* ===== Info list (lettura) ===== */
 .form-list .row{
   display:flex; align-items:center; justify-content:space-between;
   padding:14px 4px; border-top:1px solid var(--line);
 }
 .form-list .row:first-child{ border-top:none; }
 .form-list .label{ color:var(--muted); }
-.form-list .value{ font-weight:800; letter-spacing:.2px; color:var(--text) }
+.form-list .value{ font-weight:700; letter-spacing:.2px; color:var(--text) }
 .link{ color:var(--text); text-decoration:none; }
-
-/* ===== Edit inline ===== */
-.edit-inline{
-  display:flex; flex-direction:column; gap:10px; margin-top:6px;
-}
-.edit-inline label{ color:var(--muted); font-size:13px; }
-.edit-inline input{
-  padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--text);
-  background:#fff;
-}
-.edit-actions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
-.btn-primary{background:var(--prim);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
-.btn-secondary{background:#f4e5dc;color:var(--text);border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
 
 /* ===== Statistiche ===== */
 .stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -101,8 +93,6 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .bar-top strong{ font-variant-numeric:tabular-nums; }
 .bar-track{height:12px;background:#f4e5dc;border-radius:10px;overflow:hidden}
 .bar-fill{height:100%;background:var(--prim);width:0;transition:width .35s ease}
-
-/* dettaglio per trattamento */
 .by-treatment{margin-top:12px}
 .bt-title{font-weight:800;color:var(--text);margin-bottom:8px}
 .bt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -125,12 +115,64 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .h-tratt{color:var(--muted)}
 .h-amt{font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text)}
 
-/* ===== Accessibilità / Safe area ===== */
+/* ===================================================================
+   ================  EDIT INLINE: STILE RUBRICA iPHONE  ==============
+   =================================================================== */
+
+.ios-section{ margin: 16px; }
+.ios-section-title{
+  margin: 6px 2px 8px; font-size:13px; font-weight:700; color:#9c897e; letter-spacing:.02em;
+}
+
+/* Gruppo “table view” iOS */
+.ios-group{
+  background:#fff; border:1px solid var(--line);
+  border-radius:14px; overflow:hidden; margin-bottom:12px;
+  box-shadow:0 6px 16px rgba(0,0,0,.04);
+}
+
+/* Cella */
+.ios-cell{
+  display:flex; align-items:center; gap:12px;
+  padding:14px 12px; border-bottom:1px solid var(--line);
+}
+.ios-group .ios-cell:last-child{ border-bottom:none; }
+
+/* Etichetta cella a sinistra */
+.ios-cell-label{
+  min-width:92px; color:#6f625a; font-weight:600; font-size:14px;
+}
+
+/* Input a destra, stile iOS (piatto) */
+.ios-input{
+  flex:1; border:none; outline:none; background:transparent;
+  font-size:16px; color:var(--text); padding:6px 0;
+}
+.ios-input::placeholder{ color:#c7bbb3; }
+
+/* Toolbar azioni (Annulla / Salva) */
+.ios-toolbar{
+  display:flex; align-items:center; justify-content:flex-end; gap:12px;
+  margin: 6px 4px 18px;
+}
+.ios-link{
+  appearance:none; background:none; border:none; color:#9c897e;
+  font-weight:700; font-size:15px; padding:8px 10px; cursor:pointer;
+}
+.ios-primary{
+  appearance:none; border:none; border-radius:10px;
+  background:var(--prim); color:#fff; font-weight:800; font-size:15px;
+  padding:10px 16px; cursor:pointer;
+}
+
+/* ===== Accessibilità ===== */
 .sr-only{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-a.qa:focus, button:focus, select:focus, .link:focus{
+a.qa:focus, button:focus, select:focus, .link:focus, .ios-input:focus{
   outline:3px solid rgba(210,184,163,.28);
   outline-offset:2px; border-radius:12px;
 }
+
+/* ===== Safe area iPhone ===== */
 @supports(padding:max(0px)){
   .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
 }
