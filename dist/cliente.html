@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scheda Cliente</title>
+
+  <!-- CSS -->
   <link rel="stylesheet" href="navbar.css">
   <link rel="stylesheet" href="cliente.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -26,21 +28,21 @@
       </div>
     </header>
 
-    <!-- BLOCCO SUPERIORE tinteggiato: avatar + nome + azioni -->
-    <section class="hero-block">
-      <div class="hero-top">
-        <div class="avatar" id="avatarIniziali">AA</div>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="avatar" id="avatarIniziali">AA</div>
+      <div class="identity">
         <div class="display-name" id="displayName">—</div>
       </div>
+    </section>
 
-      <!-- Quick actions dentro il blocco -->
-      <div class="quick-actions in-hero">
-        <a id="btnSms"  class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
-        <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
-        <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
-        <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
-        <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
-      </div>
+    <!-- QUICK ACTIONS (IDs usati dal JS) -->
+    <section class="card quick-actions">
+      <a id="btnSms"  class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
+      <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
+      <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
+      <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
+      <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
     </section>
 
     <!-- INFO (view + inline edit) -->
@@ -57,7 +59,7 @@
         </div>
       </div>
 
-      <!-- edit inline -->
+      <!-- edit inline (stessi ID che usa cliente.js) -->
       <form id="infoEdit" class="edit-inline" style="display:none">
         <label for="editNome">Nome</label>
         <input id="editNome" type="text" required autocomplete="name">
@@ -75,12 +77,12 @@
       </form>
     </section>
 
-    <!-- NOTE -->
-    <section class="card notes-card">
+    <!-- NOTE (facoltativo: non tocca il JS esistente) -->
+    <section class="card note-card">
       <h2>Note</h2>
-      <textarea id="noteCliente" placeholder="Aggiungi una nota…"></textarea>
-      <div class="notes-actions">
-        <button id="salvaNoteBtn" class="btn-primary"><i class="fa-solid fa-check"></i> Salva note</button>
+      <textarea id="noteText" rows="4" placeholder="Aggiungi una nota…"></textarea>
+      <div class="edit-actions">
+        <button id="saveNoteBtn" class="btn-primary"><i class="fa-solid fa-check"></i> Salva note</button>
       </div>
     </section>
 
@@ -119,8 +121,12 @@
   </main>
 
   <script>
-    fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
+    fetch("navbar.html")
+      .then(r => r.text())
+      .then(h => document.getElementById("navbar-placeholder").innerHTML = h);
   </script>
+
+  <!-- JS (il tuo cliente.js) -->
   <script type="module" src="cliente.js"></script>
 </body>
 </html>
