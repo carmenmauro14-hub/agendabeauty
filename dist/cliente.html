@@ -112,9 +112,7 @@
   </main>
 
   <script>
-    fetch("navbar.html")
-      .then(r=>r.text())
-      .then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
+    fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
   </script>
   <script type="module" src="cliente.js"></script>
 </body>
