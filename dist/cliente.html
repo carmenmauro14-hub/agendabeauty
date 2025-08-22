@@ -19,7 +19,7 @@
         <i class="fa-solid fa-chevron-left"></i>
       </button>
       <div class="header-actions">
-        <button class="text-btn" id="editBtnTop" aria-label="Modifica">
+        <button class="icon-btn pill-btn" id="editBtnTop" aria-label="Modifica">
           <i class="fa-solid fa-pen"></i>
           <span>Modifica</span>
         </button>
@@ -43,16 +43,36 @@
       <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
     </section>
 
-    <!-- INFO -->
-    <section class="card form-list">
-      <div class="row">
-        <div class="label">Cellulare</div>
-        <a class="value link" id="infoPhone" href="#">—</a>
+    <!-- INFO (view + inline edit) -->
+    <section class="card form-list" id="infoCard">
+      <!-- vista -->
+      <div id="infoView">
+        <div class="row">
+          <div class="label">Cellulare</div>
+          <a class="value link" id="infoPhone" href="#">—</a>
+        </div>
+        <div class="row" id="rowEmail" style="display:none;">
+          <div class="label">Email</div>
+          <a class="value link" id="infoEmail" href="#">—</a>
+        </div>
       </div>
-      <div class="row" id="rowEmail" style="display:none;">
-        <div class="label">Email</div>
-        <a class="value link" id="infoEmail" href="#">—</a>
-      </div>
+
+      <!-- edit inline -->
+      <form id="infoEdit" class="edit-inline" style="display:none">
+        <label for="editNome">Nome</label>
+        <input id="editNome" type="text" required autocomplete="name">
+
+        <label for="editTelefono">Telefono</label>
+        <input id="editTelefono" type="tel" required inputmode="numeric" autocomplete="tel">
+
+        <label for="editEmail">Email (opzionale)</label>
+        <input id="editEmail" type="email" inputmode="email" autocomplete="email">
+
+        <div class="edit-actions">
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Salva</button>
+          <button type="button" class="btn-secondary" id="cancelInline"><i class="fa-solid fa-times"></i> Annulla</button>
+        </div>
+      </form>
     </section>
 
     <!-- STATISTICHE -->
@@ -86,28 +106,6 @@
     <section class="card history-card">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
-    </section>
-
-    <!-- EDIT SHEET -->
-    <section id="editSheet" class="edit-sheet hidden">
-      <div class="sheet">
-        <div class="sheet-head">
-          <div class="title">Modifica cliente</div>
-          <button class="close" id="closeEdit"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <form id="editForm">
-          <label>Nome</label>
-          <input id="editNome" type="text" required>
-          <label>Telefono</label>
-          <input id="editTelefono" type="tel" required inputmode="numeric">
-          <label>Email (opzionale)</label>
-          <input id="editEmail" type="email" inputmode="email">
-          <div class="sheet-actions">
-            <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Salva</button>
-            <button type="button" class="btn-secondary" id="cancelEdit"><i class="fa-solid fa-times"></i> Annulla</button>
-          </div>
-        </form>
-      </div>
     </section>
   </main>
 
