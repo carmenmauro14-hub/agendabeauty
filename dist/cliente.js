@@ -62,6 +62,11 @@ const barTotale      = document.getElementById("barTotale");
 const yearByTreatment= document.getElementById("yearByTreatment");
 const historyList    = document.getElementById("historyList");
 
+// sezione da nascondere in edit
+const quickActionsEl = document.getElementById("quickActions");
+const statsCardEl    = document.getElementById("statsCard");
+const historyCardEl  = document.getElementById("historyCard");
+
 // Stato
 let clienteId   = null;
 let clienteData = null;
@@ -102,7 +107,7 @@ async function caricaCliente(){
   const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
 
-  // quick actions
+  // quick actions links
   const btnSms = document.getElementById("btnSms");
   const btnCall = document.getElementById("btnCall");
   const btnWa = document.getElementById("btnWa");
@@ -219,11 +224,18 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-// Edit inline
+// Edit inline: mostra solo avatar+nome+form
 function setEditMode(on){
+  // vista info vs form
   infoView.style.display = on ? "none" : "";
   infoEdit.style.display = on ? "flex" : "none";
+
+  // sezioni da nascondere quando si edita
+  if (quickActionsEl) quickActionsEl.style.display = on ? "none" : "";
+  if (statsCardEl)    statsCardEl.style.display    = on ? "none" : "";
+  if (historyCardEl)  historyCardEl.style.display  = on ? "none" : "";
 }
+
 editBtnTop.addEventListener("click", ()=>{
   if(!clienteData) return;
   editNome.value     = clienteData.nome || "";
