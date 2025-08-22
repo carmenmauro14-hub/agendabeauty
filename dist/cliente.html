@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scheda Cliente</title>
-  <link rel="stylesheet" href="navbar.css">
-  <link rel="stylesheet" href="cliente.css">
+  <link rel="stylesheet" href="navbar.css" />
+  <link rel="stylesheet" href="cliente.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -18,8 +18,9 @@
       <button class="icon-btn" id="backBtn" aria-label="Indietro">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
+
       <div class="header-actions">
-        <button class="icon-btn pill-btn" id="editBtnTop" aria-label="Modifica">
+        <button class="chip-btn" id="editBtnTop" aria-label="Modifica">
           <i class="fa-solid fa-pen"></i>
           <span>Modifica</span>
         </button>
@@ -43,35 +44,50 @@
       <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
     </section>
 
-    <!-- INFO (view + inline edit) -->
-    <section class="card form-list" id="infoCard">
-      <!-- vista -->
-      <div id="infoView">
-        <div class="row">
-          <div class="label">Cellulare</div>
-          <a class="value link" id="infoPhone" href="#">—</a>
-        </div>
-        <div class="row" id="rowEmail" style="display:none;">
-          <div class="label">Email</div>
-          <a class="value link" id="infoEmail" href="#">—</a>
-        </div>
+    <!-- INFO (lettura) -->
+    <section class="card form-list">
+      <div class="row">
+        <div class="label">Cellulare</div>
+        <a class="value link" id="infoPhone" href="#">—</a>
+      </div>
+      <div class="row" id="rowEmail" style="display:none;">
+        <div class="label">Email</div>
+        <a class="value link" id="infoEmail" href="#">—</a>
+      </div>
+    </section>
+
+    <!-- EDIT INLINE – stile “Rubrica iPhone” -->
+    <section class="ios-section" id="editSection" hidden>
+      <h3 class="ios-section-title">Modifica contatto</h3>
+
+      <!-- gruppo “Nome” -->
+      <div class="ios-group">
+        <label class="ios-cell">
+          <span class="ios-cell-label">Nome</span>
+          <input id="editNome" type="text" class="ios-input" placeholder="Nome" required>
+        </label>
       </div>
 
-      <!-- edit inline -->
-      <form id="infoEdit" class="edit-inline" style="display:none">
-        <label for="editNome">Nome</label>
-        <input id="editNome" type="text" required autocomplete="name">
+      <!-- gruppo “Telefono” -->
+      <div class="ios-group">
+        <label class="ios-cell">
+          <span class="ios-cell-label">Telefono</span>
+          <input id="editTelefono" type="tel" inputmode="numeric" class="ios-input" placeholder="Numero" required>
+        </label>
+      </div>
 
-        <label for="editTelefono">Telefono</label>
-        <input id="editTelefono" type="tel" required inputmode="numeric" autocomplete="tel">
+      <!-- gruppo “Email” -->
+      <div class="ios-group">
+        <label class="ios-cell">
+          <span class="ios-cell-label">Email</span>
+          <input id="editEmail" type="email" inputmode="email" class="ios-input" placeholder="opzionale">
+        </label>
+      </div>
 
-        <label for="editEmail">Email (opzionale)</label>
-        <input id="editEmail" type="email" inputmode="email" autocomplete="email">
-
-        <div class="edit-actions">
-          <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Salva</button>
-          <button type="button" class="btn-secondary" id="cancelInline"><i class="fa-solid fa-times"></i> Annulla</button>
-        </div>
+      <!-- toolbar azioni -->
+      <form id="editForm" class="ios-toolbar">
+        <button type="button" class="ios-link" id="cancelEdit">Annulla</button>
+        <button type="submit" class="ios-primary">Salva</button>
       </form>
     </section>
 
@@ -113,5 +129,17 @@
     fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
   </script>
   <script type="module" src="cliente.js"></script>
+  <script>
+    // piccolo toggle: quando premi "Modifica", mostro/nascondo la sezione stile rubrica
+    const editBtnTop = document.getElementById('editBtnTop');
+    const editSection = document.getElementById('editSection');
+    const cancelEdit = document.getElementById('cancelEdit');
+
+    editBtnTop?.addEventListener('click', () => {
+      editSection.hidden = !editSection.hidden;
+      if (!editSection.hidden) window.scrollTo({ top: editSection.offsetTop - 12, behavior: 'smooth' });
+    });
+    cancelEdit?.addEventListener('click', () => { editSection.hidden = true; });
+  </script>
 </body>
 </html>
