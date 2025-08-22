@@ -72,8 +72,13 @@
         <input id="editEmail" type="email" inputmode="email" autocomplete="email">
 
         <div class="edit-actions">
-          <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Salva</button>
-          <button type="button" class="btn-secondary" id="cancelInline"><i class="fa-solid fa-times"></i> Annulla</button>
+          <!-- invertiti: Annulla a sinistra, Salva a destra -->
+          <button type="button" class="btn-secondary" id="cancelInline">
+            <i class="fa-solid fa-times"></i> Annulla
+          </button>
+          <button type="submit" class="btn-primary">
+            <i class="fa-solid fa-check"></i> Salva
+          </button>
         </div>
       </form>
     </section>
