@@ -4,18 +4,16 @@
   --prim:#d2b8a3;
   --text:#a07863;
   --muted:#7c6a60;
-  --line:#eadfd7;          /* hairline più soft */
+  --line:#e6d9d0;
   --bg:#fff;
   --card:#fff;
-  --tint:#f8f3ef;          /* leggero sfondo per input ampi */
-  --radius:16px;
-  --radius-pill:999px;
-  --shadow:0 6px 18px rgba(0,0,0,.04);
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}
+html,body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+}
 .cliente-page{max-width:520px;margin:0 auto;padding-bottom:110px}
 
 /* ===== Header ===== */
@@ -27,101 +25,90 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .icon-btn{
   height:36px; min-width:36px; padding:0 12px;
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  border:1px solid var(--line); border-radius:var(--radius-pill); background:#fff; color:var(--text);
+  border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--text);
   box-shadow:0 1px 2px rgba(0,0,0,.04); cursor:pointer;
 }
 .icon-btn i{font-size:14px; line-height:1;}
 .icon-btn span{font-size:14px; font-weight:700;}
 .pill-btn{ padding:8px 14px; }
 
-/* ===== Hero ===== */
-.hero{display:flex;align-items:center;gap:12px;padding:16px}
-.avatar{
-  width:86px;height:86px;border-radius:50%;background:#f4e5dc;
+/* ===== Blocco superiore tinteggiato ===== */
+.hero-block{
+  background:#f9f4f1;
+  padding:20px 16px 18px;
+  border-bottom:1px solid var(--line);
+}
+.hero-block .hero-top{
+  display:flex; align-items:center; gap:12px;
+}
+.hero-block .avatar{
+  width:86px;height:86px;border-radius:50%;
+  background:#f4e5dc; color:#fff; font-weight:800; font-size:30px;
   display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:800;font-size:30px;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.identity .display-name{font-size:28px;font-weight:900;color:var(--text)}
+.hero-block .display-name{font-size:28px;font-weight:900;color:var(--text)}
 
-/* ===== Card base (più leggera) ===== */
-.card{
-  background:var(--card); margin:12px 16px; border-radius:var(--radius);
-  border:1px solid var(--line); box-shadow:var(--shadow);
-  padding:16px;
-}
-.card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
-
-/* ===== Quick actions (senza “card” visibile) ===== */
-.card.quick-actions{
-  border:none; box-shadow:none; background:transparent;
-  margin:8px 16px 4px; padding:0;
-}
+/* ===== Quick actions (riusate nel blocco) ===== */
 .quick-actions{
   display:grid; grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  gap:12px; padding:14px;
 }
 @media (min-width:420px){ .quick-actions{ grid-template-columns:repeat(5,1fr); } }
+
+.quick-actions.in-hero{
+  margin-top:14px; padding:0; border:0; background:transparent; box-shadow:none;
+}
 .quick-actions .qa{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-decoration:none; color:var(--text);
-  background:#fff; border:1px solid var(--line); border-radius:14px;
+  background:#fff; border:1px solid var(--line); border-radius:16px;
   padding:12px 6px; min-height:72px; font-size:12px;
   transition:transform .08s ease, background .2s ease, box-shadow .2s ease;
-  box-shadow:0 4px 10px rgba(0,0,0,.03);
+  box-shadow:0 4px 10px rgba(0,0,0,.04);
 }
+.quick-actions.in-hero .qa{ border-color:#eadfd8; }
 .quick-actions .qa:hover{ background:#fdf6f3; }
 .quick-actions .qa:active{ transform:scale(.98); }
 .quick-actions .qa i{ font-size:20px; margin-bottom:6px; }
 
-/* ===== Info list (stile “grouped list” iOS) ===== */
-.card.form-list{
-  border:1px solid var(--line); box-shadow:var(--shadow); padding:0; overflow:hidden;
+/* ===== Card base ===== */
+.card{
+  background:var(--card); margin:12px 16px; border-radius:16px;
+  border:1px solid var(--line); box-shadow:0 6px 16px rgba(0,0,0,.04);
+  padding:16px;
 }
-.form-list #infoView{ padding:0 16px; }
+.card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
+
+/* ===== Info list (view) ===== */
 .form-list .row{
   display:flex; align-items:center; justify-content:space-between;
-  padding:14px 0; border-top:1px solid var(--line);
+  padding:14px 4px; border-top:1px solid var(--line);
 }
 .form-list .row:first-child{ border-top:none; }
 .form-list .label{ color:var(--muted); }
 .form-list .value{ font-weight:800; letter-spacing:.2px; color:var(--text) }
 .link{ color:var(--text); text-decoration:none; }
 
-/* ===== Edit inline (campi grandi, niente blu acceso) ===== */
-.edit-inline{ display:flex; flex-direction:column; gap:12px; padding:16px; }
+/* ===== Edit inline ===== */
+.edit-inline{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
 .edit-inline label{ color:var(--muted); font-size:13px; }
 .edit-inline input{
-  font-size:17px; line-height:1.2;
-  padding:14px 12px; border:1px solid var(--line); border-radius:12px; color:var(--text);
-  background:#fff;
-  -webkit-text-size-adjust:100%;
+  padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--text); background:#fff;
 }
-.edit-inline input:focus{
-  outline:none; border-color:#e0cfc3; box-shadow:0 0 0 3px rgba(210,184,163,.18);
-}
-.edit-actions{ display:flex; justify-content:center; gap:10px; margin-top:4px; }
+.edit-actions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
 .btn-primary{background:var(--prim);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
 .btn-secondary{background:#f4e5dc;color:var(--text);border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
 
-/* ===== NOTE (card minimale, un solo elemento evidenziato) ===== */
-.note-card{ border:1px solid var(--line); box-shadow:var(--shadow); }
-.note-card h2{ margin-bottom:10px; }
-.note-area{
+/* ===== Note ===== */
+.notes-card textarea{
   width:100%; min-height:110px; resize:vertical;
-  font-size:17px; line-height:1.35; color:var(--text);
-  background:var(--tint);
-  border:1px solid var(--line); border-radius:12px;
-  padding:12px 14px;
+  border:1px solid var(--line); border-radius:12px; padding:12px;
+  color:var(--text); background:#fff; font:inherit;
 }
-.note-area::placeholder{ color:#b7a9a0; }
-.note-area:focus{
-  outline:none; border-color:#e0cfc3; box-shadow:0 0 0 3px rgba(210,184,163,.18);
-  background:#fff;
-}
+.notes-actions{ display:flex; justify-content:flex-end; margin-top:10px; }
 
-/* ===== Statistiche (alleggerite) ===== */
-.stats-card{ border:1px solid var(--line); box-shadow:var(--shadow); }
+/* ===== Statistiche ===== */
 .stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .year-select select{padding:6px 10px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#fff}
 .bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -137,17 +124,17 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .bt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .bt-list li{
   display:grid; grid-template-columns:1fr auto; gap:12px;
-  padding:10px 12px; border:1px solid var(--line); border-radius:14px; background:#fff;
+  padding:12px 14px; border:1px solid var(--line); border-radius:16px; background:#fff;
 }
 .bt-list .qta-nome{font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .bt-list .totale{font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums}
 
 /* ===== Storico ===== */
-.history-card{ border:1px solid var(--line); box-shadow:var(--shadow); }
 .history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.history-card{margin-top:10px}
 .history li{
   display:grid;grid-template-columns:1fr auto;gap:12px;
-  padding:14px 0;border-top:1px solid var(--line)
+  padding:16px 0;border-top:1px solid var(--line)
 }
 .history li:first-child{border-top:none}
 .h-date{font-weight:800;color:var(--text)}
