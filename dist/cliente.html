@@ -26,21 +26,21 @@
       </div>
     </header>
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="avatar" id="avatarIniziali">AA</div>
-      <div class="identity">
+    <!-- BLOCCO SUPERIORE tinteggiato: avatar + nome + azioni -->
+    <section class="hero-block">
+      <div class="hero-top">
+        <div class="avatar" id="avatarIniziali">AA</div>
         <div class="display-name" id="displayName">—</div>
       </div>
-    </section>
 
-    <!-- QUICK ACTIONS (nascoste in edit) -->
-    <section class="card quick-actions hide-on-edit">
-      <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
-      <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
-      <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
-      <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
-      <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
+      <!-- Quick actions dentro il blocco -->
+      <div class="quick-actions in-hero">
+        <a id="btnSms"  class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
+        <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
+        <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
+        <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
+        <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
+      </div>
     </section>
 
     <!-- INFO (view + inline edit) -->
@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <!-- edit inline (nome/tel/email) -->
+      <!-- edit inline -->
       <form id="infoEdit" class="edit-inline" style="display:none">
         <label for="editNome">Nome</label>
         <input id="editNome" type="text" required autocomplete="name">
@@ -75,17 +75,17 @@
       </form>
     </section>
 
-    <!-- NOTE (sempre modificabili) -->
-    <section class="card note-card" id="noteCard">
-      <div class="note-head">
-        <h2>Note</h2>
-        <small id="noteStatus" class="note-status" aria-live="polite"></small>
+    <!-- NOTE -->
+    <section class="card notes-card">
+      <h2>Note</h2>
+      <textarea id="noteCliente" placeholder="Aggiungi una nota…"></textarea>
+      <div class="notes-actions">
+        <button id="salvaNoteBtn" class="btn-primary"><i class="fa-solid fa-check"></i> Salva note</button>
       </div>
-      <textarea id="noteInput" rows="4" placeholder="Aggiungi una nota…"></textarea>
     </section>
 
-    <!-- STATISTICHE (scompaiono in edit) -->
-    <section class="card stats-card hide-on-edit">
+    <!-- STATISTICHE -->
+    <section class="card stats-card">
       <div class="card-title">
         <h2>Statistiche</h2>
         <div class="year-select">
@@ -111,8 +111,8 @@
       </div>
     </section>
 
-    <!-- STORICO (scompaiono in edit) -->
-    <section class="card history-card hide-on-edit">
+    <!-- STORICO -->
+    <section class="card history-card">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
     </section>
