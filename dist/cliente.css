@@ -1,222 +1,157 @@
-/* =========================
-   Cliente – stile completo
-   ========================= */
-
-/* ---- Palette / base ---- */
+/* ===== Palette ===== */
 :root{
   --nav-height: 84px;
-  --prim: #d2b8a3;   /* primario (bottoni/barre) */
-  --text: #a07863;   /* testo principale */
-  --muted:#6b6b6b;   /* testo secondario */
-  --line: #e6d9d0;   /* bordi/linee */
-  --bg:   #ffffff;   /* sfondo pagina */
-  --card: #ffffff;   /* card */
+  --prim:#d2b8a3;      /* primario (barre/pulsanti) */
+  --text:#a07863;      /* testo principale */
+  --muted:#666;        /* testo secondario */
+  --line:#e6d9d0;      /* bordi */
+  --bg:#fff;           /* sfondo */
+  --card:#fff;         /* card */
 }
 
-*{ box-sizing:border-box; }
+*{box-sizing:border-box}
 html,body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  -webkit-font-smoothing:antialiased;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-               Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
-.cliente-page{
-  max-width:520px;
-  margin:0 auto;
-  padding-bottom:110px; /* spazio per navbar bottom */
-}
+.cliente-page{max-width:520px;margin:0 auto;padding-bottom:110px}
 
-/* ---- Header (back e Modifica) ---- */
+/* ===== Header ===== */
 .page-header{
   position:sticky; top:0; z-index:5;
   display:flex; align-items:center; justify-content:space-between;
-  padding:10px 14px;
-  background:#fff;
-  border-bottom:1px solid var(--line);
+  padding:10px 14px; background:#fff; border-bottom:1px solid var(--line);
 }
 
-/* bottone base cerchio (freccia) */
+/* freccia: bottone tondo */
 .page-header .icon-btn{
-  width:38px; height:38px;
-  border-radius:50%;
-  border:1px solid var(--line);
-  background:#fff; color:var(--text);
-  display:inline-flex; align-items:center; justify-content:center;
-  box-shadow:0 1px 2px rgba(0,0,0,.04);
-  cursor:pointer;
+  width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line); background:#fff; color:var(--text);
+  display:inline-flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 2px rgba(0,0,0,.04); cursor:pointer;
 }
-.page-header .icon-btn i{ font-size:16px; line-height:1; }
+.page-header .icon-btn i{font-size:16px;line-height:1}
 
-/* variante pill con testo (Modifica) – stessa altezza del cerchio */
-.page-header .icon-btn.text-btn{
-  height:38px;
-  padding:0 14px;
-  border-radius:999px;             /* rettangolo molto arrotondato */
-  border:1px solid var(--line);
+/* Modifica: pill rettangolare con icona + testo stessa altezza della freccia */
+.header-actions{display:flex;align-items:center;gap:8px}
+.page-header .text-btn{
+  height:38px; padding:0 14px;
+  border-radius:999px; border:1px solid var(--line);
   background:#fff; color:var(--text);
-  display:inline-flex; gap:8px; align-items:center; justify-content:center;
-  box-shadow:0 1px 2px rgba(0,0,0,.04);
-}
-.page-header .icon-btn.text-btn span{
+  display:inline-flex; align-items:center; gap:8px;
   font-size:16px; font-weight:700; line-height:1;
+  box-shadow:0 1px 2px rgba(0,0,0,.04); cursor:pointer;
 }
+.page-header .text-btn i{font-size:16px;line-height:1}
 
-/* feedback */
-.page-header .icon-btn:hover{ background:#fdf6f3; }
-.page-header .icon-btn:active{ transform:scale(.98); }
-
-/* ---- Hero ---- */
-.hero{
-  display:flex; align-items:center; gap:12px;
-  padding:16px;
-}
+/* ===== Hero ===== */
+.hero{display:flex;align-items:center;gap:12px;padding:16px}
 .avatar{
-  width:80px; height:80px; border-radius:50%;
-  background:#f4e5dc;
-  display:flex; align-items:center; justify-content:center;
-  color:#fff; font-weight:800; font-size:28px;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+  width:80px;height:80px;border-radius:50%;background:#f4e5dc;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:28px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.identity .display-name{
-  font-size:26px; font-weight:800; color:var(--text);
-}
+.identity .display-name{font-size:28px;font-weight:800;color:var(--text)}
 
-/* ---- Card base ---- */
+/* ===== Card base ===== */
 .card{
-  background:var(--card);
-  margin:12px 16px;
-  border-radius:16px;
-  border:1px solid var(--line);
-  box-shadow:0 6px 16px rgba(0,0,0,.04);
+  background:var(--card); margin:12px 16px; border-radius:16px;
+  border:1px solid var(--line); box-shadow:0 6px 16px rgba(0,0,0,.04);
   padding:16px;
 }
-.card h2{
-  margin:0 0 12px 0;
-  font-size:20px; font-weight:800; color:var(--text);
-}
+.card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
 
-/* ---- Quick actions ---- */
+/* ===== Quick actions ===== */
 .quick-actions{
   display:grid; grid-template-columns:repeat(5,1fr);
   gap:12px; padding:14px;
 }
-@media (max-width:420px){
-  .quick-actions{ grid-template-columns:repeat(3,1fr); }
-}
+@media (max-width:420px){ .quick-actions{ grid-template-columns:repeat(3,1fr); } }
+
 .quick-actions .qa{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-decoration:none; color:var(--text);
   background:#fff; border:1px solid var(--line); border-radius:16px;
   padding:12px 6px; min-height:72px; font-size:12px;
+  transition:transform .08s ease, background .2s ease, box-shadow .2s ease;
   box-shadow:0 4px 10px rgba(0,0,0,.04);
-  transition:transform .08s ease, background .2s ease;
 }
 .quick-actions .qa:hover{ background:#fdf6f3; }
 .quick-actions .qa:active{ transform:scale(.98); }
 .quick-actions .qa i{ font-size:20px; margin-bottom:6px; }
 
-/* ---- Info list ---- */
+/* ===== Info list ===== */
 .form-list .row{
   display:flex; align-items:center; justify-content:space-between;
   padding:14px 4px; border-top:1px solid var(--line);
 }
 .form-list .row:first-child{ border-top:none; }
 .form-list .label{ color:var(--muted); }
-.form-list .value{ font-weight:700; letter-spacing:.2px; color:var(--text); }
+.form-list .value{ font-weight:700; letter-spacing:.2px; color:var(--text) }
 .link{ color:var(--text); text-decoration:none; }
 
-/* ---- Statistiche ---- */
+/* ===== Statistiche ===== */
 .stats-card .card-title{
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:8px
 }
 .year-select select{
-  padding:6px 10px; border:1px solid var(--line); border-radius:10px;
-  color:var(--text); background:#fff;
+  padding:6px 10px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#fff
 }
-.bars{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.bar-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .bar-top span{ color:var(--muted); }
 .bar-top strong{ font-variant-numeric:tabular-nums; }
-.bar-track{ height:12px; background:#f4e5dc; border-radius:10px; overflow:hidden; }
-.bar-fill{ height:100%; background:var(--prim); width:0; transition:width .35s ease; }
+.bar-track{height:12px;background:#f4e5dc;border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;background:var(--prim);width:0;transition:width .35s ease}
 
 /* dettaglio per trattamento */
-.by-treatment{ margin-top:12px; }
-.bt-title{ font-weight:800; color:var(--text); margin-bottom:8px; }
-.bt-list{
-  list-style:none; margin:0; padding:0;
-  display:flex; flex-direction:column; gap:8px;
-}
+.by-treatment{margin-top:12px}
+.bt-title{font-weight:800;color:var(--text);margin-bottom:8px}
+.bt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .bt-list li{
   display:grid; grid-template-columns:1fr auto; gap:12px;
-  padding:12px 14px; border:1px solid var(--line);
-  border-radius:16px; background:#fff;
+  padding:12px 14px; border:1px solid var(--line); border-radius:16px; background:#fff;
 }
-.bt-list .qta-nome{
-  font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-.bt-list .totale{
-  font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums;
-}
+.bt-list .qta-nome{font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.bt-list .totale{font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums}
 
-/* ---- Storico ---- */
-.history{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
-.history-card{ margin-top:10px; }
+/* ===== Storico ===== */
+.history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.history-card{margin-top:10px}
 .history li{
-  display:grid; grid-template-columns:1fr auto; gap:12px;
-  padding:16px 0; border-top:1px solid var(--line);
+  display:grid;grid-template-columns:1fr auto;gap:12px;
+  padding:16px 0;border-top:1px solid var(--line)
 }
-.history li:first-child{ border-top:none; }
-.h-date{ font-weight:800; color:var(--text); }
-.h-tratt{ color:var(--muted); }
-.h-amt{ font-weight:900; white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--text); }
+.history li:first-child{border-top:none}
+.h-date{font-weight:800;color:var(--text)}
+.h-tratt{color:var(--muted)}
+.h-amt{font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text)}
 
-/* ---- Edit sheet (bottom) ---- */
-.edit-sheet{
-  position:fixed; inset:0; z-index:20;
-  background:rgba(0,0,0,.35);
-  display:flex; align-items:flex-end; justify-content:center;
-}
-.edit-sheet.hidden{ display:none; }
-.sheet{
-  background:#fff; width:100%; max-width:520px;
-  border-top-left-radius:18px; border-top-right-radius:18px;
-  box-shadow:0 -8px 24px rgba(0,0,0,.15);
-  padding:14px 16px 18px;
-}
-.sheet-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.sheet .close{ border:none; background:transparent; color:var(--text); font-size:20px; cursor:pointer; }
-.sheet form{ display:flex; flex-direction:column; gap:10px; }
-.sheet input{ padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--text); }
-.sheet-actions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
-.btn-primary{
-  background:var(--prim); color:#fff; border:none; border-radius:10px;
-  padding:10px 18px; font-size:15px; cursor:pointer;
-}
-.btn-secondary{
-  background:#f4e5dc; color:var(--text); border:none; border-radius:10px;
-  padding:10px 18px; font-size:15px; cursor:pointer;
-}
+/* ===== Edit sheet ===== */
+.edit-sheet{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.edit-sheet.hidden{display:none}
+.sheet{background:#fff;width:100%;max-width:520px;border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -8px 24px rgba(0,0,0,.15);padding:14px 16px 18px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet .close{border:none;background:transparent;color:var(--text);font-size:20px;cursor:pointer}
+.sheet form{display:flex;flex-direction:column;gap:10px}
+.sheet input{padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--text)}
+.sheet-actions{display:flex;justify-content:center;gap:10px;margin-top:6px}
+.btn-primary{background:var(--prim);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
+.btn-secondary{background:#f4e5dc;color:var(--text);border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
 
-/* ---- Accessibilità ---- */
-.sr-only{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+/* ===== Accessibilità ===== */
+.sr-only{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 a.qa:focus, button:focus, select:focus, .link:focus{
   outline:3px solid rgba(210,184,163,.28);
   outline-offset:2px; border-radius:12px;
 }
 
-/* ---- Safe area iPhone ---- */
+/* ===== Safe area iPhone ===== */
 @supports(padding:max(0px)){
   .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
 }
 
-/* ---- Nascondo eventuali vecchi bottoni fondo pagina ---- */
+/* Nasconde eventuali vecchi bottoni fondo pagina */
 .actions-foot{ display:none !important; }
-
-/* ---- Micro-tuning schermi stretti ---- */
-@media (max-width:360px){
-  .page-header .icon-btn.text-btn{ padding:0 10px; }
-}
