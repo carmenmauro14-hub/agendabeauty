@@ -45,7 +45,11 @@ const infoPhone      = document.getElementById("infoPhone");
 const infoEmail      = document.getElementById("infoEmail");
 const rowEmail       = document.getElementById("rowEmail");
 
-// inline edit
+// NOTE always-editable
+const noteInput      = document.getElementById("noteInput");
+const noteStatus     = document.getElementById("noteStatus");
+
+// inline edit (nome/tel/email)
 const infoView       = document.getElementById("infoView");
 const infoEdit       = document.getElementById("infoEdit");
 const editNome       = document.getElementById("editNome");
@@ -62,11 +66,6 @@ const barTotale      = document.getElementById("barTotale");
 const yearByTreatment= document.getElementById("yearByTreatment");
 const historyList    = document.getElementById("historyList");
 
-// sezione da nascondere in edit
-const quickActionsEl = document.getElementById("quickActions");
-const statsCardEl    = document.getElementById("statsCard");
-const historyCardEl  = document.getElementById("historyCard");
-
 // Stato
 let clienteId   = null;
 let clienteData = null;
@@ -74,6 +73,16 @@ let clienteData = null;
 function getClienteId(){
   const url = new URLSearchParams(location.search);
   return url.get("id") || sessionStorage.getItem("clienteId") || null;
+}
+
+// Helpers UI
+const debounce = (fn, ms=600) => {
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+};
+function autosize(el){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(el.scrollHeight, 92) + 'px';
 }
 
 // Caricamento Cliente
@@ -90,6 +99,7 @@ async function caricaCliente(){
   const nome = clienteData.nome || "—";
   const tel  = (clienteData.telefono || "").toString().trim();
   const mail = (clienteData.email || "").toString().trim();
+  const note = (clienteData.note  || "").toString();
 
   displayName.textContent = nome;
 
@@ -104,10 +114,15 @@ async function caricaCliente(){
     rowEmail.style.display = "none";
   }
 
+  // NOTE
+  noteInput.value = note;
+  autosize(noteInput);
+  noteStatus.textContent = "";
+
   const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
 
-  // quick actions links
+  // quick actions
   const btnSms = document.getElementById("btnSms");
   const btnCall = document.getElementById("btnCall");
   const btnWa = document.getElementById("btnWa");
@@ -127,6 +142,25 @@ async function caricaCliente(){
   await caricaStoricoETotale();
   await popolaAnniERender();
 }
+
+// Salvataggio immediato Note
+const saveNote = debounce(async ()=>{
+  if(!clienteId) return;
+  const newNote = noteInput.value.trim();
+  if(newNote === (clienteData.note || "")) { noteStatus.textContent = ""; return; }
+  noteStatus.textContent = "Salvataggio…";
+  try{
+    await updateDoc(doc(db,"clienti",clienteId), { note: newNote });
+    clienteData.note = newNote;
+    noteStatus.textContent = "Salvato";
+    setTimeout(()=>{ noteStatus.textContent=""; }, 1200);
+  }catch(e){
+    noteStatus.textContent = "Errore salvataggio";
+  }
+}, 700);
+
+noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
+window.addEventListener('resize', ()=>autosize(noteInput));
 
 // Storico & Totale
 async function caricaStoricoETotale(){
@@ -224,18 +258,12 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-// Edit inline: mostra solo avatar+nome+form
+// Gestione edit (nome/tel/email)
 function setEditMode(on){
-  // vista info vs form
+  document.body.classList.toggle('editing', on);   // nasconde blocchi con .hide-on-edit
   infoView.style.display = on ? "none" : "";
   infoEdit.style.display = on ? "flex" : "none";
-
-  // sezioni da nascondere quando si edita
-  if (quickActionsEl) quickActionsEl.style.display = on ? "none" : "";
-  if (statsCardEl)    statsCardEl.style.display    = on ? "none" : "";
-  if (historyCardEl)  historyCardEl.style.display  = on ? "none" : "";
 }
-
 editBtnTop.addEventListener("click", ()=>{
   if(!clienteData) return;
   editNome.value     = clienteData.nome || "";
