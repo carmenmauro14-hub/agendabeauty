@@ -116,32 +116,33 @@
       </div>
     </section>
 
-    <!-- STORICO (preview 3) -->
+    <!-- STORICO (in pagina: solo ultimi 3) -->
     <section class="card history-card hide-on-edit">
-      <div class="history-head">
-        <h2>Storico appuntamenti</h2>
-        <button id="openHistoryModal" class="link-btn" type="button">Mostra tutti</button>
-      </div>
+      <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
+      <!-- il pulsante "Mostra tutti" viene inserito via JS -->
     </section>
   </main>
 
-  <!-- MODALE: Storico completo -->
-  <div id="historyModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="modal__backdrop" data-close></div>
-    <div class="modal__dialog" role="document" aria-labelledby="historyModalTitle">
-      <div class="modal__handle" aria-hidden="true"></div>
-      <header class="modal__header">
-        <h3 id="historyModalTitle">Storico appuntamenti</h3>
-        <div class="modal__controls">
-          <select id="modalYearSelect" class="inline-year small"></select>
-          <button class="icon-ghost" id="closeHistoryModal" aria-label="Chiudi">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </header>
-      <div class="modal__body">
-        <ul id="modalHistoryList" class="history modal-history"></ul>
+  <!-- ===== Bottom Sheet: Storico completo ===== -->
+  <div id="historySheet" class="sheet" hidden>
+    <div class="sheet-backdrop" data-close></div>
+
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-header">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <button class="sheet-close" id="sheetClose" aria-label="Chiudi">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="sheet-titlebar">
+        <h3 id="sheetTitle">Storico appuntamenti</h3>
+        <select id="sheetYear" class="inline-year"></select>
+      </div>
+
+      <div class="sheet-body">
+        <ul id="sheetHistoryList" class="history"></ul>
       </div>
     </div>
   </div>
