@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// === Utils =====================================================
+// Utils
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 function toNumberSafe(v){ if(v==null) return 0; if(typeof v==="number") return isFinite(v)?v:0;
   if(typeof v==="string"){ const n=parseFloat(v.replace(/[€\s]/g,"").replace(",","."));
@@ -36,7 +36,7 @@ function getApptNames(a){
 }
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-// === DOM =======================================================
+// DOM
 const backBtn        = document.getElementById("backBtn");
 const editBtnTop     = document.getElementById("editBtnTop");
 
@@ -76,23 +76,22 @@ const sheetBackdrop  = document.getElementById("sheetBackdrop");
 const sheetClose     = document.getElementById("sheetClose");
 const sheetYear      = document.getElementById("sheetYear");
 const sheetHistory   = document.getElementById("sheetHistory");
+const sheetPanel     = document.querySelector("#historySheet .sheet-panel");
+const sheetHeader    = document.querySelector("#historySheet .sheet-header");
+const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
-// === Stato =====================================================
+// Stato
 let clienteId   = null;
 let clienteData = null;
-let allHistoryItems = [];     // cache completo storico {dt, tratt, prezzo}
-let allYears         = [];     // anni disponibili per sheet
+let allHistoryItems = [];
+let allYears = [];
 
-function getClienteId(){
-  const url = new URLSearchParams(location.search);
-  return url.get("id") || sessionStorage.getItem("clienteId") || null;
-}
-
-// === Helpers UI ===============================================
+// Helpers
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
+function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
 
-// === Caricamento Cliente ======================================
+// Caricamento Cliente
 async function caricaCliente(){
   clienteId = getClienteId();
   if(!clienteId) return;
@@ -109,7 +108,6 @@ async function caricaCliente(){
   const note = (clienteData.note  || "").toString();
 
   displayName.textContent = nome;
-
   infoPhone.textContent = tel || "—";
   infoPhone.href = tel ? `tel:${tel}` : "#";
 
@@ -121,10 +119,8 @@ async function caricaCliente(){
     rowEmail.style.display = "none";
   }
 
-  // NOTE
   noteInput.value = note; autosize(noteInput); noteStatus.textContent = "";
 
-  // Avatar iniziali
   const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
 
@@ -149,7 +145,7 @@ async function caricaCliente(){
   await popolaAnniERender();
 }
 
-// === Salvataggio Note =========================================
+// Note
 const saveNote = debounce(async ()=>{
   if(!clienteId) return;
   const newNote = noteInput.value.trim();
@@ -166,7 +162,7 @@ const saveNote = debounce(async ()=>{
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// === Storico & Totale =========================================
+// Storico & Totale
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
@@ -183,21 +179,16 @@ async function caricaStoricoETotale(){
     allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
   });
 
-  // ordina discendente per data
   allHistoryItems.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
 
-  // mostra solo gli ultimi 3 in pagina
   const short = allHistoryItems.slice(0,3);
   renderHistoryList(historyList, short);
 
-  // bottone "Mostra tutti"
   showAllBtn.style.display = allHistoryItems.length > 3 ? "" : "none";
 
-  // totale complessivo barra a dx
   valTotale.textContent = formatEuro(totaleSempre);
   barTotale.style.width = "100%";
 
-  // anni disponibili per lo sheet
   const anni = new Set();
   allHistoryItems.forEach(it => { if(it.dt) anni.add(it.dt.getFullYear()); });
   allYears = [...anni].sort((a,b)=>b-a);
@@ -217,7 +208,7 @@ function renderHistoryList(container, items){
   });
 }
 
-// === Statistiche per anno =====================================
+// Statistiche per anno
 async function popolaAnniERender(){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -283,15 +274,12 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-// === Bottom-sheet: apertura/chiusura + filtro anno =============
+// Bottom-sheet open/close
 function openSheet(){
-  // popola select anni (fallback anno corrente se vuoto)
   const current = new Date().getFullYear();
   const anni = allYears.length ? allYears : [current];
   sheetYear.innerHTML = anni.map(y=>`<option value="${y}">${y}</option>`).join("");
   sheetYear.value = anni.includes(current) ? current : anni[0];
-
-  // render lista completa filtrata per anno scelto
   renderSheetForYear(Number(sheetYear.value));
 
   sheet.hidden = false;
@@ -308,6 +296,49 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
+// Drag-to-close (maniglia/header)
+(function enableSheetDrag(){
+  if(!sheetPanel || !sheetHeader) return;
+  let startY = 0, lastY = 0, dragging = false;
+
+  const onStart = (e) => {
+    // se stiamo scrollando il contenuto, non avviare il drag finché non siamo in cima
+    if (sheetContent && sheetContent.scrollTop > 0) return;
+    const t = e.touches ? e.touches[0] : e;
+    startY = lastY = t.clientY;
+    dragging = true;
+    sheetPanel.classList.add("dragging");
+  };
+  const onMove = (e) => {
+    if(!dragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    lastY = t.clientY;
+    const dy = Math.max(0, lastY - startY);      // solo verso il basso
+    sheetPanel.style.transform = `translateY(${dy}px)`;
+    e.preventDefault();
+  };
+  const onEnd = () => {
+    if(!dragging) return;
+    const dy = Math.max(0, lastY - startY);
+    dragging = false;
+    sheetPanel.classList.remove("dragging");
+
+    // soglia chiusura ~120px
+    if (dy > 120) {
+      sheetPanel.style.transform = `translateY(100%)`;
+      // aspetta la fine della transizione “virtuale” e chiudi
+      setTimeout(()=>{ sheetPanel.style.transform = ""; closeSheet(); }, 120);
+    } else {
+      sheetPanel.style.transform = "";
+    }
+  };
+
+  // maniglia+header come area di drag
+  ["touchstart","mousedown"].forEach(ev => sheetHeader.addEventListener(ev, onStart, {passive:false}));
+  ["touchmove","mousemove"].forEach(ev => window.addEventListener(ev, onMove, {passive:false}));
+  ["touchend","mouseup","touchcancel","mouseleave"].forEach(ev => window.addEventListener(ev, onEnd));
+})();
+
 // eventi UI sheet
 showAllBtn?.addEventListener("click", openSheet);
 sheetClose?.addEventListener("click", closeSheet);
@@ -315,7 +346,7 @@ sheetBackdrop?.addEventListener("click", closeSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
-// === Gestione edit (nome/tel/email) ============================
+// Edit inline
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
   infoView.style.display = on ? "none" : "";
@@ -343,7 +374,7 @@ infoEdit.addEventListener("submit", async (e)=>{
   caricaCliente();
 });
 
-// Header back
+// back
 backBtn.addEventListener("click", ()=>history.back());
 
 // Avvio
