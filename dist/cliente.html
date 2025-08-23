@@ -116,11 +116,35 @@
       </div>
     </section>
 
-    <!-- STORICO (scompaiono in edit) -->
+    <!-- STORICO (solo ultimi 3) -->
     <section class="card history-card hide-on-edit">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
+      <div class="history-actions">
+        <button id="openHistoryModal" class="link-btn" style="display:none">
+          Mostra tutti
+        </button>
+      </div>
     </section>
+
+    <!-- MODALE STORICO COMPLETO -->
+    <div id="historyModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="modal__backdrop" data-close></div>
+      <div class="modal__dialog" role="document" aria-labelledby="historyModalTitle">
+        <header class="modal__header">
+          <h3 id="historyModalTitle">Storico appuntamenti</h3>
+          <div class="modal__controls">
+            <select id="modalYearSelect" class="inline-year small"></select>
+            <button class="icon-btn" id="closeHistoryModal" aria-label="Chiudi">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </header>
+        <div class="modal__body">
+          <ul id="modalHistoryList" class="history modal-history"></ul>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script>
