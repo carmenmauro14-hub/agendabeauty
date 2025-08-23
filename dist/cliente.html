@@ -116,32 +116,12 @@
       </div>
     </section>
 
-    <!-- STORICO (ultimi 3 + pulsante Mostra tutti) -->
+    <!-- STORICO (scompaiono in edit) -->
     <section class="card history-card hide-on-edit">
-      <div class="card-title with-action">
-        <h2>Storico appuntamenti</h2>
-        <button id="showAllHistory" class="link-btn" type="button" style="display:none;">Mostra tutti</button>
-      </div>
+      <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
     </section>
   </main>
-
-  <!-- MODALE STORICO COMPLETO -->
-  <section id="historyModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
-    <div class="modal-backdrop" data-close-modal></div>
-    <div class="modal-sheet" role="document">
-      <header class="modal-head">
-        <h2 id="historyTitle">Storico appuntamenti</h2>
-        <div class="modal-actions">
-          <select id="historyYearSelect" class="inline-year small"></select>
-          <button id="closeHistory" class="icon-btn" aria-label="Chiudi"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-      </header>
-      <div class="modal-body">
-        <ul id="historyAllList" class="history flat"></ul>
-      </div>
-    </div>
-  </section>
 
   <script>
     fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
