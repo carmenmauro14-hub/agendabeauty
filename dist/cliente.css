@@ -59,7 +59,7 @@ html,body{
   border:1px solid var(--line); box-shadow:0 6px 16px rgba(0,0,0,.04);
   padding:16px;
 }
-.card h2{margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text);}
+.card h2{margin:0 0 12px 0; font-size:16px; font-weight:800; color:var(--text);}
 
 /* ===== Quick actions ===== */
 .quick-actions{
@@ -112,7 +112,7 @@ html,body{
 .stats-card .card-title{
   display:flex; align-items:center; gap:10px; justify-content:space-between; margin-bottom:8px;
 }
-.stats-title{font-size:20px;font-weight:800;color:var(--text);margin:0;}
+.stats-title{font-size:16px;font-weight:800;color:var(--text);margin:0;}
 
 /* Selettore anno – frecce native iOS */
 .inline-year{
