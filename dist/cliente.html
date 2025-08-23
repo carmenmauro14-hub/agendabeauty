@@ -83,7 +83,7 @@
       </form>
     </section>
 
-    <!-- NOTE (sempre modificabili) -->
+    <!-- NOTE -->
     <section class="card note-card" id="noteCard">
       <div class="note-head">
         <h2>Note</h2>
@@ -92,7 +92,7 @@
       <textarea id="noteInput" rows="4" placeholder="Aggiungi una nota…"></textarea>
     </section>
 
-    <!-- STATISTICHE (scompaiono in edit) -->
+    <!-- STATISTICHE -->
     <section class="card stats-card hide-on-edit">
       <div class="card-title">
         <h2 class="stats-title">Statistiche</h2>
@@ -116,19 +116,20 @@
       </div>
     </section>
 
-    <!-- STORICO (in pagina: solo ultimi 3) -->
+    <!-- STORICO (ultimi 3) -->
     <section class="card history-card hide-on-edit">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
-      <!-- il pulsante "Mostra tutti" viene inserito via JS -->
+      <button id="showAllHistory" class="link-btn" style="display:none">Mostra tutti</button>
     </section>
   </main>
 
   <!-- ===== Bottom Sheet: Storico completo ===== -->
-  <div id="historySheet" class="sheet" hidden>
-    <div class="sheet-backdrop" data-close></div>
+  <div class="sheet" id="historySheet" hidden aria-hidden="true">
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
 
     <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <!-- header con maniglia + X -->
       <div class="sheet-header">
         <div class="sheet-handle" aria-hidden="true"></div>
         <button class="sheet-close" id="sheetClose" aria-label="Chiudi">
@@ -136,13 +137,14 @@
         </button>
       </div>
 
+      <!-- titolo e selettore anno, sotto la X -->
       <div class="sheet-titlebar">
         <h3 id="sheetTitle">Storico appuntamenti</h3>
         <select id="sheetYear" class="inline-year"></select>
       </div>
 
-      <div class="sheet-body">
-        <ul id="sheetHistoryList" class="history"></ul>
+      <div class="sheet-content">
+        <ul id="sheetHistory" class="history"></ul>
       </div>
     </div>
   </div>
