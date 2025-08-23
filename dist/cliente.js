@@ -64,21 +64,11 @@ const valTotale      = document.getElementById("valTotale");
 const barAnno        = document.getElementById("barAnno");
 const barTotale      = document.getElementById("barTotale");
 const yearByTreatment= document.getElementById("yearByTreatment");
-
-// storico (in pagina)
 const historyList    = document.getElementById("historyList");
-const showAllHistory = document.getElementById("showAllHistory");
-
-// modale storico
-const historyModal       = document.getElementById("historyModal");
-const historyYearSelect  = document.getElementById("historyYearSelect");
-const historyAllList     = document.getElementById("historyAllList");
-const closeHistory       = document.getElementById("closeHistory");
 
 // Stato
 let clienteId   = null;
 let clienteData = null;
-let allAppointments = [];   // tutto lo storico per modale
 
 function getClienteId(){
   const url = new URLSearchParams(location.search);
@@ -172,7 +162,7 @@ const saveNote = debounce(async ()=>{
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// Storico & Totale (in pagina mostra SOLO 3)
+// Storico & Totale
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
@@ -189,15 +179,15 @@ async function caricaStoricoETotale(){
     items.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
   });
 
-  // ordina decrescente per data
+  // ordina per data decrescente
   items.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
 
-  // salva globale per modale
-  allAppointments = items;
-
-  // render ultimi 3
   const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
-  items.slice(0,3).forEach(it=>{
+
+  // prendi solo i 3 più recenti
+  const ultimiTre = items.slice(0,3);
+
+  ultimiTre.forEach(it=>{
     const li = document.createElement("li");
     li.innerHTML = `
       <div>
@@ -208,10 +198,6 @@ async function caricaStoricoETotale(){
     historyList.appendChild(li);
   });
 
-  // mostra o nasconde "Mostra tutti"
-  showAllHistory.style.display = items.length > 3 ? "" : "none";
-
-  // totale complessivo
   valTotale.textContent = formatEuro(totaleSempre);
   barTotale.style.width = "100%";
 }
@@ -235,7 +221,6 @@ async function popolaAnniERender(){
   await aggiornaStatistiche(Number(yearSelect.value));
   yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
 }
-
 async function aggiornaStatistiche(anno){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -278,71 +263,7 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-/* ================== MODALE STORICO ================== */
-function openHistoryModal(){
-  renderHistoryYears();
-  renderHistoryList(); // default: tutti gli anni
-  historyModal.classList.remove("hidden");
-  historyModal.setAttribute("aria-hidden","false");
-}
-function closeHistoryModal(){
-  historyModal.classList.add("hidden");
-  historyModal.setAttribute("aria-hidden","true");
-}
-
-// popola selettore anni (Tutti + anni presenti)
-function renderHistoryYears(){
-  const anni = new Set();
-  allAppointments.forEach(it => { if (it.dt) anni.add(it.dt.getFullYear()); });
-  const arr = [...anni].sort((a,b)=>b-a);
-  historyYearSelect.innerHTML = `<option value="all">Tutti</option>` +
-    arr.map(y=>`<option value="${y}">${y}</option>`).join("");
-  historyYearSelect.value = "all";
-}
-
-// render lista nel modale con eventuale filtro anno
-function renderHistoryList(){
-  const chosen = historyYearSelect.value;
-  const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
-  historyAllList.innerHTML = "";
-
-  const filtered = allAppointments.filter(it => {
-    if (chosen === "all") return true;
-    return it.dt && it.dt.getFullYear() === Number(chosen);
-  });
-
-  if (!filtered.length){
-    const li = document.createElement("li");
-    li.style.padding = "16px 0";
-    li.style.color = "var(--muted)";
-    li.textContent = "Nessun appuntamento per l'anno selezionato.";
-    historyAllList.appendChild(li);
-    return;
-  }
-
-  filtered.forEach(it=>{
-    const li = document.createElement("li");
-    li.className = "history-item";
-    li.innerHTML = `
-      <div>
-        <div class="h-date">${it.dt ? fmt.format(it.dt) : "—"}</div>
-        <div class="h-tratt">${it.tratt}</div>
-      </div>
-      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
-    historyAllList.appendChild(li);
-  });
-}
-
-// eventi modale
-showAllHistory?.addEventListener("click", openHistoryModal);
-closeHistory?.addEventListener("click", closeHistoryModal);
-historyYearSelect?.addEventListener("change", renderHistoryList);
-historyModal?.addEventListener("click", (e)=>{
-  if (e.target && e.target.hasAttribute("data-close-modal")) closeHistoryModal();
-});
-window.addEventListener("keydown", (e)=>{ if(e.key==="Escape" && !historyModal.classList.contains("hidden")) closeHistoryModal(); });
-
-/* ================== Gestione edit (nome/tel/email) ================== */
+// Gestione edit (nome/tel/email)
 function setEditMode(on){
   document.body.classList.toggle('editing', on);   // nasconde blocchi con .hide-on-edit
   infoView.style.display = on ? "none" : "";
