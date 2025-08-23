@@ -65,16 +65,19 @@ const barAnno        = document.getElementById("barAnno");
 const barTotale      = document.getElementById("barTotale");
 const yearByTreatment= document.getElementById("yearByTreatment");
 
-// storico in pagina (ultimi 3) + sheet
+// storico breve + sheet
 const historyList    = document.getElementById("historyList");
-const sheet          = document.getElementById('historySheet');
-const sheetYear      = document.getElementById('sheetYear');
-const sheetList      = document.getElementById('sheetHistoryList');
-const sheetCloseBtn  = document.getElementById('sheetClose');
+const showAllBtn     = document.getElementById("showAllHistory");
+const sheet          = document.getElementById("historySheet");
+const sheetBackdrop  = document.getElementById("sheetBackdrop");
+const sheetClose     = document.getElementById("sheetClose");
+const sheetYear      = document.getElementById("sheetYear");
+const sheetHistory   = document.getElementById("sheetHistory");
 
 // Stato
 let clienteId   = null;
 let clienteData = null;
+let allAppointments = []; // storico completo in memoria
 
 function getClienteId(){
   const url = new URLSearchParams(location.search);
@@ -168,13 +171,14 @@ const saveNote = debounce(async ()=>{
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// Storico & Totale (in pagina: ultimi 3)
+// Storico & Totale
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
+  allAppointments = [];
+
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
 
-  const items = [];
   let totaleSempre = 0;
 
   qs.forEach(s=>{
@@ -182,14 +186,26 @@ async function caricaStoricoETotale(){
     const dt = safeDate(a.data || a.date || a.dateTime);
     const tot = getApptTotal(a);
     totaleSempre += tot;
-    items.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
+    allAppointments.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
   });
 
-  items.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
-  const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
+  // Ordina dal più recente
+  allAppointments.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
+  valTotale.textContent = formatEuro(totaleSempre);
+  barTotale.style.width = "100%";
 
-  // mostra solo i primi 3
-  items.slice(0,3).forEach(it=>{
+  // Render ultimi 3
+  renderHistoryPreview();
+
+  // Config "Mostra tutti"
+  showAllBtn.style.display = allAppointments.length > 3 ? "inline-block" : "none";
+  showAllBtn.onclick = openHistorySheet;
+}
+
+function renderHistoryPreview(){
+  historyList.innerHTML = "";
+  const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
+  allAppointments.slice(0,3).forEach(it=>{
     const li = document.createElement("li");
     li.innerHTML = `
       <div>
@@ -199,25 +215,9 @@ async function caricaStoricoETotale(){
       <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
     historyList.appendChild(li);
   });
-
-  // bottone "Mostra tutti"
-  let mostraTuttiBtn = document.getElementById('mostraTuttiBtn');
-  if(!mostraTuttiBtn){
-    mostraTuttiBtn = document.createElement('button');
-    mostraTuttiBtn.id = 'mostraTuttiBtn';
-    mostraTuttiBtn.type = 'button';
-    mostraTuttiBtn.className = 'icon-btn pill-btn';
-    mostraTuttiBtn.textContent = 'Mostra tutti';
-    mostraTuttiBtn.style.marginTop = '6px';
-    historyList.parentElement.appendChild(mostraTuttiBtn);
-    mostraTuttiBtn.addEventListener('click', openHistorySheet);
-  }
-
-  valTotale.textContent = formatEuro(totaleSempre);
-  barTotale.style.width = "100%";
 }
 
-// Statistiche per anno
+// Statistiche per anno (card)
 async function popolaAnniERender(){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -236,6 +236,7 @@ async function popolaAnniERender(){
   await aggiornaStatistiche(Number(yearSelect.value));
   yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
 }
+
 async function aggiornaStatistiche(anno){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -282,39 +283,30 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-/* ===== Bottom Sheet ===== */
+/* ===== Bottom Sheet logic ===== */
 function openHistorySheet(){
-  // copia gli anni del select principale
-  sheetYear.innerHTML = yearSelect.innerHTML;
-  sheetYear.value = yearSelect.value;
-  renderSheetHistory(Number(sheetYear.value));
-  sheet.removeAttribute('hidden');
+  // popola anni dal dataset corrente
+  const anniSet = new Set(allAppointments.map(a => a.dt && a.dt.getFullYear()).filter(Boolean));
+  const arr = [...anniSet].sort((a,b)=>b-a);
+  const current = new Date().getFullYear();
+  sheetYear.innerHTML = (arr.length?arr:[current]).map(y=>`<option value="${y}">${y}</option>`).join("");
+  sheetYear.value = arr.includes(current) ? current : (arr[0] || current);
+
+  renderSheetYear(+sheetYear.value);
+
+  sheet.removeAttribute("hidden");
+  sheet.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden";
 }
-function closeHistorySheet(){ sheet.setAttribute('hidden',''); }
-
-document.getElementById('sheetClose').addEventListener('click', closeHistorySheet);
-sheet.addEventListener('click', (e)=>{
-  if(e.target.hasAttribute('data-close')) closeHistorySheet();
-});
-sheetYear.addEventListener('change', ()=>{
-  renderSheetHistory(Number(sheetYear.value));
-});
-
-async function renderSheetHistory(anno){
-  const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
-  const qs = await getDocs(q);
-
-  const items = [];
-  qs.forEach(s=>{
-    const a = s.data();
-    const dt = safeDate(a.data || a.date || a.dateTime);
-    if(!dt || dt.getFullYear() !== anno) return;
-    items.push({ dt, tratt: getApptNames(a) || "—", prezzo: getApptTotal(a) });
-  });
-  items.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
+function closeHistorySheet(){
+  sheet.setAttribute("hidden","");
+  sheet.setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";
+}
+function renderSheetYear(anno){
   const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
-
-  sheetList.innerHTML = items.map(it=>`
+  const filtered = allAppointments.filter(a => a.dt && a.dt.getFullYear()===anno);
+  sheetHistory.innerHTML = filtered.map(it => `
     <li>
       <div>
         <div class="h-date">${fmt.format(it.dt)}</div>
@@ -322,12 +314,15 @@ async function renderSheetHistory(anno){
       </div>
       <div class="h-amt">${formatEuro(it.prezzo)}</div>
     </li>
-  `).join('') || '<li><div class="h-tratt">Nessun appuntamento</div></li>';
+  `).join("") || "<li>—</li>";
 }
+sheetYear?.addEventListener("change", ()=> renderSheetYear(+sheetYear.value));
+sheetClose?.addEventListener("click", closeHistorySheet);
+sheetBackdrop?.addEventListener("click", closeHistorySheet);
 
-/* ===== Edit Mode & Back ===== */
+// Gestione edit (nome/tel/email)
 function setEditMode(on){
-  document.body.classList.toggle('editing', on);
+  document.body.classList.toggle('editing', on);   // nasconde blocchi con .hide-on-edit
   infoView.style.display = on ? "none" : "";
   infoEdit.style.display = on ? "flex" : "none";
 }
@@ -339,7 +334,22 @@ editBtnTop.addEventListener("click", ()=>{
   setEditMode(true);
 });
 cancelInline.addEventListener("click", ()=> setEditMode(false));
-document.getElementById("backBtn").addEventListener("click", ()=>history.back());
+
+infoEdit.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  if(!clienteId) return;
+  const ref = doc(db,"clienti",clienteId);
+  await updateDoc(ref,{
+    nome: editNome.value.trim(),
+    telefono: editTelefono.value.trim(),
+    email: editEmail.value.trim()
+  });
+  setEditMode(false);
+  caricaCliente();
+});
+
+// Header back
+backBtn.addEventListener("click", ()=>history.back());
 
 // Avvio
 caricaCliente();
