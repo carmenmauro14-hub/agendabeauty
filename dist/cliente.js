@@ -179,15 +179,10 @@ async function caricaStoricoETotale(){
     items.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
   });
 
-  // ordina per data decrescente
   items.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
-
   const fmt = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-  // prendi solo i 3 più recenti
-  const ultimiTre = items.slice(0,3);
-
-  ultimiTre.forEach(it=>{
+  items.forEach(it=>{
     const li = document.createElement("li");
     li.innerHTML = `
       <div>
@@ -257,9 +252,14 @@ async function aggiornaStatistiche(anno){
   const perc = totalSempreNum>0 ? Math.max(0,Math.min(100,(totAnno/totalSempreNum)*100)) : 0;
   barAnno.style.width = `${perc.toFixed(0)}%`;
 
-  const entries = Object.entries(perTratt).sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum);
+  const entries = Object.entries(perTratt)
+    .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum);
+
+  // ⬇️ Qui la modifica: niente prefisso "Tot. "
   yearByTreatment.innerHTML = entries.length
-    ? entries.map(([nome,v])=>`<li><div class="qta-nome">${v.count} ${nome}</div><div class="totale">Tot. ${formatEuro(v.sum)}</div></li>`).join("")
+    ? entries.map(([nome,v]) =>
+        `<li><div class="qta-nome">${v.count} ${nome}</div><div class="totale">${formatEuro(v.sum)}</div></li>`
+      ).join("")
     : "<li>—</li>";
 }
 
