@@ -8,7 +8,6 @@
   --bg:#fff;
   --card:#fff;
 
-  /* fascia superiore e tiles – versione più chiara */
   --tint:#f7ede6;
   --tile:#efe2d8;
   --tile-hover:#e8d7cb;
@@ -40,13 +39,6 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .icon-btn:hover{ background:var(--tile-hover); }
 .pill-btn{ padding:7px 12px; }
 
-/* ===== Link-as-button (Mostra tutti) ===== */
-.link-btn{
-  border:none; background:transparent; color:var(--text);
-  font-weight:700; cursor:pointer; padding:6px 8px; border-radius:8px;
-}
-.link-btn:hover{ background:rgba(0,0,0,.03); }
-
 /* ===== Hero ===== */
 .hero{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
 .avatar{
@@ -55,7 +47,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   color:#fff;font-weight:800;font-size:28px;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
 }
-.identity .display-name{font-size:26px;font-weight:900;color:var(--text)}
+.identity .display-name{font-size:24px;font-weight:800;color:var(--text)}
 
 /* ===== Card base ===== */
 .card{
@@ -63,9 +55,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   border:1px solid var(--line); box-shadow:0 6px 16px rgba(0,0,0,.04);
   padding:16px;
 }
-.card h2{margin:0 0 12px 0; font-size:16px; font-weight:800; color:var(--text);}
-.card .card-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
-.card .card-title.with-action h2{margin:0}
+.card h2{margin:0 0 12px 0; font-size:15px; font-weight:700; color:var(--text);} /* Titoli sezioni */
 
 /* ===== Quick actions ===== */
 .quick-actions{
@@ -88,8 +78,8 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .form-list .row{display:flex;align-items:center;justify-content:space-between;
   padding:12px 4px; border-top:1px solid var(--line);}
 .form-list .row:first-child{ border-top:none; }
-.form-list .label{ color:var(--muted); }
-.form-list .value{ font-weight:800; letter-spacing:.2px; color:var(--text) }
+.form-list .label{ color:var(--muted); font-size:13px; }
+.form-list .value{ font-size:14px; font-weight:600; color:var(--text) }
 .link{ color:var(--text); text-decoration:none; }
 
 /* ===== Edit inline ===== */
@@ -97,7 +87,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .edit-inline label{ color:var(--muted); font-size:13px; }
 .edit-inline input{
   padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--text);
-  background:#fff; font-size:16px;
+  background:#fff; font-size:16px; /* iOS safe */
 }
 .edit-actions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
 .btn-primary{background:var(--prim);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
@@ -106,92 +96,69 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 /* ===== Note ===== */
 .note-card textarea{
   width:100%; min-height:104px; resize:none; border:none; padding:0;
-  background:transparent; color:var(--text); font-size:16px;
+  background:transparent; color:var(--text); font-size:14px;
   line-height:1.35; font-family:inherit; outline:none;
 }
-.note-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
-.note-status{color:var(--muted)}
+.note-head h2{ font-size:15px; }
 
 /* ===== Statistiche ===== */
-.stats-title{font-size:16px;font-weight:800;color:var(--text);margin:0;}
+.stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stats-title{font-size:15px;font-weight:700;color:var(--text);margin:0;}
 .inline-year{
   border:1px solid var(--line);
   background:#fff;
-  padding:6px 28px 6px 10px;
+  padding:6px 20px 6px 10px;
   border-radius:10px;
   color:var(--text);
-  font-size:16px;
+  font-size:14px;
   font-weight:600;
-  min-width:90px;
-  height:34px;
+  min-width:80px;
+  height:30px;
   text-align:center;
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
 }
-.inline-year.small{ height:32px; font-size:15px; padding:4px 26px 4px 10px; min-width:84px; }
+.inline-year:focus{outline:2px solid rgba(210,184,163,.35);}
 
-/* barre */
 .bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;}
 .bar-top span{ color:var(--muted); }
-.bar-top strong{ font-variant-numeric:tabular-nums; }
-.bar-track{height:12px;background:#f4e5dc;border-radius:10px;overflow:hidden}
+.bar-top strong{ font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; }
+.bar-track{height:10px;background:#f4e5dc;border-radius:10px;overflow:hidden}
 .bar-fill{height:100%;background:var(--prim);width:0;transition:width .35s ease}
 
-/* ===== Dettaglio per trattamento (stile pulito) ===== */
+/* ===== Dettaglio per trattamento (pulito) ===== */
 .by-treatment{margin-top:12px}
-.bt-title{font-weight:800;color:var(--text);margin-bottom:8px}
+.bt-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
 .bt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .bt-list li{
-  display:flex; justify-content:space-between; align-items:center;
-  padding:10px 4px; border-top:1px solid var(--line);
-  font-size:15px; color:var(--text); font-weight:400;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 2px;
+  border-top:1px solid var(--line);
+  font-size:14px;
+  font-weight:400;
+  color:var(--text);
 }
 .bt-list li:first-child{ border-top:none; }
-.bt-list .qta-nome{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.bt-list .totale{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+.bt-list .qta-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bt-list .totale{white-space:nowrap;font-size:14px;font-weight:500;}
 
-/* ===== Storico (in pagina) ===== */
+/* ===== Storico ===== */
 .history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .history-card{margin-top:10px}
+.history-card h2{ font-size:15px; }
 .history li{display:grid;grid-template-columns:1fr auto;gap:12px;
-  padding:12px 0;border-top:1px solid var(--line)}
+  padding:14px 0;border-top:1px solid var(--line);font-size:14px;}
 .history li:first-child{border-top:none}
-.h-date{font-weight:800;color:var(--text)}
-.h-tratt{color:var(--muted)}
-.h-amt{font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text)}
-
-/* ===== Modale storico ===== */
-.modal.hidden{ display:none; }
-.modal{
-  position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end; justify-content:center;
-}
-.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.35); }
-.modal-sheet{
-  position:relative; background:#fff; width:100%; max-width:520px;
-  height:92vh; border-top-left-radius:18px; border-top-right-radius:18px;
-  box-shadow:0 -8px 24px rgba(0,0,0,.15); display:flex; flex-direction:column;
-}
-.modal-head{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 14px; border-bottom:1px solid var(--line);
-}
-.modal-head h2{ margin:0; font-size:16px; font-weight:800; color:var(--text); }
-.modal-head .modal-actions{ display:flex; align-items:center; gap:8px; }
-.modal-body{ padding:8px 16px 16px; overflow:auto; }
-
-/* Lista piatta nel modale (niente extra spazi) */
-.history.flat li{ padding:14px 0; }
+.h-date{font-size:14px;font-weight:600;color:var(--text)}
+.h-tratt{font-size:13px;color:var(--muted)}
+.h-amt{font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text)}
 
 /* ===== Edit mode ===== */
 .editing .hide-on-edit{ display:none !important; }
 
 /* ===== Accessibilità ===== */
 .sr-only{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-a.qa:focus, button:focus, select:focus, .link:focus, .link-btn:focus{
+a.qa:focus, button:focus, select:focus, .link:focus{
   outline:3px solid rgba(210,184,163,.28); outline-offset:2px; border-radius:12px;
 }
-
-/* Safe area */
-@supports(padding:max(0px)){
-  .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
-}
+@supports(padding:max(0px)){ .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); } }
