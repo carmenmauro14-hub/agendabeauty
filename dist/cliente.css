@@ -105,38 +105,46 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 
 /* ===== Statistiche ===== */
 .stats-card .card-title{
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
 }
 .stats-title{font-size:20px;font-weight:800;color:var(--text);margin:0;}
 
-/* contenitore selettore anno spostato a destra */
+/* selettore anno custom */
 .year-select{
   margin-left:auto;
-  display:flex; align-items:center;
+  position:relative;
+  display:flex;align-items:center;
 }
-
-/* selettore anno con frecce su/giù e testo centrato */
-.year-select select#yearSelect{
-  padding:6px 28px 6px 12px;           /* spazio a destra per l’icona */
-  border:1px solid var(--line);
-  border-radius:10px;
-  background:#fff
+.year-select::after{
+  content:"";
+  position:absolute;
+  right:10px;
+  top:50%;
+  width:12px;height:12px;
+  transform:translateY(-50%);
+  pointer-events:none;
+  background:
     url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23a07863'>\
-<path d='M6 3l3 3H3l3-3zM6 9L3 6h6L6 9z'/></svg>") no-repeat right 10px center;
-  background-size:12px;
-  color:var(--text);
-  font-size:16px;
-  font-weight:600;
-  min-width:90px;
-  height:34px;
-  line-height:34px;
-  text-align:center;
-  text-align-last:center;
-  cursor:pointer;
-  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+<path d='M6 3l3 3H3l3-3zM6 9L3 6h6L6 9z'/></svg>") no-repeat center/12px 12px;
 }
-.year-select select#yearSelect:focus{
+
+#yearSelect{
+  -webkit-appearance:none; appearance:none;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--text);
+  font-size:16px; font-weight:600;
+  height:36px; line-height:36px;
+  min-width:96px;
+  padding:6px 30px 6px 12px;
+  text-align:center; text-align-last:center;
+  background-clip:padding-box;
+  cursor:pointer;
+}
+#yearSelect:focus{
   outline:2px solid rgba(210,184,163,.35);
   outline-offset:2px;
 }
