@@ -104,23 +104,42 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .note-status{color:var(--muted)}
 
 /* ===== Statistiche ===== */
-.stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stats-card .card-title{
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;
+}
 .stats-title{font-size:20px;font-weight:800;color:var(--text);margin:0;}
-.inline-year{
+
+/* contenitore selettore anno spostato a destra */
+.year-select{
+  margin-left:auto;
+  display:flex; align-items:center;
+}
+
+/* selettore anno con frecce su/giù e testo centrato */
+.year-select select#yearSelect{
+  padding:6px 28px 6px 12px;           /* spazio a destra per l’icona */
   border:1px solid var(--line);
-  background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a07863'><path d='M6 9l-4-5h8zM6 3l4 5H2z'/></svg>") no-repeat right 10px center;
-  background-size:12px;
-  padding:6px 28px 6px 10px;
   border-radius:10px;
+  background:#fff
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23a07863'>\
+<path d='M6 3l3 3H3l3-3zM6 9L3 6h6L6 9z'/></svg>") no-repeat right 10px center;
+  background-size:12px;
   color:var(--text);
   font-size:16px;
   font-weight:600;
   min-width:90px;
   height:34px;
+  line-height:34px;
   text-align:center;
+  text-align-last:center;
+  cursor:pointer;
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
 }
-.inline-year:focus{outline:2px solid rgba(210,184,163,.35);}
+.year-select select#yearSelect:focus{
+  outline:2px solid rgba(210,184,163,.35);
+  outline-offset:2px;
+}
 
 .bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
