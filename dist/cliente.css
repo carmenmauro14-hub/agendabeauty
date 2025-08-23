@@ -99,9 +99,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   background:transparent; color:var(--text); font-size:14px;
   line-height:1.35; font-family:inherit; outline:none;
 }
-.note-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
 .note-head h2{ font-size:15px; }
-.note-status{color:var(--muted)}
 
 /* ===== Statistiche ===== */
 .stats-card .card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -119,7 +117,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);
   text-align:center;
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
 }
-.inline-year.small{ height:30px; padding:6px 18px 6px 10px; font-size:14px; min-width:84px; }
+.inline-year.small{ font-size:14px; height:30px; padding:6px 20px 6px 10px; min-width:90px; }
 .inline-year:focus{outline:2px solid rgba(210,184,163,.35);}
 
 .bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -145,35 +143,58 @@ html,body{margin:0;background:var(--bg);color:var(--text);
 .bt-list .qta-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .bt-list .totale{white-space:nowrap;font-size:14px;font-weight:500;}
 
-/* ===== Storico (card) ===== */
+/* ===== Storico ===== */
 .history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .history-card{margin-top:10px}
+.history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
 .history-card h2{ font-size:15px; }
+.link-btn{ background:transparent; border:none; color:var(--text); font-weight:600; cursor:pointer; }
 .history li{display:grid;grid-template-columns:1fr auto;gap:12px;
   padding:14px 0;border-top:1px solid var(--line);font-size:14px;}
 .history li:first-child{border-top:none}
 .h-date{font-size:14px;font-weight:600;color:var(--text)}
 .h-tratt{font-size:13px;color:var(--muted)}
 .h-amt{font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text)}
-.history-actions{ margin-top:8px; text-align:center; }
-.link-btn{ background:none; border:none; color:var(--text); font-weight:600; cursor:pointer; }
 
-/* ===== Modal base ===== */
+/* ===== Modal sheet stile iOS ===== */
+.icon-ghost{
+  height:34px; min-width:34px; padding:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; border:none; border-radius:8px; color:var(--text);
+  cursor:pointer;
+}
+.icon-ghost i{ font-size:18px; line-height:1; }
+.icon-ghost:focus{ outline:2px solid rgba(210,184,163,.35); outline-offset:2px; }
+
 .modal{ position:fixed; inset:0; display:none; z-index:50; }
 .modal.is-open{ display:block; }
 .modal__backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.25); }
+
 .modal__dialog{
-  position:absolute; inset:auto 0 0 0; margin:0 auto; max-width:560px;
-  height:92vh; background:#fff; border-top-left-radius:16px; border-top-right-radius:16px;
-  box-shadow:0 -10px 30px rgba(0,0,0,.18); display:flex; flex-direction:column;
+  position:absolute; left:0; right:0; bottom:0;
+  margin:0 auto; max-width:560px;
+  background:#fff;
+  border-top-left-radius:22px; border-top-right-radius:22px;
+  box-shadow:0 -10px 30px rgba(0,0,0,.18);
+  display:flex; flex-direction:column;
+  height:calc(92vh - env(safe-area-inset-top, 0px));
 }
+
+.modal__handle{
+  width:56px; height:6px; border-radius:999px;
+  background:var(--tile);
+  margin:8px auto 6px;
+}
+
 .modal__header{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:12px 14px; border-bottom:1px solid var(--line);
-  position:sticky; top:0; background:#fff; z-index:1;
+  padding:6px 14px 12px;
+  border-bottom:1px solid var(--line);
+  position:sticky; top:0; background:#fff; z-index:1; 
 }
 .modal__header h3{ margin:0; font-size:16px; font-weight:800; color:var(--text); }
 .modal__controls{ display:flex; gap:8px; align-items:center; }
+
 .modal__body{ padding:8px 16px 18px; overflow:auto; }
 .modal-history li{ padding:14px 0; border-top:1px solid var(--line); }
 .modal-history li:first-child{ border-top:none; }
