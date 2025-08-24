@@ -15,13 +15,24 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// Utils
+// ===== Utils =====
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
-function toNumberSafe(v){ if(v==null) return 0; if(typeof v==="number") return isFinite(v)?v:0;
-  if(typeof v==="string"){ const n=parseFloat(v.replace(/[€\s]/g,"").replace(",","."));
-  return isNaN(n)?0:n } return 0 }
-function safeDate(d){ if(!d) return null; if(d.toDate) return d.toDate(); if(typeof d==="number") return new Date(d);
-  if(typeof d==="string") return new Date(d); return d instanceof Date ? d : null }
+function toNumberSafe(v){
+  if(v==null) return 0;
+  if(typeof v==="number") return isFinite(v)?v:0;
+  if(typeof v==="string"){
+    const n=parseFloat(v.replace(/[€\s]/g,"").replace(",","."));
+    return isNaN(n)?0:n;
+  }
+  return 0;
+}
+function safeDate(d){
+  if(!d) return null;
+  if(d.toDate) return d.toDate();
+  if(typeof d==="number") return new Date(d);
+  if(typeof d==="string") return new Date(d);
+  return d instanceof Date ? d : null;
+}
 function getApptTotal(a){
   if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
     return a.trattamenti.reduce((s,t)=>s+toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price),0);
@@ -36,7 +47,7 @@ function getApptNames(a){
 }
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-// DOM
+// ===== DOM =====
 const backBtn        = document.getElementById("backBtn");
 const editBtnTop     = document.getElementById("editBtnTop");
 
@@ -71,7 +82,7 @@ const historyList    = document.getElementById("historyList");
 const showAllBtn     = document.getElementById("showAllHistory");
 
 // bottom-sheet
-const historySheet   = document.getElementById("historySheet");
+const sheet          = document.getElementById("historySheet");
 const sheetBackdrop  = document.getElementById("sheetBackdrop");
 const sheetClose     = document.getElementById("sheetClose");
 const sheetYear      = document.getElementById("sheetYear");
@@ -80,18 +91,18 @@ const sheetPanel     = document.querySelector("#historySheet .sheet-panel");
 const sheetHeader    = document.querySelector("#historySheet .sheet-header");
 const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
-// Stato
+// ===== Stato =====
 let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
 let allYears = [];
 
-// Helpers
+// ===== Helpers =====
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
 function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
 
-// Caricamento Cliente
+// ===== Caricamento Cliente =====
 async function caricaCliente(){
   clienteId = getClienteId();
   if(!clienteId) return;
@@ -145,7 +156,7 @@ async function caricaCliente(){
   await popolaAnniERender();
 }
 
-// Note
+// ===== Note =====
 const saveNote = debounce(async ()=>{
   if(!clienteId) return;
   const newNote = noteInput.value.trim();
@@ -162,7 +173,7 @@ const saveNote = debounce(async ()=>{
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// Storico & Totale
+// ===== Storico & Totale (pagina) =====
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
@@ -208,7 +219,7 @@ function renderHistoryList(container, items){
   });
 }
 
-// Statistiche per anno
+// ===== Statistiche per anno =====
 async function popolaAnniERender(){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -274,13 +285,7 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-/* ===========================
-   Bottom-sheet: open/close + lock scroll + swipe
-=========================== */
-
-// Mantieni posizione scroll quando blocchi il body
-let __lockScrollY = 0;
-
+// ===== Bottom-sheet =====
 function openSheet(){
   const current = new Date().getFullYear();
   const anni = allYears.length ? allYears : [current];
@@ -288,87 +293,93 @@ function openSheet(){
   sheetYear.value = anni.includes(current) ? current : anni[0];
   renderSheetForYear(Number(sheetYear.value));
 
-  historySheet.hidden = false;
-  historySheet.setAttribute("aria-hidden","false");
-
-  // Lock del body (iOS friendly)
-  __lockScrollY = window.scrollY || 0;
+  sheet.hidden = false;
+  sheet.setAttribute("aria-hidden","false");
   document.body.classList.add("sheet-open");
-  document.body.style.top = `-${__lockScrollY}px`;
 }
-
 function closeSheet(){
-  historySheet.hidden = true;
-  historySheet.setAttribute("aria-hidden","true");
-
+  sheet.hidden = true;
+  sheet.setAttribute("aria-hidden","true");
   document.body.classList.remove("sheet-open");
-  // ripristina posizione
-  const y = __lockScrollY;
-  document.body.style.top = "";
-  window.scrollTo(0, y);
 }
-
 function renderSheetForYear(anno){
   const items = allHistoryItems.filter(it => it.dt && it.dt.getFullYear() === anno);
   renderHistoryList(sheetHistory, items);
 }
 
-// Evita che lo scroll “buchi” verso lo sfondo (touch + wheel)
-historySheet.addEventListener('touchmove', (e)=>{
-  if(!e.target.closest('.sheet-content')) e.preventDefault();
-},{passive:false});
-historySheet.addEventListener('wheel', (e)=>{
-  if(!e.target.closest('.sheet-content')) e.preventDefault();
-},{passive:false});
-
-// Swipe down per chiudere (da maniglia/header)
+// Drag-to-close (maniglia/header) con “flick”
 (function enableSheetDrag(){
   if(!sheetPanel || !sheetHeader) return;
+
   let startY = 0, lastY = 0, dragging = false;
+  let lastT = 0, velocity = 0;
+
+  const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
 
   const onStart = (e) => {
-    // consenti drag solo se il contenuto è in cima
-    if (sheetContent && sheetContent.scrollTop > 0) return;
-    const t = e.touches ? e.touches[0] : e;
-    startY = lastY = t.clientY;
+    if (sheetContent && sheetContent.scrollTop > 0) return; // non iniziare se la lista non è in cima
+    startY = lastY = getY(e);
+    lastT  = performance.now();
+    velocity = 0;
     dragging = true;
-    sheetPanel.classList.add("dragging");
+    sheetPanel.classList.add('dragging');
+    e.preventDefault();
   };
+
   const onMove = (e) => {
     if(!dragging) return;
-    const t = e.touches ? e.touches[0] : e;
-    lastY = t.clientY;
-    const dy = Math.max(0, lastY - startY); // solo verso il basso
+    const y = getY(e);
+    const now = performance.now();
+    const dy  = Math.max(0, y - startY);      // solo verso il basso
+    const dt  = Math.max(1, now - lastT);
+    velocity  = (y - lastY) / dt;             // px/ms
+    lastY = y; lastT = now;
+
     sheetPanel.style.transform = `translateY(${dy}px)`;
-    e.preventDefault(); // non far scorrere la pagina
+    e.preventDefault();
   };
+
   const onEnd = () => {
     if(!dragging) return;
-    const dy = Math.max(0, lastY - startY);
     dragging = false;
-    sheetPanel.classList.remove("dragging");
+    sheetPanel.classList.remove('dragging');
 
-    if (dy > 120) {
-      sheetPanel.style.transform = `translateY(100%)`;
-      setTimeout(()=>{ sheetPanel.style.transform = ""; closeSheet(); }, 140);
+    const dy = Math.max(0, lastY - startY);
+    const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35);
+
+    if (shouldClose) {
+      sheetPanel.style.transition = 'transform .22s ease-out';
+      sheetPanel.style.transform  = 'translateY(100%)';
+      setTimeout(() => {
+        sheetPanel.style.transition = '';
+        sheetPanel.style.transform  = '';
+        closeSheet();
+      }, 220);
     } else {
-      sheetPanel.style.transform = "";
+      sheetPanel.style.transition = 'transform .18s ease';
+      sheetPanel.style.transform  = '';
+      setTimeout(()=>{ sheetPanel.style.transition=''; }, 180);
     }
   };
 
-  ["touchstart","mousedown"].forEach(ev => sheetHeader.addEventListener(ev, onStart, {passive:false}));
-  ["touchmove","mousemove"].forEach(ev => window.addEventListener(ev, onMove, {passive:false}));
-  ["touchend","mouseup","touchcancel","mouseleave"].forEach(ev => window.addEventListener(ev, onEnd));
+  const opts = { passive:false };
+  sheetHeader.addEventListener('touchstart', onStart, opts);
+  sheetHeader.addEventListener('mousedown',   onStart, opts);
+  window.addEventListener('touchmove', onMove, opts);
+  window.addEventListener('mousemove', onMove, opts);
+  window.addEventListener('touchend', onEnd);
+  window.addEventListener('mouseup',  onEnd);
+  window.addEventListener('touchcancel', onEnd);
 })();
 
-// eventi UI sheet
-showAllBtn?.addEventListener("click", (e)=>{ e.preventDefault(); openSheet(); });
+// Eventi UI sheet
+showAllBtn?.addEventListener("click", openSheet);
 sheetClose?.addEventListener("click", closeSheet);
 sheetBackdrop?.addEventListener("click", closeSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
-document.addEventListener("keydown", (e)=>{ if(!historySheet.hidden && e.key==="Escape") closeSheet(); });
+document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
-// Edit inline
+// ===== Edit inline =====
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
   infoView.style.display = on ? "none" : "";
@@ -396,8 +407,8 @@ infoEdit.addEventListener("submit", async (e)=>{
   caricaCliente();
 });
 
-// back
+// ===== Back =====
 backBtn.addEventListener("click", ()=>history.back());
 
-// Avvio
+// ===== Avvio =====
 caricaCliente();
