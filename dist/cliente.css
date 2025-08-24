@@ -172,7 +172,8 @@ html,body{
 /* ===== Bottom Sheet ===== */
 .sheet[hidden]{ display:none; }
 .sheet{
-  position:fixed; inset:0; z-index:999;
+  position:fixed; inset:0; 
+  z-index:9999;                   /* sopra la navbar */
   display:flex; align-items:flex-end; justify-content:center;
 }
 .sheet-backdrop{
@@ -188,12 +189,10 @@ html,body{
   box-shadow:0 -10px 30px rgba(0,0,0,.25);
   transform: translateY(100%);
   transition: transform .28s ease;
-  /* altezza quasi full-screen + safe-area iOS */
-  max-height: 86vh;
+  max-height: calc(100vh - 8px);  /* quasi full screen */
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 .sheet:not([hidden]) .sheet-panel{ transform: translateY(0); }
-/* durante il drag */
 .sheet-panel.dragging{ transition:none; }
 
 .sheet-header{
@@ -221,20 +220,18 @@ html,body{
   margin:0; font-size:16px; font-weight:700; color:var(--text);
 }
 
-/* scrolling interno fluido su iOS */
+/* scrolling interno + spazio per navbar/safe area */
 .sheet-content{
   overflow:auto; -webkit-overflow-scrolling:touch;
   overscroll-behavior: contain;
-  padding:2px 16px max(20px, calc(env(safe-area-inset-bottom) + var(--nav-height) + 12px));
-  max-height: calc(86vh - 112px); /* ≈ header + titlebar */
+  padding:2px 16px calc(env(safe-area-inset-bottom) + var(--nav-height) + 24px);
+  max-height: calc(100vh - 8px - 112px); /* ≈ header + titlebar */
 }
 
 /* blocca lo scroll del body quando il foglio è aperto */
 body.sheet-open{
-  position:fixed;
-  width:100%;
-  overflow:hidden;
-  touch-action:none;
+  position:fixed; inset:0; width:100%;
+  overflow:hidden; touch-action:none;
 }
 
 /* ===== Edit mode ===== */
