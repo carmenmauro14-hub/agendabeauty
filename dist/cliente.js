@@ -71,7 +71,7 @@ const historyList    = document.getElementById("historyList");
 const showAllBtn     = document.getElementById("showAllHistory");
 
 // bottom-sheet
-const sheet          = document.getElementById("historySheet");
+const historySheet   = document.getElementById("historySheet");
 const sheetBackdrop  = document.getElementById("sheetBackdrop");
 const sheetClose     = document.getElementById("sheetClose");
 const sheetYear      = document.getElementById("sheetYear");
@@ -274,7 +274,13 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-// Bottom-sheet open/close
+/* ===========================
+   Bottom-sheet: open/close + lock scroll + swipe
+=========================== */
+
+// Mantieni posizione scroll quando blocchi il body
+let __lockScrollY = 0;
+
 function openSheet(){
   const current = new Date().getFullYear();
   const anni = allYears.length ? allYears : [current];
@@ -282,27 +288,46 @@ function openSheet(){
   sheetYear.value = anni.includes(current) ? current : anni[0];
   renderSheetForYear(Number(sheetYear.value));
 
-  sheet.hidden = false;
-  sheet.setAttribute("aria-hidden","false");
+  historySheet.hidden = false;
+  historySheet.setAttribute("aria-hidden","false");
+
+  // Lock del body (iOS friendly)
+  __lockScrollY = window.scrollY || 0;
   document.body.classList.add("sheet-open");
+  document.body.style.top = `-${__lockScrollY}px`;
 }
+
 function closeSheet(){
-  sheet.hidden = true;
-  sheet.setAttribute("aria-hidden","true");
+  historySheet.hidden = true;
+  historySheet.setAttribute("aria-hidden","true");
+
   document.body.classList.remove("sheet-open");
+  // ripristina posizione
+  const y = __lockScrollY;
+  document.body.style.top = "";
+  window.scrollTo(0, y);
 }
+
 function renderSheetForYear(anno){
   const items = allHistoryItems.filter(it => it.dt && it.dt.getFullYear() === anno);
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag-to-close (maniglia/header)
+// Evita che lo scroll “buchi” verso lo sfondo (touch + wheel)
+historySheet.addEventListener('touchmove', (e)=>{
+  if(!e.target.closest('.sheet-content')) e.preventDefault();
+},{passive:false});
+historySheet.addEventListener('wheel', (e)=>{
+  if(!e.target.closest('.sheet-content')) e.preventDefault();
+},{passive:false});
+
+// Swipe down per chiudere (da maniglia/header)
 (function enableSheetDrag(){
   if(!sheetPanel || !sheetHeader) return;
   let startY = 0, lastY = 0, dragging = false;
 
   const onStart = (e) => {
-    // se stiamo scrollando il contenuto, non avviare il drag finché non siamo in cima
+    // consenti drag solo se il contenuto è in cima
     if (sheetContent && sheetContent.scrollTop > 0) return;
     const t = e.touches ? e.touches[0] : e;
     startY = lastY = t.clientY;
@@ -313,9 +338,9 @@ function renderSheetForYear(anno){
     if(!dragging) return;
     const t = e.touches ? e.touches[0] : e;
     lastY = t.clientY;
-    const dy = Math.max(0, lastY - startY);      // solo verso il basso
+    const dy = Math.max(0, lastY - startY); // solo verso il basso
     sheetPanel.style.transform = `translateY(${dy}px)`;
-    e.preventDefault();
+    e.preventDefault(); // non far scorrere la pagina
   };
   const onEnd = () => {
     if(!dragging) return;
@@ -323,28 +348,25 @@ function renderSheetForYear(anno){
     dragging = false;
     sheetPanel.classList.remove("dragging");
 
-    // soglia chiusura ~120px
     if (dy > 120) {
       sheetPanel.style.transform = `translateY(100%)`;
-      // aspetta la fine della transizione “virtuale” e chiudi
-      setTimeout(()=>{ sheetPanel.style.transform = ""; closeSheet(); }, 120);
+      setTimeout(()=>{ sheetPanel.style.transform = ""; closeSheet(); }, 140);
     } else {
       sheetPanel.style.transform = "";
     }
   };
 
-  // maniglia+header come area di drag
   ["touchstart","mousedown"].forEach(ev => sheetHeader.addEventListener(ev, onStart, {passive:false}));
   ["touchmove","mousemove"].forEach(ev => window.addEventListener(ev, onMove, {passive:false}));
   ["touchend","mouseup","touchcancel","mouseleave"].forEach(ev => window.addEventListener(ev, onEnd));
 })();
 
 // eventi UI sheet
-showAllBtn?.addEventListener("click", openSheet);
+showAllBtn?.addEventListener("click", (e)=>{ e.preventDefault(); openSheet(); });
 sheetClose?.addEventListener("click", closeSheet);
 sheetBackdrop?.addEventListener("click", closeSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
-document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
+document.addEventListener("keydown", (e)=>{ if(!historySheet.hidden && e.key==="Escape") closeSheet(); });
 
 // Edit inline
 function setEditMode(on){
