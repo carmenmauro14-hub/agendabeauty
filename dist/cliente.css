@@ -224,12 +224,18 @@ html,body{
 /* scrolling interno fluido su iOS */
 .sheet-content{
   overflow:auto; -webkit-overflow-scrolling:touch;
-  padding:2px 16px 16px 16px;
+  overscroll-behavior: contain;
+  padding:2px 16px max(20px, calc(env(safe-area-inset-bottom) + var(--nav-height) + 12px));
   max-height: calc(86vh - 112px); /* ≈ header + titlebar */
 }
 
 /* blocca lo scroll del body quando il foglio è aperto */
-.sheet-open { overflow:hidden; touch-action:none; }
+body.sheet-open{
+  position:fixed;
+  width:100%;
+  overflow:hidden;
+  touch-action:none;
+}
 
 /* ===== Edit mode ===== */
 .editing .hide-on-edit{ display:none !important; }
