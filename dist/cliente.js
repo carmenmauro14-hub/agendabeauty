@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ===== Utils =====
+/* ================= Utils ================= */
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 function toNumberSafe(v){
   if(v==null) return 0;
@@ -47,7 +47,7 @@ function getApptNames(a){
 }
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-// ===== DOM =====
+/* ================= DOM ================= */
 const backBtn        = document.getElementById("backBtn");
 const editBtnTop     = document.getElementById("editBtnTop");
 
@@ -89,20 +89,21 @@ const sheetYear      = document.getElementById("sheetYear");
 const sheetHistory   = document.getElementById("sheetHistory");
 const sheetPanel     = document.querySelector("#historySheet .sheet-panel");
 const sheetHeader    = document.querySelector("#historySheet .sheet-header");
+const sheetTitlebar  = document.querySelector("#historySheet .sheet-titlebar");
 const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
-// ===== Stato =====
+/* ================= Stato ================= */
 let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
 let allYears = [];
 
-// ===== Helpers =====
+/* ================= Helpers ================= */
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
 function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
 
-// ===== Caricamento Cliente =====
+/* ================= Caricamento Cliente ================= */
 async function caricaCliente(){
   clienteId = getClienteId();
   if(!clienteId) return;
@@ -156,7 +157,7 @@ async function caricaCliente(){
   await popolaAnniERender();
 }
 
-// ===== Note =====
+/* ================= Note ================= */
 const saveNote = debounce(async ()=>{
   if(!clienteId) return;
   const newNote = noteInput.value.trim();
@@ -173,7 +174,7 @@ const saveNote = debounce(async ()=>{
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// ===== Storico & Totale (pagina) =====
+/* ================= Storico & Totale (pagina) ================= */
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
@@ -219,7 +220,7 @@ function renderHistoryList(container, items){
   });
 }
 
-// ===== Statistiche per anno =====
+/* ================= Statistiche per anno ================= */
 async function popolaAnniERender(){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -285,7 +286,14 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-// ===== Bottom-sheet =====
+/* ================= Bottom-sheet ================= */
+function preventBackgroundScroll(e){
+  // Se il target non è dentro al contenuto scrollabile del foglio, blocco lo scroll
+  if (!sheet.hidden && !sheetContent.contains(e.target)) {
+    e.preventDefault();
+  }
+}
+
 function openSheet(){
   const current = new Date().getFullYear();
   const anni = allYears.length ? allYears : [current];
@@ -293,31 +301,42 @@ function openSheet(){
   sheetYear.value = anni.includes(current) ? current : anni[0];
   renderSheetForYear(Number(sheetYear.value));
 
+  // porta all'inizio la lista
+  if (sheetContent) sheetContent.scrollTop = 0;
+
   sheet.hidden = false;
   sheet.setAttribute("aria-hidden","false");
   document.body.classList.add("sheet-open");
+
+  // blocca scroll sotto (iOS + Android)
+  window.addEventListener("touchmove", preventBackgroundScroll, {passive:false});
+  window.addEventListener("wheel",     preventBackgroundScroll, {passive:false});
 }
 function closeSheet(){
   sheet.hidden = true;
   sheet.setAttribute("aria-hidden","true");
   document.body.classList.remove("sheet-open");
+
+  window.removeEventListener("touchmove", preventBackgroundScroll);
+  window.removeEventListener("wheel",     preventBackgroundScroll);
 }
 function renderSheetForYear(anno){
   const items = allHistoryItems.filter(it => it.dt && it.dt.getFullYear() === anno);
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag-to-close (maniglia/header) con “flick”
+// Drag-to-close (maniglia/header + titlebar) con “flick”
 (function enableSheetDrag(){
-  if(!sheetPanel || !sheetHeader) return;
+  if(!sheetPanel || !sheetHeader || !sheetTitlebar) return;
 
   let startY = 0, lastY = 0, dragging = false;
   let lastT = 0, velocity = 0;
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
+  const atTop = () => !sheetContent || sheetContent.scrollTop <= 0;
 
   const onStart = (e) => {
-    if (sheetContent && sheetContent.scrollTop > 0) return; // non iniziare se la lista non è in cima
+    if (!atTop()) return;                       // non iniziare se la lista non è in cima
     startY = lastY = getY(e);
     lastT  = performance.now();
     velocity = 0;
@@ -330,13 +349,13 @@ function renderSheetForYear(anno){
     if(!dragging) return;
     const y = getY(e);
     const now = performance.now();
-    const dy  = Math.max(0, y - startY);      // solo verso il basso
+    const dy  = Math.max(0, y - startY);        // solo verso il basso
     const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;             // px/ms
+    velocity  = (y - lastY) / dt;               // px/ms
     lastY = y; lastT = now;
 
     sheetPanel.style.transform = `translateY(${dy}px)`;
-    e.preventDefault();
+    e.preventDefault();                         // evita scroll pagina
   };
 
   const onEnd = () => {
@@ -345,7 +364,7 @@ function renderSheetForYear(anno){
     sheetPanel.classList.remove('dragging');
 
     const dy = Math.max(0, lastY - startY);
-    const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35);
+    const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35); // soglia + flick
 
     if (shouldClose) {
       sheetPanel.style.transition = 'transform .22s ease-out';
@@ -363,8 +382,12 @@ function renderSheetForYear(anno){
   };
 
   const opts = { passive:false };
+  // aree sensibili al drag
   sheetHeader.addEventListener('touchstart', onStart, opts);
   sheetHeader.addEventListener('mousedown',   onStart, opts);
+  sheetTitlebar.addEventListener('touchstart', onStart, opts);
+  sheetTitlebar.addEventListener('mousedown',   onStart, opts);
+
   window.addEventListener('touchmove', onMove, opts);
   window.addEventListener('mousemove', onMove, opts);
   window.addEventListener('touchend', onEnd);
@@ -379,7 +402,7 @@ sheetBackdrop?.addEventListener("click", closeSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
-// ===== Edit inline =====
+/* ================= Edit inline ================= */
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
   infoView.style.display = on ? "none" : "";
@@ -407,8 +430,8 @@ infoEdit.addEventListener("submit", async (e)=>{
   caricaCliente();
 });
 
-// ===== Back =====
+/* ================= Back ================= */
 backBtn.addEventListener("click", ()=>history.back());
 
-// ===== Avvio =====
+/* ================= Avvio ================= */
 caricaCliente();
