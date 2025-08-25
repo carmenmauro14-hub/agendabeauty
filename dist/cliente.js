@@ -88,7 +88,8 @@ const sheetClose     = document.getElementById("sheetClose");
 const sheetYear      = document.getElementById("sheetYear");
 const sheetHistory   = document.getElementById("sheetHistory");
 const sheetPanel     = document.querySelector("#historySheet .sheet-panel");
-const sheetHeader    = document.querySelector("#historySheet .sheet-header");
+const sheetHeader    = document.querySelector("#historySheet .sheet-header"); // area con maniglia
+const sheetHandle    = document.querySelector("#historySheet .sheet-handle"); // solo la maniglia
 const sheetTitlebar  = document.querySelector("#historySheet .sheet-titlebar");
 const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
@@ -287,9 +288,9 @@ async function aggiornaStatistiche(anno){
 }
 
 /* ================= Bottom-sheet ================= */
+// blocca lo scroll della pagina sotto al foglio
 function preventBackgroundScroll(e){
-  // Se il target non è dentro al contenuto scrollabile del foglio, blocco lo scroll
-  if (!sheet.hidden && !sheetContent.contains(e.target)) {
+  if (!sheet.hidden && !sheetPanel.contains(e.target)) {
     e.preventDefault();
   }
 }
@@ -301,106 +302,100 @@ function openSheet(){
   sheetYear.value = anni.includes(current) ? current : anni[0];
   renderSheetForYear(Number(sheetYear.value));
 
-  // porta all'inizio la lista
-  if (sheetContent) sheetContent.scrollTop = 0;
+  // reset stato pannello
+  sheetPanel.classList.remove("swipe-out-down");
+  sheetPanel.style.transform = "";
 
+  // mostra foglio
   sheet.hidden = false;
   sheet.setAttribute("aria-hidden","false");
   document.body.classList.add("sheet-open");
+  if (sheetContent) sheetContent.scrollTop = 0;
 
-  // blocca scroll sotto (iOS + Android)
+  // blocca scroll sotto (iOS + Android + desktop)
   window.addEventListener("touchmove", preventBackgroundScroll, {passive:false});
   window.addEventListener("wheel",     preventBackgroundScroll, {passive:false});
 }
-function closeSheet(){
-  sheet.hidden = true;
-  sheet.setAttribute("aria-hidden","true");
-  document.body.classList.remove("sheet-open");
 
-  window.removeEventListener("touchmove", preventBackgroundScroll);
-  window.removeEventListener("wheel",     preventBackgroundScroll);
+function closeSheet(){
+  // chiusura con animazione tipo rubrica
+  sheetPanel.classList.add("swipe-out-down");
+  const finish = () => {
+    sheetPanel.removeEventListener("transitionend", finish);
+    sheet.hidden = true;
+    sheet.setAttribute("aria-hidden","true");
+    document.body.classList.remove("sheet-open");
+    sheetPanel.classList.remove("swipe-out-down");
+    sheetPanel.style.transform = "";
+    window.removeEventListener("touchmove", preventBackgroundScroll);
+    window.removeEventListener("wheel",     preventBackgroundScroll);
+  };
+  // fallback nel caso transitionend non scatti
+  setTimeout(finish, 260);
+  sheetPanel.addEventListener("transitionend", finish);
 }
+
 function renderSheetForYear(anno){
   const items = allHistoryItems.filter(it => it.dt && it.dt.getFullYear() === anno);
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag-to-close (maniglia/header + titlebar) con “flick”
+// Drag SOLO dalla maniglia (non dalla titlebar, così il select resta sempre tappabile)
 (function enableSheetDrag(){
-  if(!sheetPanel || !sheetHeader || !sheetTitlebar) return;
+  if(!sheetPanel || !sheetHandle) return;
 
-  let startY = 0, lastY = 0, dragging = false;
-  let lastT = 0, velocity = 0;
+  let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
-  const atTop = () => !sheetContent || sheetContent.scrollTop <= 0;
-
-  const onStart = (e) => {
-    if (!atTop()) return;                       // non iniziare se la lista non è in cima
+  const onStart = (e)=>{
+    // se il contenuto sta scrollando verso l'alto, permetti lo scroll (niente drag)
+    if (sheetContent && sheetContent.scrollTop > 0) return;
     startY = lastY = getY(e);
     lastT  = performance.now();
     velocity = 0;
     dragging = true;
-    sheetPanel.classList.add('dragging');
     e.preventDefault();
   };
-
-  const onMove = (e) => {
+  const onMove = (e)=>{
     if(!dragging) return;
     const y = getY(e);
     const now = performance.now();
-    const dy  = Math.max(0, y - startY);        // solo verso il basso
+    const dy  = Math.max(0, y - startY);      // trascina solo verso il basso
     const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;               // px/ms
+    velocity  = (y - lastY) / dt;             // px/ms
     lastY = y; lastT = now;
-
     sheetPanel.style.transform = `translateY(${dy}px)`;
-    e.preventDefault();                         // evita scroll pagina
+    e.preventDefault();
   };
-
-  const onEnd = () => {
+  const onEnd = ()=>{
     if(!dragging) return;
     dragging = false;
-    sheetPanel.classList.remove('dragging');
-
     const dy = Math.max(0, lastY - startY);
     const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35); // soglia + flick
-
-    if (shouldClose) {
-      sheetPanel.style.transition = 'transform .22s ease-out';
-      sheetPanel.style.transform  = 'translateY(100%)';
-      setTimeout(() => {
-        sheetPanel.style.transition = '';
-        sheetPanel.style.transform  = '';
-        closeSheet();
-      }, 220);
-    } else {
-      sheetPanel.style.transition = 'transform .18s ease';
-      sheetPanel.style.transform  = '';
-      setTimeout(()=>{ sheetPanel.style.transition=''; }, 180);
-    }
+    sheetPanel.style.transform = "";
+    if (shouldClose) closeSheet();
   };
 
-  const opts = { passive:false };
-  // aree sensibili al drag
-  sheetHeader.addEventListener('touchstart', onStart, opts);
-  sheetHeader.addEventListener('mousedown',   onStart, opts);
-  sheetTitlebar.addEventListener('touchstart', onStart, opts);
-  sheetTitlebar.addEventListener('mousedown',   onStart, opts);
-
-  window.addEventListener('touchmove', onMove, opts);
-  window.addEventListener('mousemove', onMove, opts);
-  window.addEventListener('touchend', onEnd);
-  window.addEventListener('mouseup',  onEnd);
-  window.addEventListener('touchcancel', onEnd);
+  const opts = {passive:false};
+  sheetHandle.addEventListener("touchstart", onStart, opts);
+  sheetHandle.addEventListener("mousedown",  onStart, opts);
+  window.addEventListener("touchmove",  onMove,  opts);
+  window.addEventListener("mousemove",  onMove,  opts);
+  window.addEventListener("touchend",   onEnd);
+  window.addEventListener("mouseup",    onEnd);
+  window.addEventListener("touchcancel",onEnd);
 })();
 
 // Eventi UI sheet
 showAllBtn?.addEventListener("click", openSheet);
-sheetClose?.addEventListener("click", closeSheet);
-sheetBackdrop?.addEventListener("click", closeSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
+
+// Chiudi da backdrop + X (click + touch)
+const doClose = (e)=>{ e.preventDefault?.(); e.stopPropagation?.(); closeSheet(); };
+sheetBackdrop?.addEventListener("click", doClose);
+sheetClose?.addEventListener("click", doClose, {capture:true});
+sheetClose?.addEventListener("touchend", doClose, {capture:true, passive:false});
 
 /* ================= Edit inline ================= */
 function setEditMode(on){
