@@ -180,7 +180,7 @@ html,body{
   position:relative;
   width:100%; max-width:520px;
   background:#fff;
-  border-top-left-radius:22px; border-top-right-radius:22px;
+  border-top-left-radius:16px; border-top-right-radius:16px;  /* come rubrica */
   box-shadow:0 -10px 30px rgba(0,0,0,.25);
   transform: translateY(100%);
   transition: transform .28s ease;
@@ -188,40 +188,48 @@ html,body{
   min-height: calc(100vh - var(--nav-height));
   max-height: calc(100vh - var(--nav-height));
   padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+  padding-top:56px;                                     /* spazio per header assoluto */
   display:flex; flex-direction:column;
   overscroll-behavior:contain;
 }
 .sheet:not([hidden]) .sheet-panel{ transform: translateY(0); }
 .sheet-panel.dragging{ transition:none; }
 
-/* Header con maniglia (area non interattiva, solo drag) */
+/* Header con maniglia e X IDENTICI alla rubrica */
 .sheet-header{
-  position:sticky; top:0; background:#fff; z-index:2;
-  padding:10px 16px 0 16px;
-  border-top-left-radius:22px; border-top-right-radius:22px;
-  -webkit-user-select:none; user-select:none; touch-action:none;
+  position:absolute; top:0; left:0; right:0;
+  height:44px;
+  display:flex; align-items:center; justify-content:center;
+  z-index:3;
+  background:transparent;     /* nessuna tinta né bordi */
+  padding:0;
+  touch-action:none;
+  -webkit-user-select:none; user-select:none;
+  border-bottom:none;
 }
 .sheet-handle{
-  width:84px; height:6px; border-radius:999px; background:#e8d7cb;
-  margin:6px auto 10px auto;
-  cursor:grab;
+  width:48px; height:5px;
+  border-radius:3px; background:#e6d9d0;
+  margin:0; cursor:grab;
 }
 .sheet-close{
   position:absolute; right:8px; top:6px;
-  width:36px; height:36px; border:none; background:transparent; color:var(--muted);
-  border-radius:50%; cursor:pointer;
+  width:32px; height:32px; border:0; background:transparent;
+  font-size:22px; line-height:32px;
+  color:#a07863; opacity:.85; cursor:pointer; z-index:4;
 }
-.sheet-close:hover{ background:rgba(0,0,0,.04) }
+.sheet-close:hover{ opacity:1; }
+.sheet-close:active{ transform:scale(.96); }
 
 /* Niente linea sopra al titolo; solo sotto */
 .sheet-titlebar{
   display:flex; align-items:center; justify-content:space-between;
   padding:12px 16px; border-bottom:1px solid var(--line);
-  /* IMPORTANTE: consentire i tap (select cliccabile) */
-  touch-action:auto;
+  border-top:none;
+  touch-action:auto;            /* select cliccabile */
 }
 .sheet-titlebar h3{
-  margin:0; font-size:16px; font-weight:700; color:var(--text);
+  margin:0; font-size:22px; font-weight:800; color:#a07863; /* look rubrica */
 }
 
 /* Scrolling interno (riempie tutto lo spazio rimanente) */
