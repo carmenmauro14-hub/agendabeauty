@@ -36,7 +36,7 @@
         </div>
       </section>
 
-      <!-- QUICK ACTIONS (nascoste in edit) -->
+      <!-- QUICK ACTIONS -->
       <section class="card quick-actions hide-on-edit">
         <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
         <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
@@ -46,9 +46,8 @@
       </section>
     </div>
 
-    <!-- INFO (view + inline edit) -->
+    <!-- INFO -->
     <section class="card form-list" id="infoCard">
-      <!-- vista -->
       <div id="infoView">
         <div class="row">
           <div class="label">Cellulare</div>
@@ -60,7 +59,7 @@
         </div>
       </div>
 
-      <!-- edit inline (nome/tel/email) -->
+      <!-- edit inline -->
       <form id="infoEdit" class="edit-inline" style="display:none">
         <label for="editNome">Nome</label>
         <input id="editNome" type="text" required autocomplete="name">
@@ -72,7 +71,6 @@
         <input id="editEmail" type="email" inputmode="email" autocomplete="email">
 
         <div class="edit-actions">
-          <!-- invertiti: Annulla a sinistra, Salva a destra -->
           <button type="button" class="btn-secondary" id="cancelInline">
             <i class="fa-solid fa-times"></i> Annulla
           </button>
@@ -96,7 +94,16 @@
     <section class="card stats-card hide-on-edit">
       <div class="card-title">
         <h2 class="stats-title">Statistiche</h2>
-        <select id="yearSelect" class="inline-year"></select>
+
+        <!-- Navigazione anno in stile iOS -->
+        <div class="year-nav">
+          <button type="button" class="year-btn" id="yearPrev"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="year-label" id="yearLabel">2025</span>
+          <button type="button" class="year-btn" id="yearNext"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Select nascosto (serve solo a JS) -->
+        <select id="yearSelect" class="inline-year" style="display:none"></select>
       </div>
 
       <div class="bars">
@@ -116,7 +123,7 @@
       </div>
     </section>
 
-    <!-- STORICO (ultimi 3) -->
+    <!-- STORICO -->
     <section class="card history-card hide-on-edit">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
@@ -124,12 +131,11 @@
     </section>
   </main>
 
-  <!-- ===== Bottom Sheet: Storico completo ===== -->
+  <!-- Bottom Sheet -->
   <div class="sheet" id="historySheet" hidden aria-hidden="true">
     <div class="sheet-backdrop" id="sheetBackdrop"></div>
 
     <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-      <!-- header con maniglia + X -->
       <div class="sheet-header">
         <div class="sheet-handle" aria-hidden="true"></div>
         <button class="sheet-close" id="sheetClose" aria-label="Chiudi">
@@ -137,10 +143,18 @@
         </button>
       </div>
 
-      <!-- titolo e selettore anno, sotto la X -->
       <div class="sheet-titlebar">
         <h3 id="sheetTitle">Storico appuntamenti</h3>
-        <select id="sheetYear" class="inline-year"></select>
+
+        <!-- Navigazione anno -->
+        <div class="year-nav">
+          <button type="button" class="year-btn" id="sheetYearPrev"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="year-label" id="sheetYearLabel">2025</span>
+          <button type="button" class="year-btn" id="sheetYearNext"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Select nascosto -->
+        <select id="sheetYear" class="inline-year" style="display:none"></select>
       </div>
 
       <div class="sheet-content">
@@ -150,7 +164,9 @@
   </div>
 
   <script>
-    fetch("navbar.html").then(r=>r.text()).then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
+    fetch("navbar.html")
+      .then(r=>r.text())
+      .then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
   </script>
   <script type="module" src="cliente.js"></script>
 </body>
