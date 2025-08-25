@@ -57,7 +57,7 @@ html,body{
   border:1px solid var(--line); box-shadow:0 6px 16px rgba(0,0,0,.04);
   padding:16px;
 }
-.card h2{margin:0 0 12px 0; font-size:15px; font-weight:700; color:var(--text);} /* Titoli sezioni */
+.card h2{margin:0 0 12px 0; font-size:15px; font-weight:700; color:var(--text);}
 
 /* ===== Quick actions ===== */
 .quick-actions{
@@ -91,7 +91,7 @@ html,body{
 .edit-inline label{ color:var(--muted); font-size:13px; }
 .edit-inline input{
   padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--text);
-  background:#fff; font-size:16px; /* iOS safe */
+  background:#fff; font-size:16px;
 }
 .edit-actions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
 .btn-primary{background:var(--prim);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
@@ -132,15 +132,14 @@ html,body{
 .bar-track{height:10px;background:#f4e5dc;border-radius:10px;overflow:hidden}
 .bar-fill{height:100%;background:var(--prim);width:0;transition:width .35s ease}
 
-/* ===== Dettaglio per trattamento (pulito) ===== */
+/* ===== Dettaglio per trattamento ===== */
 .by-treatment{margin-top:12px}
 .bt-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
 .bt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .bt-list li{
   display:flex;justify-content:space-between;align-items:center;
-  padding:8px 2px;
-  border-top:1px solid var(--line);
-  font-size:14px; font-weight:400; color:var(--text);
+  padding:8px 2px;border-top:1px solid var(--line);
+  font-size:14px;font-weight:400;color:var(--text);
 }
 .bt-list li:first-child{ border-top:none; }
 .bt-list .qta-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -165,17 +164,17 @@ html,body{
 }
 .link-btn:hover{ background:rgba(0,0,0,.04) }
 
-/* ===== Bottom Sheet ===== */
+/* ===== Bottom Sheet (stile rubrica) ===== */
 .sheet[hidden]{ display:none; }
 .sheet{
-  position:fixed; inset:0; z-index:4000;          /* sopra alla navbar */
+  position:fixed; inset:0; z-index:4000;                 /* sopra navbar */
   display:flex; align-items:flex-end; justify-content:center;
 }
 .sheet-backdrop{
   position:absolute; inset:0;
   background:rgba(0,0,0,.28);
   backdrop-filter:blur(2px);
-  touch-action:none;
+  pointer-events:auto; touch-action:none;
 }
 .sheet-panel{
   position:relative;
@@ -185,14 +184,17 @@ html,body{
   box-shadow:0 -10px 30px rgba(0,0,0,.25);
   transform: translateY(100%);
   transition: transform .28s ease;
-  /* altezza utile: togli la navbar fissa */
+  /* riempi lo schermo meno la navbar fissa */
+  min-height: calc(100vh - var(--nav-height));
   max-height: calc(100vh - var(--nav-height));
   padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
-  overscroll-behavior: contain;                 /* evita scroll chaining */
+  display:flex; flex-direction:column;
+  overscroll-behavior:contain;
 }
 .sheet:not([hidden]) .sheet-panel{ transform: translateY(0); }
 .sheet-panel.dragging{ transition:none; }
 
+/* Header con maniglia (area non interattiva, solo drag) */
 .sheet-header{
   position:sticky; top:0; background:#fff; z-index:2;
   padding:10px 16px 0 16px;
@@ -202,6 +204,7 @@ html,body{
 .sheet-handle{
   width:84px; height:6px; border-radius:999px; background:#e8d7cb;
   margin:6px auto 10px auto;
+  cursor:grab;
 }
 .sheet-close{
   position:absolute; right:8px; top:6px;
@@ -210,23 +213,23 @@ html,body{
 }
 .sheet-close:hover{ background:rgba(0,0,0,.04) }
 
-/* Niente linea sopra al titolo */
+/* Niente linea sopra al titolo; solo sotto */
 .sheet-titlebar{
   display:flex; align-items:center; justify-content:space-between;
   padding:12px 16px; border-bottom:1px solid var(--line);
-  touch-action:none;                              /* aiuta il drag su mobile */
+  /* IMPORTANTE: consentire i tap (select cliccabile) */
+  touch-action:auto;
 }
 .sheet-titlebar h3{
   margin:0; font-size:16px; font-weight:700; color:var(--text);
 }
 
-/* scrolling interno */
+/* Scrolling interno (riempie tutto lo spazio rimanente) */
 .sheet-content{
+  flex:1; min-height:0;
   overflow:auto; -webkit-overflow-scrolling:touch;
   padding:2px 16px 16px 16px;
-  /*  header+titlebar ≈ 112px, sottraggo anche la navbar */
-  max-height: calc(100vh - var(--nav-height) - 112px);
-  overscroll-behavior: contain;
+  overscroll-behavior:contain;
 }
 
 /* blocca lo scroll del body quando il foglio è aperto */
