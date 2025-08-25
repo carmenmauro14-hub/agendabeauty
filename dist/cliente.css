@@ -240,6 +240,39 @@ html,body{
 /* blocca lo scroll del body quando il foglio è aperto */
 .sheet-open { overflow:hidden; height:100%; touch-action:none; }
 
+/* ===== Navigazione anno stile iOS (frecce orizzontali) ===== */
+.year-nav{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  padding:4px 8px;
+  font-weight:700;
+  color:var(--text);
+}
+.year-label{
+  min-width:52px;
+  text-align:center;
+  font-size:15px;
+}
+.year-btn{
+  border:0;
+  background:transparent;
+  color:var(--text);
+  font-size:15px;
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.year-btn:hover{ background:var(--tile-hover); }
+.year-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
 /* ===== Edit mode ===== */
 .editing .hide-on-edit{ display:none !important; }
 
