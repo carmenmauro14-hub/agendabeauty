@@ -228,9 +228,6 @@ html,body{
   border-top:none;
   touch-action:auto;            /* select cliccabile */
 }
-.sheet-titlebar h3{
-  margin:0; font-size:22px; font-weight:800; color:#a07863; /* look rubrica */
-}
 
 /* Scrolling interno (riempie tutto lo spazio rimanente) */
 .sheet-content{
