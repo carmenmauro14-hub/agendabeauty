@@ -401,4 +401,24 @@ cancelInline.addEventListener("click", ()=> setEditMode(false));
 
 infoEdit.addEventListener("submit", async (e)=>{
   e.preventDefault();
+infoEdit.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  if(!clienteId) return;
+
+  const ref = doc(db,"clienti",clienteId);
+  await updateDoc(ref, {
+    nome: editNome.value.trim(),
+    telefono: editTelefono.value.trim(),
+    email: editEmail.value.trim()
+  });
+
+  setEditMode(false);
+  caricaCliente();
+});
+
+/* ================= Back ================= */
+backBtn.addEventListener("click", ()=>history.back());
+
+/* ================= Avvio ================= */
+caricaCliente();
  
