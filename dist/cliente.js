@@ -215,7 +215,7 @@ function renderHistoryList(container, items){
         <div class="h-date">${it.dt ? FMT_DATA.format(it.dt) : "—"}</div>
         <div class="h-tratt">${it.tratt}</div>
       </div>
-      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
+        <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
     container.appendChild(li);
   });
 }
@@ -335,32 +335,49 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag-to-close: SOLO da maniglia o header. Il contenuto scorre libero.
+// Drag-to-close ELASTICO: solo da maniglia/header o da content quando è in cima
 (function enableSheetDrag(){
   if(!sheetPanel) return;
+
+  const isInteractive = (el) =>
+    !!(el && el.closest("select, option, button, a, input, textarea, label"));
 
   let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
 
-  const beginDrag = (e) => {
-    startY = lastY = getY(e);
+  const beginDrag = (y) => {
+    startY = lastY = y;
     lastT  = performance.now();
     velocity = 0;
     dragging = true;
     sheetPanel.classList.add("dragging");
-    e.preventDefault(); // entriamo in drag, non scroll
+  };
+
+  const onStart = (e) => {
+    if (isInteractive(e.target)) return;
+
+    // Se parte dal contenuto ma non siamo in cima, lascia scorrere
+    if (sheetContent && sheetContent.contains(e.target) && sheetContent.scrollTop > 0) return;
+
+    beginDrag(getY(e));
+    e.preventDefault();
   };
 
   const onMove = (e)=>{
     if(!dragging) return;
     const y = getY(e);
     const now = performance.now();
-    const dy  = Math.max(0, y - startY); // solo verso il basso
+    const dy  = Math.max(0, y - startY);
+
+    // Resistenza elastica: maggiore spostamento => più resistenza
+    const resistanceDy = dy > 0 ? Math.pow(dy, 0.85) : 0;
+
     const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;        // px/ms
+    velocity  = (y - lastY) / dt;  // px/ms
     lastY = y; lastT = now;
-    sheetPanel.style.transform = `translateY(${dy}px)`;
+
+    sheetPanel.style.transform = `translateY(${resistanceDy}px)`;
     e.preventDefault();
   };
 
@@ -368,21 +385,24 @@ function renderSheetForYear(anno){
     if(!dragging) return;
     dragging = false;
     sheetPanel.classList.remove("dragging");
+
     const dy = Math.max(0, lastY - startY);
-    const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35);
+    const shouldClose = dy > 120 || (dy > 60 && velocity > 0.35);
+
     sheetPanel.style.transform = "";
     if (shouldClose) closeSheet();
   };
 
   const opts = { passive:false };
 
-  // Avvio drag SOLO da handle + header
-  sheetHandle?.addEventListener("touchstart", beginDrag, opts);
-  sheetHandle?.addEventListener("mousedown",  beginDrag, opts);
-  sheetHeader?.addEventListener("touchstart", beginDrag, opts);
-  sheetHeader?.addEventListener("mousedown",  beginDrag, opts);
+  // Avvio drag SOLO da handle + header + (content solo se scrollTop==0)
+  sheetHandle?.addEventListener("touchstart", onStart, opts);
+  sheetHandle?.addEventListener("mousedown",  onStart, opts);
+  sheetHeader?.addEventListener("touchstart", onStart, opts);
+  sheetHeader?.addEventListener("mousedown",  onStart, opts);
+  sheetContent?.addEventListener("touchstart", onStart, opts);
+  sheetContent?.addEventListener("mousedown",  onStart, opts);
 
-  // NIENTE start dal contenuto -> lo scroll resta naturale
   window.addEventListener("touchmove",  onMove,  opts);
   window.addEventListener("mousemove",  onMove,  opts);
   window.addEventListener("touchend",   onEnd);
