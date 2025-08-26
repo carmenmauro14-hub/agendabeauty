@@ -135,6 +135,7 @@ async function caricaCliente(){
   const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
 
+  // quick actions
   const btnSms = document.getElementById("btnSms");
   const btnCall = document.getElementById("btnCall");
   const btnWa   = document.getElementById("btnWa");
@@ -213,7 +214,7 @@ function renderHistoryList(container, items){
         <div class="h-date">${it.dt ? FMT_DATA.format(it.dt) : "—"}</div>
         <div class="h-tratt">${it.tratt}</div>
       </div>
-      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
+        <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
     container.appendChild(li);
   });
 }
@@ -322,6 +323,7 @@ function closeSheet(){
     window.removeEventListener("touchmove", preventBackgroundScroll);
     window.removeEventListener("wheel",     preventBackgroundScroll);
   };
+  // fallback nel caso transitionend non scatti
   setTimeout(finish, 260);
   sheetPanel.addEventListener("transitionend", finish);
 }
@@ -331,6 +333,7 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
+// Drag dalla maniglia
 (function enableSheetDrag(){
   if(!sheetPanel || !sheetHandle) return;
 
@@ -375,10 +378,12 @@ function renderSheetForYear(anno){
   window.addEventListener("touchcancel",onEnd);
 })();
 
+// Eventi UI sheet
 showAllBtn?.addEventListener("click", openSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
+// Chiudi da backdrop + X
 const doClose = (e)=>{ e.preventDefault?.(); e.stopPropagation?.(); closeSheet(); };
 sheetBackdrop?.addEventListener("click", doClose);
 sheetClose?.addEventListener("click", doClose, {capture:true});
@@ -401,8 +406,6 @@ cancelInline.addEventListener("click", ()=> setEditMode(false));
 
 infoEdit.addEventListener("submit", async (e)=>{
   e.preventDefault();
-infoEdit.addEventListener("submit", async (e)=>{
-  e.preventDefault();
   if(!clienteId) return;
 
   const ref = doc(db,"clienti",clienteId);
@@ -421,4 +424,3 @@ backBtn.addEventListener("click", ()=>history.back());
 
 /* ================= Avvio ================= */
 caricaCliente();
- 
