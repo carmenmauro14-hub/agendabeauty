@@ -88,102 +88,19 @@ const sheetClose     = document.getElementById("sheetClose");
 const sheetYear      = document.getElementById("sheetYear");
 const sheetHistory   = document.getElementById("sheetHistory");
 const sheetPanel     = document.querySelector("#historySheet .sheet-panel");
-const sheetHeader    = document.querySelector("#historySheet .sheet-header"); // area con maniglia
-const sheetHandle    = document.querySelector("#historySheet .sheet-handle"); // solo la maniglia
-const sheetTitlebar  = document.querySelector("#historySheet .sheet-titlebar");
+const sheetHandle    = document.querySelector("#historySheet .sheet-handle");
 const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
 /* ================= Stato ================= */
 let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
-let allYears = [];      // anni disponibili per storico (sheet)
-let statsYears = [];    // anni disponibili per statistiche (card)
+let allYears = [];
 
 /* ================= Helpers ================= */
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
 function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
-
-/* ====== Year navigation (frecce iOS) ====== */
-function createYearNav(selectEl, years, onChange){
-  // nascondo il select ma lo lascio per accessibilità/screen reader
-  selectEl.style.position = "absolute";
-  selectEl.style.opacity  = "0";
-  selectEl.style.pointerEvents = "none";
-  selectEl.style.width = "0";
-  selectEl.style.height = "0";
-  selectEl.setAttribute("aria-hidden","true");
-
-  // wrapper nav
-  const nav = document.createElement("div");
-  nav.className = "year-nav";
-  const btnPrev = document.createElement("button");
-  btnPrev.type = "button";
-  btnPrev.className = "year-btn";
-  btnPrev.setAttribute("aria-label","Anno precedente");
-  btnPrev.innerHTML = "&#x25C0;"; // ◀
-
-  const label = document.createElement("span");
-  label.className = "year-label";
-  label.textContent = String(selectEl.value || years[0] || new Date().getFullYear());
-
-  const btnNext = document.createElement("button");
-  btnNext.type = "button";
-  btnNext.className = "year-btn";
-  btnNext.setAttribute("aria-label","Anno successivo");
-  btnNext.innerHTML = "&#x25B6;"; // ▶
-
-  nav.append(btnPrev, label, btnNext);
-  selectEl.parentElement.insertBefore(nav, selectEl.nextSibling);
-
-  const updateDisabled = () => {
-    const cur = Number(label.textContent);
-    const min = Math.min(...years);
-    const max = Math.max(...years);
-    btnPrev.disabled = cur <= min;
-    btnNext.disabled = cur >= max;
-  };
-
-  const setYear = (y) => {
-    if(!years.includes(y)) return;
-    label.textContent = String(y);
-    // sincronizza il select (anche se invisibile)
-    selectEl.value = y;
-    updateDisabled();
-    onChange?.(y);
-  };
-
-  // init
-  updateDisabled();
-
-  btnPrev.addEventListener("click", ()=>{
-    const cur = Number(label.textContent);
-    const idx = years.indexOf(cur);
-    if(idx > 0) setYear(years[idx-1]);
-  });
-  btnNext.addEventListener("click", ()=>{
-    const cur = Number(label.textContent);
-    const idx = years.indexOf(cur);
-    if(idx >= 0 && idx < years.length-1) setYear(years[idx+1]);
-  });
-
-  // espongo un piccolo API sul nodo per poter aggiornare dinamicamente
-  nav._setYears = (arr) => {
-    years = [...arr].sort((a,b)=>a-b);
-    if(!years.length) years = [new Date().getFullYear()];
-    // se l'anno corrente non è nella lista, mettiamo il più vicino
-    const cur = Number(label.textContent);
-    const y = years.includes(cur) ? cur : (years[0]);
-    setYear(y);
-  };
-  nav._setYear = (y) => setYear(Number(y));
-
-  return nav;
-}
-
-let statsYearNav = null;
-let sheetYearNav = null;
 
 /* ================= Caricamento Cliente ================= */
 async function caricaCliente(){
@@ -218,12 +135,11 @@ async function caricaCliente(){
   const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
 
-  // quick actions
   const btnSms = document.getElementById("btnSms");
   const btnCall = document.getElementById("btnCall");
-  const btnWa = document.getElementById("btnWa");
-  const btnApp= document.getElementById("btnApp");
-  const btnRem= document.getElementById("btnRem");
+  const btnWa   = document.getElementById("btnWa");
+  const btnApp  = document.getElementById("btnApp");
+  const btnRem  = document.getElementById("btnRem");
 
   if (tel) {
     btnSms.href = `sms:${tel}`;
@@ -285,7 +201,7 @@ async function caricaStoricoETotale(){
 
   const anni = new Set();
   allHistoryItems.forEach(it => { if(it.dt) anni.add(it.dt.getFullYear()); });
-  allYears = [...anni].sort((a,b)=>a-b); // ordinati crescente per le frecce
+  allYears = [...anni].sort((a,b)=>b-a);
 }
 
 function renderHistoryList(container, items){
@@ -313,28 +229,13 @@ async function popolaAnniERender(){
     if(dt) anni.add(dt.getFullYear());
   });
 
-  statsYears = [...anni].sort((a,b)=>a-b);
+  const arr = [...anni].sort((a,b)=>b-a);
   const current = new Date().getFullYear();
-  const initial = statsYears.length ? (statsYears.includes(current) ? current : statsYears[0]) : current;
+  yearSelect.innerHTML = (arr.length?arr:[current]).map(y=>`<option value="${y}">${y}</option>`).join("");
+  yearSelect.value = arr.includes(current) ? current : (arr[0] || current);
 
-  // popola (e nascondi) il select
-  yearSelect.innerHTML = (statsYears.length?statsYears:[initial]).map(y=>`<option value="${y}">${y}</option>`).join("");
-  yearSelect.value = initial;
-
-  // crea nav a frecce solo una volta
-  if(!statsYearNav){
-    statsYearNav = createYearNav(yearSelect, statsYears, (y)=>aggiornaStatistiche(Number(y)));
-    // se volessi anche ascoltare cambi dal select (es. tastiera)
-    yearSelect.addEventListener("change", ()=> {
-      const y = Number(yearSelect.value);
-      statsYearNav?._setYear?.(y);
-      aggiornaStatistiche(y);
-    });
-  }else{
-    statsYearNav._setYears(statsYears);
-  }
-
-  await aggiornaStatistiche(initial);
+  await aggiornaStatistiche(Number(yearSelect.value));
+  yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
 }
 
 async function aggiornaStatistiche(anno){
@@ -384,7 +285,6 @@ async function aggiornaStatistiche(anno){
 }
 
 /* ================= Bottom-sheet ================= */
-// blocca lo scroll della pagina sotto al foglio
 function preventBackgroundScroll(e){
   if (!sheet.hidden && !sheetPanel.contains(e.target)) {
     e.preventDefault();
@@ -394,43 +294,23 @@ function preventBackgroundScroll(e){
 function openSheet(){
   const current = new Date().getFullYear();
   const anni = allYears.length ? allYears : [current];
-
-  // popola (e nascondi) il select
   sheetYear.innerHTML = anni.map(y=>`<option value="${y}">${y}</option>`).join("");
-  const initial = anni.includes(current) ? current : anni[0];
-  sheetYear.value = initial;
-
-  // crea nav a frecce (una volta sola)
-  if(!sheetYearNav){
-    sheetYearNav = createYearNav(sheetYear, anni, (y)=>renderSheetForYear(Number(y)));
-    sheetYear.addEventListener("change", ()=> {
-      const y = Number(sheetYear.value);
-      sheetYearNav?._setYear?.(y);
-      renderSheetForYear(y);
-    });
-  }else{
-    sheetYearNav._setYears(anni);
-  }
-
+  sheetYear.value = anni.includes(current) ? current : anni[0];
   renderSheetForYear(Number(sheetYear.value));
 
-  // reset stato pannello
   sheetPanel.classList.remove("swipe-out-down");
   sheetPanel.style.transform = "";
 
-  // mostra foglio
   sheet.hidden = false;
   sheet.setAttribute("aria-hidden","false");
   document.body.classList.add("sheet-open");
   if (sheetContent) sheetContent.scrollTop = 0;
 
-  // blocca scroll sotto (iOS + Android + desktop)
   window.addEventListener("touchmove", preventBackgroundScroll, {passive:false});
   window.addEventListener("wheel",     preventBackgroundScroll, {passive:false});
 }
 
 function closeSheet(){
-  // chiusura con animazione tipo rubrica
   sheetPanel.classList.add("swipe-out-down");
   const finish = () => {
     sheetPanel.removeEventListener("transitionend", finish);
@@ -442,7 +322,6 @@ function closeSheet(){
     window.removeEventListener("touchmove", preventBackgroundScroll);
     window.removeEventListener("wheel",     preventBackgroundScroll);
   };
-  // fallback nel caso transitionend non scatti
   setTimeout(finish, 260);
   sheetPanel.addEventListener("transitionend", finish);
 }
@@ -452,7 +331,6 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag SOLO dalla maniglia (non dalla titlebar, così i controlli sono sempre tappabili)
 (function enableSheetDrag(){
   if(!sheetPanel || !sheetHandle) return;
 
@@ -460,7 +338,6 @@ function renderSheetForYear(anno){
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
   const onStart = (e)=>{
-    // se il contenuto sta scrollando verso l'alto, permetti lo scroll (niente drag)
     if (sheetContent && sheetContent.scrollTop > 0) return;
     startY = lastY = getY(e);
     lastT  = performance.now();
@@ -472,9 +349,9 @@ function renderSheetForYear(anno){
     if(!dragging) return;
     const y = getY(e);
     const now = performance.now();
-    const dy  = Math.max(0, y - startY);      // trascina solo verso il basso
+    const dy  = Math.max(0, y - startY);
     const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;             // px/ms
+    velocity  = (y - lastY) / dt;
     lastY = y; lastT = now;
     sheetPanel.style.transform = `translateY(${dy}px)`;
     e.preventDefault();
@@ -483,7 +360,7 @@ function renderSheetForYear(anno){
     if(!dragging) return;
     dragging = false;
     const dy = Math.max(0, lastY - startY);
-    const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35); // soglia + flick
+    const shouldClose = dy > 120 || (dy > 45 && velocity > 0.35);
     sheetPanel.style.transform = "";
     if (shouldClose) closeSheet();
   };
@@ -498,11 +375,10 @@ function renderSheetForYear(anno){
   window.addEventListener("touchcancel",onEnd);
 })();
 
-// Eventi UI sheet
 showAllBtn?.addEventListener("click", openSheet);
+sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
-// Chiudi da backdrop + X (click + touch)
 const doClose = (e)=>{ e.preventDefault?.(); e.stopPropagation?.(); closeSheet(); };
 sheetBackdrop?.addEventListener("click", doClose);
 sheetClose?.addEventListener("click", doClose, {capture:true});
@@ -525,19 +401,4 @@ cancelInline.addEventListener("click", ()=> setEditMode(false));
 
 infoEdit.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  if(!clienteId) return;
-  const ref = doc(db,"clienti",clienteId);
-  await updateDoc(ref,{
-    nome: editNome.value.trim(),
-    telefono: editTelefono.value.trim(),
-    email: editEmail.value.trim()
-  });
-  setEditMode(false);
-  caricaCliente();
-});
-
-/* ================= Back ================= */
-backBtn.addEventListener("click", ()=>history.back());
-
-/* ================= Avvio ================= */
-caricaCliente();
+ 
