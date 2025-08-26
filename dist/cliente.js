@@ -215,7 +215,7 @@ function renderHistoryList(container, items){
         <div class="h-date">${it.dt ? FMT_DATA.format(it.dt) : "—"}</div>
         <div class="h-tratt">${it.tratt}</div>
       </div>
-        <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
+      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
     container.appendChild(li);
   });
 }
@@ -335,33 +335,37 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag-to-close ELASTICO: solo da maniglia/header o da content quando è in cima
+// ===== Drag-to-close: SOLO handle/header + resistenza elastica =====
 (function enableSheetDrag(){
   if(!sheetPanel) return;
 
-  const isInteractive = (el) =>
-    !!(el && el.closest("select, option, button, a, input, textarea, label"));
+  // Parametri “tuning”
+  const CLOSE_DISTANCE  = 120;      // px per chiudere trascinando piano
+  const FLICK_DISTANCE  = 60;       // px min con flick
+  const FLICK_VELOCITY  = 0.35;     // px/ms per chiusura con flick
+  const LINEAR_LIMIT    = 80;       // primi px senza resistenza
+  const RESISTANCE_GAIN = 0.3;      // percentuale oltre il limite
 
   let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
 
-  const beginDrag = (y) => {
-    startY = lastY = y;
+  const mapWithResistance = (dy) => {
+    if (dy <= 0) return 0;
+    if (dy <= LINEAR_LIMIT) return dy;
+    // oltre il limite, applica “elasticità”
+    return LINEAR_LIMIT + (dy - LINEAR_LIMIT) * RESISTANCE_GAIN;
+  };
+
+  const beginDrag = (e) => {
+    startY = lastY = getY(e);
     lastT  = performance.now();
     velocity = 0;
     dragging = true;
+    // durante il drag niente transizione
     sheetPanel.classList.add("dragging");
-  };
-
-  const onStart = (e) => {
-    if (isInteractive(e.target)) return;
-
-    // Se parte dal contenuto ma non siamo in cima, lascia scorrere
-    if (sheetContent && sheetContent.contains(e.target) && sheetContent.scrollTop > 0) return;
-
-    beginDrag(getY(e));
-    e.preventDefault();
+    sheetPanel.style.transition = "none";
+    e.preventDefault(); // entriamo in drag, non scroll
   };
 
   const onMove = (e)=>{
@@ -369,39 +373,54 @@ function renderSheetForYear(anno){
     const y = getY(e);
     const now = performance.now();
     const dy  = Math.max(0, y - startY);
-
-    // Resistenza elastica: maggiore spostamento => più resistenza
-    const resistanceDy = dy > 0 ? Math.pow(dy, 0.85) : 0;
+    const eased = mapWithResistance(dy);
 
     const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;  // px/ms
+    velocity  = (y - lastY) / dt;
     lastY = y; lastT = now;
 
-    sheetPanel.style.transform = `translateY(${resistanceDy}px)`;
+    sheetPanel.style.transform = `translateY(${eased}px)`;
     e.preventDefault();
+  };
+
+  const springBack = () => {
+    // piccolo rimbalzo per tornare su
+    sheetPanel.classList.remove("dragging");
+    sheetPanel.style.transition = "transform .18s ease-out";
+    sheetPanel.style.transform  = "";
+    const clear = () => {
+      sheetPanel.style.transition = "";
+      sheetPanel.removeEventListener("transitionend", clear);
+    };
+    sheetPanel.addEventListener("transitionend", clear);
   };
 
   const onEnd = ()=>{
     if(!dragging) return;
     dragging = false;
-    sheetPanel.classList.remove("dragging");
 
     const dy = Math.max(0, lastY - startY);
-    const shouldClose = dy > 120 || (dy > 60 && velocity > 0.35);
+    const shouldClose = dy > CLOSE_DISTANCE || (dy > FLICK_DISTANCE && velocity > FLICK_VELOCITY);
 
-    sheetPanel.style.transform = "";
-    if (shouldClose) closeSheet();
+    // ripristina eventuale transizione
+    sheetPanel.classList.remove("dragging");
+    sheetPanel.style.transition = "";
+    sheetPanel.style.transform  = "";
+
+    if (shouldClose) {
+      closeSheet();
+    } else {
+      springBack();
+    }
   };
 
   const opts = { passive:false };
 
-  // Avvio drag SOLO da handle + header + (content solo se scrollTop==0)
-  sheetHandle?.addEventListener("touchstart", onStart, opts);
-  sheetHandle?.addEventListener("mousedown",  onStart, opts);
-  sheetHeader?.addEventListener("touchstart", onStart, opts);
-  sheetHeader?.addEventListener("mousedown",  onStart, opts);
-  sheetContent?.addEventListener("touchstart", onStart, opts);
-  sheetContent?.addEventListener("mousedown",  onStart, opts);
+  // Avvio drag SOLO da handle + header (contenuto scorre liberamente)
+  sheetHandle?.addEventListener("touchstart", beginDrag, opts);
+  sheetHandle?.addEventListener("mousedown",  beginDrag, opts);
+  sheetHeader?.addEventListener("touchstart", beginDrag, opts);
+  sheetHeader?.addEventListener("mousedown",  beginDrag, opts);
 
   window.addEventListener("touchmove",  onMove,  opts);
   window.addEventListener("mousemove",  onMove,  opts);
