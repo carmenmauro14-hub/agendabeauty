@@ -15,6 +15,31 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
+// Recupero parametro "cliente" da URL
+function getClienteIdFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get("cliente");
+}
+
+const clientePreselezionato = getClienteIdFromUrl();
+if (clientePreselezionato) {
+  // Vai a prendere i dati del cliente
+  const ref = doc(db, "clienti", clientePreselezionato);
+  getDoc(ref).then(snap => {
+    if (snap.exists()) {
+      const c = snap.data();
+      // Esempio: riempi subito il campo cliente
+      const campoCliente = document.getElementById("campo-cliente");
+      if (campoCliente) {
+        campoCliente.value = c.nome || "—";
+      }
+
+      // Se hai uno step rubrica/selector, lo puoi saltare o pre-selezionare
+      sessionStorage.setItem("clienteId", clientePreselezionato);
+    }
+  });
+}
+
 // ===== Utils =====
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 function toNumberSafe(v){
