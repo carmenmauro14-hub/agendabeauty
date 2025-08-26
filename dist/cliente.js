@@ -1,4 +1,4 @@
-// Firebase
+// ===== Firebase =====
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
@@ -15,8 +15,9 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-/* ================= Utils ================= */
+// ===== Utils =====
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
+
 function toNumberSafe(v){
   if(v==null) return 0;
   if(typeof v==="number") return isFinite(v)?v:0;
@@ -26,6 +27,7 @@ function toNumberSafe(v){
   }
   return 0;
 }
+
 function safeDate(d){
   if(!d) return null;
   if(d.toDate) return d.toDate();
@@ -33,21 +35,27 @@ function safeDate(d){
   if(typeof d==="string") return new Date(d);
   return d instanceof Date ? d : null;
 }
+
 function getApptTotal(a){
-  if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
-    return a.trattamenti.reduce((s,t)=>s+toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price),0);
+  if(Array.isArray(a.trattamenti) && a.trattamenti.length){
+    return a.trattamenti.reduce((s,t)=> s + toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price), 0);
   }
   return toNumberSafe(a.prezzo ?? a.totale ?? a.price ?? a.costo);
 }
+
 function getApptNames(a){
-  if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
-    return a.trattamenti.map(t=>t?.nome||t?.titolo||t).join(", ");
+  if(Array.isArray(a.trattamenti) && a.trattamenti.length){
+    return a.trattamenti.map(t => t?.nome || t?.titolo || t).join(", ");
   }
   return a.trattamento || a.titolo || "";
 }
-const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-/* ================= DOM ================= */
+const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
+const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
+function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
+
+// ===== DOM =====
 const backBtn        = document.getElementById("backBtn");
 const editBtnTop     = document.getElementById("editBtnTop");
 
@@ -57,11 +65,11 @@ const infoPhone      = document.getElementById("infoPhone");
 const infoEmail      = document.getElementById("infoEmail");
 const rowEmail       = document.getElementById("rowEmail");
 
-// NOTE
+// Note
 const noteInput      = document.getElementById("noteInput");
 const noteStatus     = document.getElementById("noteStatus");
 
-// inline edit
+// Inline edit
 const infoView       = document.getElementById("infoView");
 const infoEdit       = document.getElementById("infoEdit");
 const editNome       = document.getElementById("editNome");
@@ -69,7 +77,7 @@ const editTelefono   = document.getElementById("editTelefono");
 const editEmail      = document.getElementById("editEmail");
 const cancelInline   = document.getElementById("cancelInline");
 
-// stats
+// Stats
 const yearSelect     = document.getElementById("yearSelect");
 const valAnno        = document.getElementById("valAnno");
 const valTotale      = document.getElementById("valTotale");
@@ -77,11 +85,11 @@ const barAnno        = document.getElementById("barAnno");
 const barTotale      = document.getElementById("barTotale");
 const yearByTreatment= document.getElementById("yearByTreatment");
 
-// storico (in pagina)
+// Storico (card)
 const historyList    = document.getElementById("historyList");
 const showAllBtn     = document.getElementById("showAllHistory");
 
-// bottom-sheet
+// Bottom sheet
 const sheet          = document.getElementById("historySheet");
 const sheetBackdrop  = document.getElementById("sheetBackdrop");
 const sheetClose     = document.getElementById("sheetClose");
@@ -91,18 +99,13 @@ const sheetPanel     = document.querySelector("#historySheet .sheet-panel");
 const sheetHandle    = document.querySelector("#historySheet .sheet-handle");
 const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
-/* ================= Stato ================= */
+// ===== Stato =====
 let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
-let allYears = [];
+let allYears = []; // per lo sheet
 
-/* ================= Helpers ================= */
-const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
-function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
-function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
-
-/* ================= Caricamento Cliente ================= */
+// ===== Caricamento cliente =====
 async function caricaCliente(){
   clienteId = getClienteId();
   if(!clienteId) return;
@@ -119,6 +122,7 @@ async function caricaCliente(){
   const note = (clienteData.note  || "").toString();
 
   displayName.textContent = nome;
+
   infoPhone.textContent = tel || "—";
   infoPhone.href = tel ? `tel:${tel}` : "#";
 
@@ -130,7 +134,9 @@ async function caricaCliente(){
     rowEmail.style.display = "none";
   }
 
-  noteInput.value = note; autosize(noteInput); noteStatus.textContent = "";
+  noteInput.value = note;
+  autosize(noteInput);
+  noteStatus.textContent = "";
 
   const iniziali = nome.split(" ").filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join("") || "AA";
   avatarIniziali.textContent = iniziali;
@@ -147,7 +153,9 @@ async function caricaCliente(){
     btnCall.href = `tel:${tel}`;
     btnWa.href   = `https://wa.me/${tel.replace(/[^\d]/g,"")}`;
   } else {
-    btnSms.removeAttribute("href"); btnCall.removeAttribute("href"); btnWa.removeAttribute("href");
+    btnSms.removeAttribute("href");
+    btnCall.removeAttribute("href");
+    btnWa.removeAttribute("href");
   }
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
   btnRem.onclick = (e)=>{ e.preventDefault(); alert("Promemoria WhatsApp: funzione in sviluppo."); };
@@ -156,7 +164,7 @@ async function caricaCliente(){
   await popolaAnniERender();
 }
 
-/* ================= Note ================= */
+// ===== Note =====
 const saveNote = debounce(async ()=>{
   if(!clienteId) return;
   const newNote = noteInput.value.trim();
@@ -167,24 +175,27 @@ const saveNote = debounce(async ()=>{
     clienteData.note = newNote;
     noteStatus.textContent = "Salvato";
     setTimeout(()=>{ noteStatus.textContent=""; }, 1200);
-  }catch{ noteStatus.textContent = "Errore salvataggio"; }
+  }catch{
+    noteStatus.textContent = "Errore salvataggio";
+  }
 }, 700);
 
-noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
+noteInput?.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-/* ================= Storico & Totale (pagina) ================= */
+// ===== Storico & Totale (card) =====
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
+
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
 
   let totaleSempre = 0;
 
   qs.forEach(s=>{
-    const a = s.data();
-    const dt = safeDate(a.data || a.date || a.dateTime);
+    const a   = s.data();
+    const dt  = safeDate(a.data || a.date || a.dateTime);
     const tot = getApptTotal(a);
     totaleSempre += tot;
     allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
@@ -214,12 +225,12 @@ function renderHistoryList(container, items){
         <div class="h-date">${it.dt ? FMT_DATA.format(it.dt) : "—"}</div>
         <div class="h-tratt">${it.tratt}</div>
       </div>
-        <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
+      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
     container.appendChild(li);
   });
 }
 
-/* ================= Statistiche per anno ================= */
+// ===== Statistiche per anno =====
 async function popolaAnniERender(){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -232,6 +243,7 @@ async function popolaAnniERender(){
 
   const arr = [...anni].sort((a,b)=>b-a);
   const current = new Date().getFullYear();
+
   yearSelect.innerHTML = (arr.length?arr:[current]).map(y=>`<option value="${y}">${y}</option>`).join("");
   yearSelect.value = arr.includes(current) ? current : (arr[0] || current);
 
@@ -254,7 +266,7 @@ async function aggiornaStatistiche(anno){
     const apptTotal = getApptTotal(a);
     totAnno += apptTotal;
 
-    if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
+    if(Array.isArray(a.trattamenti) && a.trattamenti.length){
       a.trattamenti.forEach(t=>{
         const nome = t?.nome || t?.titolo || "Trattamento";
         const p    = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
@@ -285,11 +297,9 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-/* ================= Bottom-sheet ================= */
+// ===== Bottom Sheet =====
 function preventBackgroundScroll(e){
-  if (!sheet.hidden && !sheetPanel.contains(e.target)) {
-    e.preventDefault();
-  }
+  if (!sheet.hidden && !sheetPanel.contains(e.target)) e.preventDefault();
 }
 
 function openSheet(){
@@ -323,7 +333,6 @@ function closeSheet(){
     window.removeEventListener("touchmove", preventBackgroundScroll);
     window.removeEventListener("wheel",     preventBackgroundScroll);
   };
-  // fallback nel caso transitionend non scatti
   setTimeout(finish, 260);
   sheetPanel.addEventListener("transitionend", finish);
 }
@@ -333,7 +342,7 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag dalla maniglia
+// Drag solo dalla maniglia
 (function enableSheetDrag(){
   if(!sheetPanel || !sheetHandle) return;
 
@@ -354,7 +363,7 @@ function renderSheetForYear(anno){
     const now = performance.now();
     const dy  = Math.max(0, y - startY);
     const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;
+    velocity  = (y - lastY) / dt; // px/ms
     lastY = y; lastT = now;
     sheetPanel.style.transform = `translateY(${dy}px)`;
     e.preventDefault();
@@ -389,38 +398,38 @@ sheetBackdrop?.addEventListener("click", doClose);
 sheetClose?.addEventListener("click", doClose, {capture:true});
 sheetClose?.addEventListener("touchend", doClose, {capture:true, passive:false});
 
-/* ================= Edit inline ================= */
+// ===== Edit inline =====
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
-  infoView.style.display = on ? "none" : "";
-  infoEdit.style.display = on ? "flex" : "none";
+  if(infoView) infoView.style.display = on ? "none" : "";
+  if(infoEdit) infoEdit.style.display = on ? "flex" : "none";
 }
-editBtnTop.addEventListener("click", ()=>{
+
+editBtnTop?.addEventListener("click", ()=>{
   if(!clienteData) return;
   editNome.value     = clienteData.nome || "";
   editTelefono.value = clienteData.telefono || "";
   editEmail.value    = clienteData.email || "";
   setEditMode(true);
 });
-cancelInline.addEventListener("click", ()=> setEditMode(false));
 
-infoEdit.addEventListener("submit", async (e)=>{
+cancelInline?.addEventListener("click", ()=> setEditMode(false));
+
+infoEdit?.addEventListener("submit", async (e)=>{
   e.preventDefault();
   if(!clienteId) return;
-
   const ref = doc(db,"clienti",clienteId);
   await updateDoc(ref, {
     nome: editNome.value.trim(),
     telefono: editTelefono.value.trim(),
     email: editEmail.value.trim()
   });
-
   setEditMode(false);
   caricaCliente();
 });
 
-/* ================= Back ================= */
-backBtn.addEventListener("click", ()=>history.back());
+// ===== Back =====
+backBtn?.addEventListener("click", ()=>history.back());
 
-/* ================= Avvio ================= */
+// ===== Avvio =====
 caricaCliente();
