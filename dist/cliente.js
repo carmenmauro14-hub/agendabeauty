@@ -288,7 +288,7 @@ async function aggiornaStatistiche(anno){
 
 // ===== Bottom-sheet =====
 function preventBackgroundScroll(e){
-  // Blocca lo scroll del body solo se clicchi fuori dal pannello
+  // Blocca lo scroll del body solo se tocchi/clicki FUORI dal pannello
   if (!sheet.hidden && !sheetPanel.contains(e.target)) {
     e.preventDefault();
   }
@@ -335,38 +335,21 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// Drag-to-close: lascia scorrere il contenuto; chiudi solo da cima o da maniglia/header
+// Drag-to-close: SOLO da maniglia o header. Il contenuto scorre libero.
 (function enableSheetDrag(){
   if(!sheetPanel) return;
 
-  const isInteractive = (el) =>
-    !!(el && el.closest("select, option, button, a, input, textarea, label"));
-
   let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
-  let startedOnContent = false;
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
 
-  const beginDrag = (y, fromContent=false) => {
-    startY = lastY = y;
+  const beginDrag = (e) => {
+    startY = lastY = getY(e);
     lastT  = performance.now();
     velocity = 0;
     dragging = true;
-    startedOnContent = fromContent;
     sheetPanel.classList.add("dragging");
-  };
-
-  const onStartGeneric = (e, fromContent) => {
-    if (isInteractive(e.target)) return;
-
-    if (fromContent) {
-      // Se parte dal contenuto ma non siamo in cima, lascia scorrere
-      if (sheetContent && sheetContent.scrollTop > 0) return;
-      beginDrag(getY(e), true);
-    } else {
-      beginDrag(getY(e), false);
-    }
-    e.preventDefault();
+    e.preventDefault(); // entriamo in drag, non scroll
   };
 
   const onMove = (e)=>{
@@ -377,7 +360,6 @@ function renderSheetForYear(anno){
     const dt  = Math.max(1, now - lastT);
     velocity  = (y - lastY) / dt;        // px/ms
     lastY = y; lastT = now;
-
     sheetPanel.style.transform = `translateY(${dy}px)`;
     e.preventDefault();
   };
@@ -394,14 +376,13 @@ function renderSheetForYear(anno){
 
   const opts = { passive:false };
 
-  // Avvio drag SOLO da handle/header, oppure da content se scrollTop==0
-  sheetHandle?.addEventListener("touchstart", (e)=>onStartGeneric(e,false), opts);
-  sheetHandle?.addEventListener("mousedown",  (e)=>onStartGeneric(e,false), opts);
-  sheetHeader?.addEventListener("touchstart", (e)=>onStartGeneric(e,false), opts);
-  sheetHeader?.addEventListener("mousedown",  (e)=>onStartGeneric(e,false), opts);
-  sheetContent?.addEventListener("touchstart",(e)=>onStartGeneric(e,true),  opts);
-  sheetContent?.addEventListener("mousedown", (e)=>onStartGeneric(e,true),  opts);
+  // Avvio drag SOLO da handle + header
+  sheetHandle?.addEventListener("touchstart", beginDrag, opts);
+  sheetHandle?.addEventListener("mousedown",  beginDrag, opts);
+  sheetHeader?.addEventListener("touchstart", beginDrag, opts);
+  sheetHeader?.addEventListener("mousedown",  beginDrag, opts);
 
+  // NIENTE start dal contenuto -> lo scroll resta naturale
   window.addEventListener("touchmove",  onMove,  opts);
   window.addEventListener("mousemove",  onMove,  opts);
   window.addEventListener("touchend",   onEnd);
