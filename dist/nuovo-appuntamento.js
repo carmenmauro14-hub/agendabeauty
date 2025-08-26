@@ -1,10 +1,12 @@
+// nuovo-appuntamento.js
+
+// ─── Firebase ──────────────────────────────────────────────────────
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { abilitaSwipeVerticale } from "./swipe.js";
 
-// ─── Firebase config (UNICA) ───────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -13,34 +15,22 @@ const firebaseConfig = {
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
+// ─── Parametri URL (preset cliente e data opzionali) ───────────────
+const urlParams        = new URLSearchParams(location.search);
+const editId           = urlParams.get("edit");         // se presente → modalità MODIFICA
+const presetClienteId  = urlParams.get("cliente");      // se presente → pre-seleziona cliente
+const presetDataISO    = urlParams.get("data");         // opzionale per preimpostare la data
+
 // ─── Utils ─────────────────────────────────────────────────────────
-const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
-function toNumberSafe(v){ if(v==null) return 0; if(typeof v==="number") return isFinite(v)?v:0;
-  if(typeof v==="string"){ const n=parseFloat(v.replace(/[€\s]/g,"").replace(",","."));
-  return isNaN(n)?0:n } return 0 }
-function safeDate(d){ if(!d) return null; if(d.toDate) return d.toDate(); if(typeof d==="number") return new Date(d);
-  if(typeof d==="string") return new Date(d); return d instanceof Date ? d : null }
-function getApptTotal(a){
-  if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
-    return a.trattamenti.reduce((s,t)=>s+toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price),0);
-  }
-  return toNumberSafe(a.prezzo ?? a.totale ?? a.price ?? a.costo);
+function setPageTitle(text) {
+  if (wizardTitle) wizardTitle.textContent = text;
+  document.title = text;
 }
-function getApptNames(a){
-  if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
-    return a.trattamenti.map(t=>t?.nome||t?.titolo||t).join(", ");
-  }
-  return a.trattamento || a.titolo || "";
-}
-const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-// ─── DOM comuni (se li usi in pagina, ok; altrimenti ignorati) ────
-const backBtn        = document.getElementById("backBtn");
-
-// ─── Picker / Wizard DOM ───────────────────────────────────────────
+// ─── Riferimenti DOM ───────────────────────────────────────────────
 const wizardTitle        = document.getElementById("wizardTitle");
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
@@ -57,7 +47,7 @@ const inpData            = document.getElementById("dataAppuntamento");
 const inpOra             = document.getElementById("oraAppuntamento");
 const wrapperTratt       = document.getElementById("trattamentiWrapper");
 
-// Picker cliente
+// Picker cliente (step 1)
 const clienteIdHidden    = document.getElementById("clienteId");
 const clienteSelezionato = document.getElementById("clienteSelezionato");
 const openRubrica        = document.getElementById("openRubrica");
@@ -68,30 +58,41 @@ const letterNavPicker    = document.getElementById("letterNavPicker");
 const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-container");
 const btnRubricaClose    = document.getElementById("rubricaClose");
 
-// Campo finto input che apre la rubrica
+// Campo “finto input” che apre rubrica
 const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
 const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
 
-// ─── (Opzionale) modalità “pagina-modale” ─────────────────────────
+// Sheet wrapper (overlay)
 const pageModal   = document.querySelector(".page-modal");
 const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
 
-// ─── Helpers ───────────────────────────────────────────────────────
-function setPageTitle(text) { if (wizardTitle) wizardTitle.textContent = text; document.title = text; }
-function showModal(m) { m.style.display = "flex"; }
-function closeModal(m) { m.style.display = "none"; }
+// ─── Stato ─────────────────────────────────────────────────────────
+let apptData       = null;   // dati appuntamento se in modifica
+let clientiCache   = null;   // rubrica in cache
+
+// ─── Abilitazioni UI ───────────────────────────────────────────────
 function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
-  if (btnToStep3) btnToStep3.disabled = !(inpData?.value && inpOra?.value);
+  if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOra.value);
 }
 [inpData, inpOra].forEach(el => el?.addEventListener("input", updateNavState));
 
-// ─── Rubrica ───────────────────────────────────────────────────────
-let clientiCache = null;
+// ─── Overlay / Sheet controlli ─────────────────────────────────────
+function chiudiSheet() {
+  const doClose = () => document.getElementById("cancelWizard")?.click();
+  if (!sheetEl) return doClose();
+  sheetEl.classList.add("swipe-out-down");
+  sheetEl.addEventListener("transitionend", doClose, { once: true });
+}
+sheetClose?.addEventListener("click", chiudiSheet);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
+pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
+if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
+// ─── Rubrica ───────────────────────────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -101,12 +102,26 @@ async function apriRubrica() {
   renderRubrica(clientiCache);
   if (searchCliente) searchCliente.value = "";
   if (letterNavPicker) letterNavPicker.style.display = "flex";
-  showModal(rubricaModal);
+  rubricaModal.style.display = "flex";
 }
 openRubrica?.addEventListener("click", apriRubrica);
-openRubricaField?.addEventListener("click", apriRubrica);
-openRubricaField?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
+if (openRubricaField) {
+  openRubricaField.addEventListener("click", apriRubrica);
+  openRubricaField.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
+  });
+}
+rubricaModal?.addEventListener("click", (e) => {
+  if (e.target === rubricaModal) rubricaModal.style.display = "none";
+});
+btnRubricaClose?.addEventListener("click", () => {
+  // piccola animazione in uscita
+  if (!rubricaPanel) return (rubricaModal.style.display = "none");
+  rubricaPanel.classList.add("swipe-out-down");
+  rubricaPanel.addEventListener("transitionend", () => {
+    rubricaPanel.classList.remove("swipe-out-down");
+    rubricaModal.style.display = "none";
+  }, { once: true });
 });
 
 function renderRubrica(clienti) {
@@ -131,11 +146,12 @@ function renderRubrica(clienti) {
       li.textContent = c.nome || "(senza nome)";
       li.onclick = () => {
         clienteIdHidden.value = c.id;
-        clienteSelezionato && (clienteSelezionato.textContent = c.nome || "(senza nome)");
-        pickerValue && (pickerValue.textContent = c.nome || "(senza nome)");
-        pickerPlaceholder && (pickerPlaceholder.style.display = "none");
-        openRubricaField && openRubricaField.classList.remove("empty");
-        closeModal(rubricaModal);
+        const nome = c.nome || "(senza nome)";
+        clienteSelezionato.textContent = nome;
+        if (pickerValue) pickerValue.textContent = nome;
+        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+        if (openRubricaField) openRubricaField.classList.remove("empty");
+        rubricaModal.style.display = "none";
         updateNavState();
       };
       clientListPicker.appendChild(li);
@@ -147,7 +163,8 @@ function renderRubrica(clienti) {
     const el = document.createElement("span");
     el.textContent = L;
     el.onclick = () => {
-      document.getElementById("picker-letter-" + L)?.scrollIntoView({ behavior: "smooth" });
+      const target = document.getElementById("picker-letter-" + L);
+      target && target.scrollIntoView({ behavior: "smooth" });
     };
     letterNavPicker.appendChild(el);
   });
@@ -160,7 +177,8 @@ searchCliente?.addEventListener("input", () => {
     li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
   });
   clientListPicker.querySelectorAll("li.section").forEach(sec => {
-    let el = sec.nextElementSibling, visible = false;
+    let el = sec.nextElementSibling;
+    let visible = false;
     while (el && !el.classList.contains("section")) {
       if (el.style.display !== "none") { visible = true; break; }
       el = el.nextElementSibling;
@@ -171,12 +189,14 @@ searchCliente?.addEventListener("input", () => {
 
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
-  "makeup_sposa","makeup","microblading","extension_ciglia",
-  "laminazione_ciglia","filo_arabo","architettura_sopracciglia","airbrush_sopracciglia"
+  "makeup_sposa", "makeup", "microblading", "extension_ciglia",
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
 ];
-function trovaIcona(nome){
-  const norm = (nome || "").toLowerCase().replace(/\s+/g,"_");
-  for (const base of iconeDisponibili) if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
+function trovaIcona(nome) {
+  const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
+  for (const base of iconeDisponibili) {
+    if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
+  }
   return "icone_uniformate_colore/setting.png";
 }
 
@@ -189,24 +209,33 @@ async function caricaTrattamenti(selectedMap = null) {
     for (const t of lista) {
       const icona = t.icona || trovaIcona(t.nome);
       const prezzoListino = Number(t.prezzo) || 0;
-      const checked   = selectedMap ? selectedMap.has(t.nome) : false;
-      const prezzoSel = selectedMap && selectedMap.has(t.nome) ? Number(selectedMap.get(t.nome)) || 0 : prezzoListino;
 
       const row = document.createElement("div");
       row.classList.add("trattamento-row");
+
+      const checked   = selectedMap ? selectedMap.has(t.nome) : false;
+      const prezzoSel = selectedMap && selectedMap.has(t.nome)
+                        ? Number(selectedMap.get(t.nome)) || 0
+                        : prezzoListino;
+
       row.innerHTML = `
         <label>
-          <input type="checkbox" class="trattamento-checkbox" ${checked ? "checked" : ""}
+          <input type="checkbox" class="trattamento-checkbox"
+                 ${checked ? "checked" : ""}
                  data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
           <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
           ${t.nome}
         </label>
-        <input type="number" class="prezzo-input" placeholder="€${prezzoListino}" value="${prezzoSel}"
-               min="0" step="0.01" inputmode="decimal">`;
+        <input type="number" class="prezzo-input"
+               placeholder="€${prezzoListino}"
+               value="${prezzoSel}"
+               min="0" step="0.01"
+               inputmode="decimal">
+      `;
       wrapperTratt.appendChild(row);
     }
   } catch (e) {
-    console.error("Errore trattamenti:", e);
+    console.error("Errore caricamento trattamenti:", e);
     alert("Errore nel caricamento dei trattamenti.");
   }
 }
@@ -214,20 +243,29 @@ async function caricaTrattamenti(selectedMap = null) {
 // ─── Navigazione step ──────────────────────────────────────────────
 btnToStep2?.addEventListener("click", () => {
   if (!clienteIdHidden.value) return alert("Seleziona un cliente");
-  step1.style.display = "none"; step2.style.display = "block";
+  step1.style.display = "none";
+  step2.style.display = "block";
 });
-btnBackToStep1?.addEventListener("click", () => { step2.style.display = "none"; step1.style.display = "block"; });
+btnBackToStep1?.addEventListener("click", () => {
+  step2.style.display = "none";
+  step1.style.display = "block";
+});
 btnToStep3?.addEventListener("click", () => {
   if (!(inpData.value && inpOra.value)) return alert("Inserisci data e ora");
-  step2.style.display = "none"; step3.style.display = "block";
+  step2.style.display = "none";
+  step3.style.display = "block";
 });
-btnBackToStep2?.addEventListener("click", () => { step3.style.display = "none"; step2.style.display = "block"; });
+btnBackToStep2?.addEventListener("click", () => {
+  step3.style.display = "none";
+  step2.style.display = "block";
+});
 
 // ─── Salvataggio appuntamento ──────────────────────────────────────
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
-  const dataISO   = inpData.value;
-  const ora       = inpOra.value;
+  const dataISO   = inpData.value;            // "YYYY-MM-DD"
+  const ora       = inpOra.value;             // "HH:mm"
+
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(dataISO && ora)) return alert("Inserisci data e ora");
 
@@ -235,23 +273,46 @@ btnSalva?.addEventListener("click", async () => {
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
   const trattamenti = selected.map(cb => {
-    const prezzoVal = parseFloat(cb.closest(".trattamento-row").querySelector(".prezzo-input").value);
-    return { nome: cb.dataset.nome, prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0, icona: cb.dataset.icona || trovaIcona(cb.dataset.nome) };
+    const row = cb.closest(".trattamento-row");
+    const prezzoInput = row.querySelector(".prezzo-input");
+    const prezzoVal = parseFloat(prezzoInput.value);
+    return {
+      nome: cb.dataset.nome,
+      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
+      icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
+    };
   });
 
+  // Timestamp giorno (mezzanotte locale)
   const dateMidnight = new Date(dataISO + "T00:00:00");
   const dataTs = Timestamp.fromDate(dateMidnight);
 
+  // Timestamp completo (data+ora) opzionale
   const [hh, mm] = ora.split(":").map(n => parseInt(n,10));
-  const dateWithTime = new Date(dateMidnight); dateWithTime.setHours(hh||0, mm||0, 0, 0);
+  const dateWithTime = new Date(dateMidnight);
+  dateWithTime.setHours(hh || 0, mm || 0, 0, 0);
   const dateTime = Timestamp.fromDate(dateWithTime);
 
   try {
     if (editId) {
-      await updateDoc(doc(db, "appuntamenti", editId), { clienteId, data: dataTs, dataISO, ora, dateTime, trattamenti });
+      await updateDoc(doc(db, "appuntamenti", editId), {
+        clienteId,
+        data: dataTs,
+        dataISO,
+        ora,
+        dateTime,
+        trattamenti
+      });
       alert("Appuntamento aggiornato!");
     } else {
-      await addDoc(collection(db, "appuntamenti"), { clienteId, data: dataTs, dataISO, ora, dateTime, trattamenti });
+      await addDoc(collection(db, "appuntamenti"), {
+        clienteId,
+        data: dataTs,
+        dataISO,
+        ora,
+        dateTime,
+        trattamenti
+      });
       alert("Appuntamento salvato con successo!");
     }
     location.href = "calendario.html";
@@ -261,124 +322,111 @@ btnSalva?.addEventListener("click", async () => {
   }
 });
 
-// ─── Pre-SELEZIONE cliente da ?cliente= o da sessionStorage ────────
-async function precompilaClienteSePassato() {
-  const qs = new URLSearchParams(location.search);
-  const preId = qs.get("cliente") || sessionStorage.getItem("clienteId") || "";
-  if (!preId) return;
-
-  try {
-    const snap = await getDoc(doc(db, "clienti", preId));
-    if (!snap.exists()) return;
-    const c = snap.data();
-    // Compila i campi del picker
-    clienteIdHidden.value = preId;
-    if (clienteSelezionato) clienteSelezionato.textContent = c.nome || "(senza nome)";
-    if (pickerValue)        pickerValue.textContent        = c.nome || "(senza nome)";
-    if (pickerPlaceholder)  pickerPlaceholder.style.display = "none";
-    if (openRubricaField)   openRubricaField.classList.remove("empty");
-    // Tieni memoria se serve in altri passaggi
-    sessionStorage.setItem("clienteId", preId);
-    updateNavState();
-  } catch (e) {
-    console.warn("Preselezione cliente fallita:", e);
-  }
-}
-
 // ─── Avvio ─────────────────────────────────────────────────────────
-const params  = new URLSearchParams(location.search);
-const editId  = params.get("edit");
-let apptData  = null;
-
 (async function init() {
-  // Titolo & trattamenti
+  // Titolo base
+  setPageTitle(editId ? "Modifica Appuntamento" : "Nuovo Appuntamento");
+
+  // Precarica trattamenti (se in edit, poi aggiorno con i selezionati)
+  if (!editId) {
+    await caricaTrattamenti();
+  }
+
+  // Modalità MODIFICA: carica appuntamento e precompila tutto
   if (editId) {
-    setPageTitle("Modifica Appuntamento");
     try {
       const apptDoc = await getDoc(doc(db, "appuntamenti", editId));
       if (!apptDoc.exists()) {
-        alert("Appuntamento non trovato."); setPageTitle("Nuovo Appuntamento");
-        await caricaTrattamenti(); updateNavState(); return;
+        alert("Appuntamento non trovato. Procedo come 'Nuovo'.");
+        setPageTitle("Nuovo Appuntamento");
+        await caricaTrattamenti();
+      } else {
+        apptData = apptDoc.data();
+
+        // Data (da Timestamp o stringa fallback)
+        let iso = "";
+        if (apptData.data && typeof apptData.data.toDate === "function") {
+          const d = apptData.data.toDate();
+          const y = d.getFullYear();
+          const m = String(d.getMonth()+1).padStart(2,"0");
+          const da= String(d.getDate()).padStart(2,"0");
+          iso = `${y}-${m}-${da}`;
+        } else if (typeof apptData.data === "string") {
+          iso = apptData.data.slice(0,10);
+        } else if (typeof apptData.dataISO === "string") {
+          iso = apptData.dataISO.slice(0,10);
+        }
+        if (inpData) inpData.value = iso || "";
+        if (inpOra)  inpOra.value  = apptData.ora || "";
+
+        // Client preselect (da appuntamento)
+        if (apptData.clienteId) {
+          clienteIdHidden.value = apptData.clienteId;
+          try {
+            const cliDoc = await getDoc(doc(db, "clienti", apptData.clienteId));
+            const nomeCli = cliDoc.exists() ? (cliDoc.data().nome || "(senza nome)") : "(senza nome)";
+            if (pickerValue) pickerValue.textContent = nomeCli;
+            if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+            if (openRubricaField) openRubricaField.classList.remove("empty");
+          } catch {}
+        }
+
+        // Trattamenti preselezionati
+        const selectedMap = new Map(
+          (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
+            .map(t => [t.nome, Number(t.prezzo) || 0])
+        );
+        await caricaTrattamenti(selectedMap);
       }
-      apptData = apptDoc.data();
-
-      // data
-      let iso = "";
-      if (apptData.data?.toDate) {
-        const d = apptData.data.toDate();
-        iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-      } else if (typeof apptData.data === "string") iso = apptData.data.slice(0,10);
-      else if (typeof apptData.dataISO === "string") iso = apptData.dataISO.slice(0,10);
-      inpData && (inpData.value = iso || "");
-      inpOra  && (inpOra.value  = apptData.ora || "");
-
-      // cliente
-      if (apptData.clienteId) {
-        clienteIdHidden.value = apptData.clienteId;
-        try {
-          const cliDoc = await getDoc(doc(db, "clienti", apptData.clienteId));
-          const nomeCli = cliDoc.exists() ? (cliDoc.data().nome || "(senza nome)") : "(senza nome)";
-          clienteSelezionato && (clienteSelezionato.textContent = nomeCli);
-          pickerValue && (pickerValue.textContent = nomeCli);
-          pickerPlaceholder && (pickerPlaceholder.style.display = "none");
-          openRubricaField && openRubricaField.classList.remove("empty");
-        } catch {}
-      }
-
-      // trattamenti
-      const selectedMap = new Map((Array.isArray(apptData.trattamenti) ? apptData.trattamenti : []).map(t => [t.nome, Number(t.prezzo) || 0]));
-      await caricaTrattamenti(selectedMap);
-
     } catch (e) {
       console.error("Errore caricamento appuntamento:", e);
       alert("Errore nel caricamento. Procedo come 'Nuovo'.");
       setPageTitle("Nuovo Appuntamento");
       await caricaTrattamenti();
     }
-  } else {
-    setPageTitle("Nuovo Appuntamento");
-    await caricaTrattamenti();
-    // ⬇️ qui pre-selezioniamo il cliente se arrivi da scheda cliente
-    await precompilaClienteSePassato();
   }
 
-  // Se arrivi con ?data=YYYY-MM-DD in “Nuovo”
-  const fromDate = params.get("data");
-  if (!editId && fromDate && inpData && !inpData.value) {
-    inpData.value = fromDate;
+  // Se arrivo con ?cliente=... → preimposta cliente (SOLO in modalità NUOVO)
+  if (!editId && presetClienteId) {
+    try {
+      const snap = await getDoc(doc(db, "clienti", presetClienteId));
+      if (snap.exists()) {
+        const c = snap.data();
+        const nome = c.nome || "(senza nome)";
+        clienteIdHidden.value = presetClienteId;
+        if (pickerValue) pickerValue.textContent = nome;
+        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+        if (openRubricaField) openRubricaField.classList.remove("empty");
+      } else {
+        // id non valido → stato vuoto
+        clienteIdHidden.value = "";
+      }
+    } catch {
+      clienteIdHidden.value = "";
+    }
+  }
+
+  // Se NON c’è ?cliente=... (apertura da “+”) → stato vuoto garantito
+  if (!editId && !presetClienteId) {
+    clienteIdHidden.value = "";
+    if (pickerValue) pickerValue.textContent = "";
+    if (pickerPlaceholder) pickerPlaceholder.style.display = "";
+    if (openRubricaField) openRubricaField.classList.add("empty");
+  }
+
+  // Preimposta data se passata in URL (solo Nuovo)
+  if (!editId && presetDataISO && inpData && !inpData.value) {
+    inpData.value = presetDataISO;
   }
 
   updateNavState();
 
-  // chiusure / swipe
+  // Tasto ANNULLA
   btnCancel?.addEventListener("click", () => {
-    if (history.length > 1) history.back(); else location.href = "calendario.html";
+    if (history.length > 1) {
+      history.back();
+    } else {
+      location.href = "calendario.html";
+    }
   });
-
-  // Rubrica animazione/chiusura
-  const rubricaHeader = document.querySelector("#rubricaModal .rubrica-header");
-  if (rubricaHeader) {
-    abilitaSwipeVerticale(rubricaHeader, () => {}, () => {
-      if (!rubricaPanel) return;
-      rubricaPanel.classList.add("swipe-out-down");
-      rubricaPanel.addEventListener("transitionend", () => {
-        rubricaPanel.classList.remove("swipe-out-down");
-        closeModal(rubricaModal);
-      }, { once: true });
-    }, true, 45);
-  }
-
-  // Sheet opzionale
-  sheetClose?.addEventListener("click", () => {
-    const doClose = () => document.getElementById("cancelWizard")?.click();
-    if (!sheetEl) return doClose();
-    sheetEl.classList.add("swipe-out-down");
-    sheetEl.addEventListener("transitionend", doClose, { once: true });
-  });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.getElementById("cancelWizard")?.click(); });
-  pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) document.getElementById("cancelWizard")?.click(); });
-  sheetHeader && abilitaSwipeVerticale(sheetHeader, null, () => document.getElementById("cancelWizard")?.click(), true, 45);
-
-  // Back (se presente)
-  backBtn?.addEventListener("click", ()=>history.back());
 })();
