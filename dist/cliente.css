@@ -275,6 +275,9 @@ a.qa:focus, button:focus, select:focus, .link:focus{
   outline:3px solid rgba(210,184,163,.28); outline-offset:2px; border-radius:12px;
 }
 
+/* assicura che il contenuto del foglio scorra verticalmente su iOS */
+.sheet-content { touch-action: pan-y; }
+
 @supports(padding:max(0px)){
   .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
 }
