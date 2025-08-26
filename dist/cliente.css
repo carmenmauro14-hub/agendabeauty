@@ -113,7 +113,7 @@ html,body{
 .inline-year{
   border:1px solid var(--line);
   background:#fff;
-  padding:6px 10px;             /* spazio naturale alle frecce iOS */
+  padding:6px 10px;
   border-radius:10px;
   color:var(--text);
   font-size:14px;
@@ -126,10 +126,6 @@ html,body{
   appearance: auto;
 }
 .inline-year:focus{outline:2px solid rgba(210,184,163,.35);}
-
-/* (se usi il componente year-nav personalizzato, lo manteniamo compatibile) */
-.stats-card .card-title .year-nav { margin-left: auto; }
-.sheet-titlebar .year-nav { margin-left: auto; }
 
 .bars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;}
@@ -173,7 +169,7 @@ html,body{
 /* ===== Bottom Sheet (stile rubrica) ===== */
 .sheet[hidden]{ display:none; }
 .sheet{
-  position:fixed; inset:0; z-index:4000;                 /* sopra navbar */
+  position:fixed; inset:0; z-index:4000;
   display:flex; align-items:flex-end; justify-content:center;
 }
 .sheet-backdrop{
@@ -193,7 +189,7 @@ html,body{
   min-height: calc(100vh - var(--nav-height));
   max-height: calc(100vh - var(--nav-height));
   padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
-  padding-top:56px;                                     /* spazio per header assoluto */
+  padding-top:56px;
   display:flex; flex-direction:column;
   overscroll-behavior:contain;
 }
@@ -240,31 +236,11 @@ html,body{
   overflow:auto; -webkit-overflow-scrolling:touch;
   padding:2px 16px 16px 16px;
   overscroll-behavior:contain;
+  touch-action: pan-y; /* IMPORTANT per iOS */
 }
 
 /* blocca lo scroll del body quando il foglio è aperto */
 .sheet-open { overflow:hidden; height:100%; touch-action:none; }
-
-/* ===== Navigazione anno (opzionale, se vuoi frecce custom) ===== */
-.year-nav{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:#fff;
-  padding:4px 8px;
-  font-weight:700;
-  color:var(--text);
-}
-.year-label{ min-width:52px; text-align:center; font-size:15px; }
-.year-btn{
-  border:0; background:transparent; color:var(--text);
-  font-size:15px; width:28px; height:28px; border-radius:8px; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-}
-.year-btn:hover{ background:var(--tile-hover); }
-.year-btn:disabled{ opacity:.4; cursor:not-allowed; }
 
 /* ===== Edit mode ===== */
 .editing .hide-on-edit{ display:none !important; }
@@ -274,9 +250,6 @@ html,body{
 a.qa:focus, button:focus, select:focus, .link:focus{
   outline:3px solid rgba(210,184,163,.28); outline-offset:2px; border-radius:12px;
 }
-
-/* assicura che il contenuto del foglio scorra verticalmente su iOS */
-.sheet-content { touch-action: pan-y; }
 
 @supports(padding:max(0px)){
   .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
