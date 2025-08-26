@@ -18,11 +18,11 @@
       <!-- HEADER -->
       <header class="page-header">
         <button class="icon-btn" id="backBtn" aria-label="Indietro">
-          <i class="fa-solid fa-chevron-left"></i>
+          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
         </button>
         <div class="header-actions">
           <button class="icon-btn pill-btn" id="editBtnTop" aria-label="Modifica">
-            <i class="fa-solid fa-pen"></i>
+            <i class="fa-solid fa-pen" aria-hidden="true"></i>
             <span>Modifica</span>
           </button>
         </div>
@@ -36,18 +36,19 @@
         </div>
       </section>
 
-      <!-- QUICK ACTIONS -->
+      <!-- QUICK ACTIONS (nascoste in edit) -->
       <section class="card quick-actions hide-on-edit">
-        <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message"></i><span>Messaggio</span></a>
-        <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone"></i><span>Chiama</span></a>
-        <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
-        <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus"></i><span>Nuovo App.</span></a>
-        <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell"></i><span>Promemoria</span></a>
+        <a id="btnSms" class="qa" href="#"><i class="fa-regular fa-message" aria-hidden="true"></i><span>Messaggio</span></a>
+        <a id="btnCall" class="qa" href="#"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>Chiama</span></a>
+        <a id="btnWa"   class="qa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i><span>WhatsApp</span></a>
+        <a id="btnApp"  class="qa" href="nuovo-appuntamento.html"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i><span>Nuovo App.</span></a>
+        <a id="btnRem"  class="qa" href="#"><i class="fa-solid fa-bell" aria-hidden="true"></i><span>Promemoria</span></a>
       </section>
     </div>
 
-    <!-- INFO -->
+    <!-- INFO (view + inline edit) -->
     <section class="card form-list" id="infoCard">
+      <!-- vista -->
       <div id="infoView">
         <div class="row">
           <div class="label">Cellulare</div>
@@ -72,10 +73,10 @@
 
         <div class="edit-actions">
           <button type="button" class="btn-secondary" id="cancelInline">
-            <i class="fa-solid fa-times"></i> Annulla
+            <i class="fa-solid fa-times" aria-hidden="true"></i> Annulla
           </button>
           <button type="submit" class="btn-primary">
-            <i class="fa-solid fa-check"></i> Salva
+            <i class="fa-solid fa-check" aria-hidden="true"></i> Salva
           </button>
         </div>
       </form>
@@ -94,16 +95,9 @@
     <section class="card stats-card hide-on-edit">
       <div class="card-title">
         <h2 class="stats-title">Statistiche</h2>
-
-        <!-- Navigazione anno in stile iOS -->
-        <div class="year-nav">
-          <button type="button" class="year-btn" id="yearPrev"><i class="fa-solid fa-chevron-left"></i></button>
-          <span class="year-label" id="yearLabel">2025</span>
-          <button type="button" class="year-btn" id="yearNext"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-
-        <!-- Select nascosto (serve solo a JS) -->
-        <select id="yearSelect" class="inline-year" style="display:none"></select>
+        <!-- select nativo (frecce iOS) -->
+        <label for="yearSelect" class="sr-only">Anno</label>
+        <select id="yearSelect" class="inline-year"></select>
       </div>
 
       <div class="bars">
@@ -123,7 +117,7 @@
       </div>
     </section>
 
-    <!-- STORICO -->
+    <!-- STORICO (ultimi 3) -->
     <section class="card history-card hide-on-edit">
       <h2>Storico appuntamenti</h2>
       <ul id="historyList" class="history"></ul>
@@ -131,30 +125,25 @@
     </section>
   </main>
 
-  <!-- Bottom Sheet -->
+  <!-- ===== Bottom Sheet: Storico completo ===== -->
   <div class="sheet" id="historySheet" hidden aria-hidden="true">
     <div class="sheet-backdrop" id="sheetBackdrop"></div>
 
     <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <!-- header con maniglia + X -->
       <div class="sheet-header">
         <div class="sheet-handle" aria-hidden="true"></div>
         <button class="sheet-close" id="sheetClose" aria-label="Chiudi">
-          <i class="fa-solid fa-xmark"></i>
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
+      <!-- titolo e selettore anno -->
       <div class="sheet-titlebar">
         <h3 id="sheetTitle">Storico appuntamenti</h3>
-
-        <!-- Navigazione anno -->
-        <div class="year-nav">
-          <button type="button" class="year-btn" id="sheetYearPrev"><i class="fa-solid fa-chevron-left"></i></button>
-          <span class="year-label" id="sheetYearLabel">2025</span>
-          <button type="button" class="year-btn" id="sheetYearNext"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-
-        <!-- Select nascosto -->
-        <select id="sheetYear" class="inline-year" style="display:none"></select>
+        <label for="sheetYear" class="sr-only">Anno storico</label>
+        <!-- select nativo (frecce iOS) -->
+        <select id="sheetYear" class="inline-year"></select>
       </div>
 
       <div class="sheet-content">
@@ -165,8 +154,8 @@
 
   <script>
     fetch("navbar.html")
-      .then(r=>r.text())
-      .then(h=>document.getElementById("navbar-placeholder").innerHTML=h);
+      .then(r => r.text())
+      .then(h => document.getElementById("navbar-placeholder").innerHTML = h);
   </script>
   <script type="module" src="cliente.js"></script>
 </body>
