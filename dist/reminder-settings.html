@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Impostazioni Promemoria - BeautyBook</title>
 
-  <!-- Stili base -->
+  <!-- Stili principali dell'app -->
   <link rel="stylesheet" href="navbar.css">
+  <!-- Stili dedicati a questa pagina -->
   <link rel="stylesheet" href="reminder-settings.css">
 </head>
 <body>
   <div id="navbar-placeholder"></div>
 
-  <!-- Header indietro -->
+  <!-- Header “indietro” -->
   <div class="back-header" onclick="location.href='settings.html'">
     <span class="back-arrow">‹</span> Impostazioni
   </div>
@@ -23,64 +24,65 @@
       Personalizza il testo del promemoria WhatsApp che invierai ai clienti.
     </p>
 
-    <!-- Card promemoria -->
-    <ul class="settings-list" style="list-style:none; padding:0; margin:0;">
-      <li style="padding:14px 0; border-bottom:1px solid #e6d9d0;">
+    <ul class="settings-list">
+      <!-- SEZIONE: Testo promemoria -->
+      <li>
         <div class="section-title">Testo promemoria</div>
+        <div class="section-subtitle">Puoi usare variabili:</div>
 
-        <div class="vars-label">Puoi usare variabili:</div>
-        <div class="vars-row">
-          <span class="token" data-token="{NOME}">{NOME}</span>
-          <span class="token" data-token="{DATA}">{DATA}</span>
-          <span class="token" data-token="{ORA}">{ORA}</span>
-          <span class="token" data-token="{TRATTAMENTI}">{TRATTAMENTI}</span>
+        <div class="token-row">
+          <span class="token" data-insert="{NOME}">{NOME}</span>
+          <span class="token" data-insert="{DATA}">{DATA}</span>
+          <span class="token" data-insert="{ORA}">{ORA}</span>
+          <span class="token" data-insert="{TRATTAMENTI}">{TRATTAMENTI}</span>
         </div>
 
         <textarea id="reminder-template"
           placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
 
-        <div style="font-size:12px; color:#666; margin-top:8px;">
+        <div class="hint-row">
           Suggerimento: mantieni il messaggio breve e chiaro.
         </div>
 
-        <div class="bottoni-form" style="margin-top:14px;">
+        <div class="bottoni-form">
           <button type="button" id="btnAnteprima">Anteprima</button>
           <button type="button" id="btnSalvaTemplate">Salva</button>
         </div>
       </li>
 
-      <!-- Sezione invio automatico disabilitata -->
-      <li style="padding:14px 0; border-bottom:1px solid #e6d9d0; opacity:.55; filter:grayscale(8%); pointer-events:none;">
-        <div class="section-title" style="font-size:17px;">Invio automatico (in arrivo)</div>
+      <!-- SEZIONE: Invio automatico (placeholder) -->
+      <li>
+        <div class="section-title soft">Invio automatico (in arrivo)</div>
 
-        <label style="display:flex; align-items:center; gap:10px; color:#a07863; margin:6px 0;">
-          <input type="checkbox" disabled> Attiva promemoria automatici
-        </label>
-
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
-          <span style="color:#a07863;">Anticipo promemoria</span>
-          <select disabled>
-            <option value="24h">24 ore prima</option>
-            <option value="12h">12 ore prima</option>
-            <option value="2h">2 ore prima</option>
-          </select>
+        <div class="soft-line">
+          <label class="soft-line__label">
+            <input type="checkbox" disabled>
+            Attiva promemoria automatici
+          </label>
         </div>
 
-        <div style="font-size:12px; color:#666;">
-          Presto potrai far inviare all’app i promemoria in automatico, all’orario scelto.
+        <div class="soft-line space-between">
+          <span class="soft-line__text">Anticipo promemoria</span>
+          <div class="soft-pill" aria-disabled="true">24 ore prima ▾</div>
+        </div>
+
+        <div class="soft-note">
+          Presto potrai far inviare all’app i promemoria in automatico,
+          all’orario scelto.
         </div>
       </li>
     </ul>
   </main>
 
+  <!-- Caricamento navbar -->
   <script>
     fetch("navbar.html")
       .then(r => r.text())
       .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
   </script>
 
-  <script src="reminder-settings.js"></script>
   <script src="navbar.js"></script>
   <script type="module" src="auth.js"></script>
+  <script src="reminder-settings.js"></script>
 </body>
 </html>
