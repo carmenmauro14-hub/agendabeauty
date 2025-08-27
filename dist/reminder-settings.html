@@ -1,33 +1,39 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Impostazioni Promemoria - BeautyBook</title>
-  <link rel="stylesheet" href="navbar.css">
-  <link rel="stylesheet" href="reminder-settings.css"> <!-- CSS dedicato -->
+
+  <!-- Stili globali e pagina -->
+  <link rel="stylesheet" href="navbar.css" />
+  <link rel="stylesheet" href="reminder-settings.css" />
 </head>
 <body>
+  <!-- Navbar (iniettata) -->
   <div id="navbar-placeholder"></div>
 
+  <!-- Header back -->
   <div class="back-header" onclick="location.href='settings.html'">
-  <span class="back-arrow">‹</span> Impostazioni
+    <span class="back-arrow">‹</span> Impostazioni
   </div>
 
   <main class="reminder-container">
     <h1 class="reminder-title">Impostazioni Promemoria</h1>
-    <p class="info-text">Qui potrai gestire le notifiche e i promemoria automatici per gli appuntamenti.</p>
+    <!-- Badge stato (riempito da JS) -->
+    <small id="reminder-status" class="info-text" aria-live="polite"></small>
+    <p class="info-text">Gestisci i promemoria per ricordare gli appuntamenti ai clienti.</p>
 
-    <!-- Area funzionale da sviluppare -->
+    <!-- Preferenze principali -->
     <ul class="reminder-list">
       <li>
-        <label>
+        <label for="enable-reminders" style="display:flex;align-items:center;gap:10px;">
           <input type="checkbox" id="enable-reminders" />
-          Attiva promemoria automatici
+          <span>Attiva promemoria automatici</span>
         </label>
       </li>
       <li>
-        Anticipo promemoria:
+        <label for="reminder-time" style="display:block;margin-bottom:6px;">Anticipo promemoria</label>
         <select id="reminder-time">
           <option value="24h">24 ore prima</option>
           <option value="12h">12 ore prima</option>
@@ -35,17 +41,23 @@
         </select>
       </li>
     </ul>
+
+    <!-- Template messaggio (facoltativo ma già pronto) -->
+    <h2 class="reminder-subtitle">Testo promemoria (WhatsApp)</h2>
+    <p class="info-text">Puoi usare segnaposti: <code>{NOME}</code>, <code>{DATA}</code>, <code>{ORA}</code>, <code>{SERVIZI}</code></p>
+    <textarea id="reminder-template" rows="5" placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
   </main>
 
+  <!-- Inietta navbar -->
   <script>
     fetch("navbar.html")
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById("navbar-placeholder").innerHTML = data;
-      });
+      .then(r => r.text())
+      .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
   </script>
 
+  <!-- Script app -->
   <script src="navbar.js"></script>
   <script type="module" src="auth.js"></script>
+  <script type="module" src="reminder-settings.js"></script>
 </body>
 </html>
