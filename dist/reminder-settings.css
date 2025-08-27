@@ -1,291 +1,136 @@
-/* ───────────────────────────────────────────────
-   Base
-─────────────────────────────────────────────── */
-body {
-  font-family: -apple-system, BlinkMacSystemFont,
-               "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-               "Helvetica Neue", sans-serif;
-  margin: 0;
-  padding: 0;
-  background: #fff;
+/* ===== Palette base (eredita i token usati nell'app) ===== */
+:root{
+  --prim:#d2b8a3;
+  --text:#a07863;
+  --muted:#7c6a60;
+  --line:#e6d9d0;
+  --tint:#f7ede6;
+  --tile:#efe2d8;
+  --tile-hover:#e8d7cb;
+  --card:#fff;
+  --bg:#fff;
 }
 
-.wizard-container {
-  max-width: 600px;
-  margin: 80px auto;
-  padding: 20px;
+*{box-sizing:border-box}
+html,body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
-.step {
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+/* ===== Back header (come le altre pagine impostazioni) ===== */
+.back-header{
+  position:sticky; top:0; z-index:5;
+  display:flex; align-items:center; gap:8px;
+  height:52px; padding:0 14px;
+  background:var(--tint); border-bottom:1px solid var(--line);
+  color:var(--text); font-weight:800; letter-spacing:.2px; cursor:pointer;
+}
+.back-header .back-arrow{ font-size:22px; line-height:1; }
+
+/* ===== Container ===== */
+.reminder-container{
+  max-width:560px; margin:12px auto 120px; padding:0 16px;
+}
+.reminder-title{
+  margin:14px 0 6px; font-size:22px; font-weight:900; color:var(--text);
+}
+.info-text{
+  margin:0 0 14px; color:var(--muted); line-height:1.35;
 }
 
-/* Titoli step */
-.step h2 {
-  font-size: 18px;
-  font-weight: bold;
-  color: #a07863;
-  margin-bottom: 10px;
+/* ===== Card/list ===== */
+.reminder-list{
+  list-style:none; margin:0; padding:0;
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 6px 16px rgba(0,0,0,.04);
+  overflow:hidden;
+}
+.reminder-list li{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 16px; border-top:1px solid var(--line);
+}
+.reminder-list li:first-child{ border-top:none; }
+
+/* Testi a sinistra dentro la riga */
+.reminder-list li > .label,
+.reminder-list li > label{
+  color:var(--text); font-weight:700; display:flex; align-items:center; gap:10px;
 }
 
-/* ───────────────────────────────────────────────
-   Navigazione step / Pulsanti
-─────────────────────────────────────────────── */
-.wizard-nav {
-  margin-top: 20px;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
+/* ===== Checkbox nativo migliorato ===== */
+.reminder-list input[type="checkbox"]{
+  width:22px; height:22px; accent-color:var(--prim); cursor:pointer;
 }
 
-/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
-.btn,
-.btn-primary,        /* retro-compatibilità */
-.btn-secondary {     /* retro-compatibilità */
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 14px;
-  background: #d2b8a3;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
-  text-decoration: none;
-  user-select: none;
-}
-.btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover { opacity: .95; }
-.btn:active,
-.btn-primary:active,
-.btn-secondary:active { transform: scale(.98); }
-.btn:disabled,
-.btn-primary:disabled,
-.btn-secondary:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-  filter: grayscale(10%);
-}
-
-/* ───────────────────────────────────────────────
-   Campi input date/ora
-─────────────────────────────────────────────── */
-select,
-input[type="date"],
-input[type="time"] {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  margin-top: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #e6d9d0;
-  border-radius: 12px;
-  background: #fff;
-  color: #a07863;
-  font-size: 16px;
-}
-
-/* ───────────────────────────────────────────────
-   Trattamenti
-─────────────────────────────────────────────── */
-#trattamentiWrapper {
-  max-height: 350px;
-  overflow-y: auto;
-  border: 1px solid #e6d9d0;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
-}
-
-.trattamento-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 10px;
-}
-
-.trattamento-row label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-grow: 1;
-  color: #a07863;
-}
-
-.trattamento-row .icona-trattamento {
-  width: 24px;
-  height: 24px;
-}
-
-.prezzo-input {
-  width: 90px;
-  padding: 8px;
-  border: 1px solid #e6d9d0;
-  border-radius: 10px;
-  color: #a07863;
-  box-sizing: border-box;
-  font-size: 18px;
-}
-
-/* ───────────────────────────────────────────────
-   “Input finto” che apre la rubrica (step 1)
-─────────────────────────────────────────────── */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-  padding:12px 16px;
-  border:1px solid #e6d9d0;
-  border-radius:14px;
+/* ===== Select bellino ===== */
+.reminder-list select{
+  min-width:180px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
   background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
+  color:var(--text);
+  font-size:16px;
+  appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text) 50%),
+    linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size:6px 6px, 6px 6px;
+  background-repeat:no-repeat;
 }
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
-}
-.picker-input .value{
-  font-weight:600;
-  color:#a07863;
-}
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
-
-/* ───────────────────────────────────────────────
-   Modale Rubrica
-─────────────────────────────────────────────── */
-#rubricaModal .rubrica-container {
-  position: relative;
-  padding-top: 56px;
-  will-change: transform;
-  transform: translateY(0);
-  transition: transform 200ms ease;
-}
-#rubricaModal .rubrica-container.swipe-out-down {
-  transform: translateY(100%);
+.reminder-list select:focus{
+  outline:none; box-shadow:0 0 0 4px rgba(210,184,163,.25);
 }
 
-#rubricaModal .rubrica-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  background: transparent;
-  padding: 0;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
+/* ===== Sezione testo promemoria (opzionale) ===== */
+.template-group{
+  margin-top:12px;
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 6px 16px rgba(0,0,0,.04);
+  padding:14px 16px;
+}
+.template-group h3{
+  margin:0 0 8px; font-size:18px; font-weight:900; color:var(--text);
+}
+.template-group .hint{ margin:0 0 10px; color:var(--muted); font-size:14px; }
+.template-group textarea{
+  width:100%; min-height:110px; resize:vertical;
+  border:1px solid var(--line); border-radius:12px;
+  padding:12px 14px; background:#fff; color:var(--text);
+  font-size:16px; line-height:1.35; font-family:inherit;
+}
+.template-group textarea:focus{ outline:none; box-shadow:0 0 0 4px rgba(210,184,163,.18); }
+
+/* Placeholder di variabili nel testo */
+.token{
+  display:inline-block; padding:2px 8px; border-radius:999px;
+  background:var(--tile); color:var(--text); font-size:12px; font-weight:700;
+  margin-right:6px; margin-bottom:6px;
 }
 
-#rubricaModal .rubrica-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-  margin: 0;
-  cursor: grab;
+/* ===== Barra azioni fissa (se la aggiungerai) ===== */
+.save-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:10;
+  background:var(--tint); border-top:1px solid var(--line);
+  padding:10px 16px;
+}
+.save-bar .btn{
+  width:100%; height:48px; border:none; border-radius:14px;
+  background:var(--prim); color:#fff; font-weight:800; font-size:16px; cursor:pointer;
+  transition:transform .06s ease, opacity .15s ease;
+}
+.save-bar .btn:active{ transform:scale(.98); }
+
+/* ===== Accessibilità ===== */
+select:focus, button:focus, input[type="checkbox"]:focus, textarea:focus{
+  outline:3px solid rgba(210,184,163,.28); outline-offset:2px;
 }
 
-#rubricaModal .rubrica-close {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 32px;
-  color: #a07863;
-  opacity: .85;
-  cursor: pointer;
-  z-index: 4;
+/* Piccoli affinamenti responsive */
+@media (min-width:520px){
+  .reminder-list li{ padding:16px 18px; }
+  .reminder-list select{ min-width:220px; }
 }
-
-.wizard-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #a07863;
-  margin-bottom: 10px;
-}
-
-/* ───────────────────────────────────────────────
-   Pagina-modale
-─────────────────────────────────────────────── */
-.page-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1000;
-}
-
-#wizardSheet {
-  background: #fff;
-  width: 100%;
-  max-width: 600px;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-  transform: translateY(0);
-  transition: transform 0.25s ease;
-}
-
-#wizardSheet.swipe-out-down {
-  transform: translateY(100%);
-}
-
-.sheet-header {
-  position: relative;
-  padding: 8px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.sheet-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-}
-
-#sheetClose {
-  position: absolute;
-  right: 12px;
-  top: 4px;
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  color: #a07863;
-  cursor: pointer;
-}
-
-html { -webkit-text-size-adjust: 100%; }
-input, select, textarea { font-size: 16px; }
-.prezzo-input { font-size: 18px; }
-
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
