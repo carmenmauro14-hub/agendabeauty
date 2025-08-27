@@ -5,158 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Impostazioni Promemoria - BeautyBook</title>
 
-  <!-- Stili app già esistenti -->
+  <!-- Stili comuni -->
   <link rel="stylesheet" href="navbar.css">
-  <!-- Usa qui il CSS che mi hai passato (quello con settings-*) -->
+  <!-- Stile dedicato -->
   <link rel="stylesheet" href="reminder-settings.css">
 </head>
 <body>
   <div id="navbar-placeholder"></div>
 
-  <!-- Header “indietro” coerente -->
+  <!-- Header indietro -->
   <div class="back-header" onclick="location.href='settings.html'">
     <span class="back-arrow">‹</span> Impostazioni
   </div>
 
-  <!-- Contenitore pagina con scroll interno nella lista -->
+  <!-- Contenuto -->
   <main class="settings-container">
     <h1 class="settings-title">Impostazioni Promemoria</h1>
     <p class="info-text">
       Personalizza il testo del promemoria WhatsApp che invierai ai clienti.
     </p>
 
-    <!-- LISTA SCORREVOLE (coerente con le altre pagine impostazioni) -->
-    <ul class="settings-list" style="list-style:none; padding:0; margin:0;">
-      <!-- Riga: Testo promemoria -->
-      <li style="padding:14px 0; border-bottom:1px solid #e6d9d0;">
-        <div style="font-weight:700; color:#a07863; margin-bottom:10px;">
-          Testo promemoria
+    <!-- Lista -->
+    <ul class="settings-list">
+      <!-- Riga testo promemoria -->
+      <li>
+        <div class="label">Testo promemoria</div>
+        <div class="tokens">
+          <span class="token">{NOME}</span>
+          <span class="token">{DATA}</span>
+          <span class="token">{ORA}</span>
+          <span class="token">{TRATTAMENTI}</span>
         </div>
-
-        <!-- Form in stile “settings-form” (forzo display per usare il look dei tuoi input) -->
-        <form class="settings-form" style="display:flex;">
-          <div style="width:100%;">
-            <div style="font-size:13px; color:#666; margin-bottom:8px;">
-              Puoi usare variabili:&nbsp;
-              <span class="token">{NOME}</span>
-              <span class="token">{DATA}</span>
-              <span class="token">{ORA}</span>
-              <span class="token">{TRATTAMENTI}</span>
-            </div>
-
-            <!-- Textarea con stile coerente agli input -->
-            <textarea id="reminder-template"
-              style="
-                width:100%;
-                box-sizing:border-box;
-                padding:12px 14px;
-                border:1px solid #e6d9d0;
-                border-radius:12px;
-                background:#fff;
-                color:#a07863;
-                font-size:16px;
-                line-height:1.35;
-                min-height:130px;
-                resize:vertical;
-              "
-              placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
-
-            <div style="font-size:12px; color:#666; margin-top:8px;">
-              Suggerimento: mantieni il messaggio breve e chiaro.
-            </div>
-
-            <!-- Pulsanti centrati, coerenti con .bottoni-form -->
-            <div class="bottoni-form" style="margin-top:14px;">
-              <button type="button" id="btnAnteprima" title="Anteprima messaggio">Anteprima</button>
-              <button type="button" id="btnSalvaTemplate" title="Salva template">Salva</button>
-            </div>
-          </div>
-        </form>
+        <textarea id="reminder-template"
+          placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
+        <div class="hint">Suggerimento: mantieni il messaggio breve e chiaro.</div>
+        <div class="bottoni-form">
+          <button type="button" id="btnAnteprima">Anteprima</button>
+          <button type="button" id="btnSalvaTemplate">Salva</button>
+        </div>
       </li>
 
-      <!-- Riga: Invio automatico (in arrivo) -->
-      <li style="padding:14px 0; border-bottom:1px solid #e6d9d0; opacity:.55; filter:grayscale(8%); pointer-events:none;">
-        <div style="font-weight:700; color:#a07863; margin-bottom:6px;">
-          Invio automatico (in arrivo)
-        </div>
-
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
-          <label style="display:flex; align-items:center; gap:10px; color:#a07863;">
-            <input type="checkbox" disabled> Attiva promemoria automatici
-          </label>
-        </div>
-
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-          <span style="color:#a07863;">Anticipo promemoria</span>
-          <select disabled
-            style="
-              min-width:160px;
-              padding:10px 12px;
-              border:1px solid #e6d9d0;
-              border-radius:12px;
-              background:#fff;
-              color:#a07863;
-              font-size:16px;
-            ">
-            <option value="24h">24 ore prima</option>
-            <option value="12h">12 ore prima</option>
-            <option value="2h">2 ore prima</option>
-          </select>
-        </div>
-
-        <div style="font-size:12px; color:#666; margin-top:10px;">
-          Presto potrai far inviare all’app i promemoria in automatico, all’orario scelto.
-        </div>
+      <!-- Riga invio automatico (placeholder) -->
+      <li class="disabled">
+        <div class="label">Invio automatico (in arrivo)</div>
+        <label><input type="checkbox" disabled> Attiva promemoria automatici</label>
+        <select disabled>
+          <option value="24h">24 ore prima</option>
+          <option value="12h">12 ore prima</option>
+          <option value="2h">2 ore prima</option>
+        </select>
+        <div class="hint">Presto potrai far inviare all’app i promemoria in automatico.</div>
       </li>
     </ul>
   </main>
 
-  <!-- Navbar load -->
+  <!-- Carica navbar -->
   <script>
     fetch("navbar.html")
       .then(r => r.text())
       .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
   </script>
 
-  <!-- Logica essenziale: salva/leggi il template localmente (non perdi testo) -->
-  <script>
-    (function(){
-      const KEY = 'bb-reminder-template';
-      const ta  = document.getElementById('reminder-template');
-      const btnSave = document.getElementById('btnSalvaTemplate');
-      const btnPrev = document.getElementById('btnAnteprima');
-
-      try {
-        const saved = localStorage.getItem(KEY);
-        if (!ta.value && saved) ta.value = saved;
-      } catch(e){}
-
-      btnSave?.addEventListener('click', () => {
-        try {
-          localStorage.setItem(KEY, ta.value || '');
-          // feedback “soft” usando la tua palette
-          btnSave.classList.add('is-tapped');
-          setTimeout(()=>btnSave.classList.remove('is-tapped'), 160);
-          alert('Template salvato.');
-        } catch(e){
-          alert('Impossibile salvare il template.');
-        }
-      });
-
-      btnPrev?.addEventListener('click', () => {
-        const demo = (ta.value || '')
-          .replaceAll('{NOME}', 'Giulia')
-          .replaceAll('{DATA}', '12/09/2025')
-          .replaceAll('{ORA}', '15:00')
-          .replaceAll('{TRATTAMENTI}', 'Laminazione ciglia');
-        btnPrev.classList.add('is-tapped');
-        setTimeout(()=>btnPrev.classList.remove('is-tapped'), 160);
-        alert('Anteprima:\n\n' + demo);
-      });
-    })();
-  </script>
-
   <script src="navbar.js"></script>
+  <script type="module" src="reminder-settings.js"></script>
   <script type="module" src="auth.js"></script>
 </body>
 </html>
