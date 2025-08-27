@@ -1,4 +1,3 @@
-/* ===== Palette base (eredita i token usati nell'app) ===== */
 :root{
   --prim:#d2b8a3;
   --text:#a07863;
@@ -17,101 +16,71 @@ html,body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
-/* ===== Back header (coerente con altre pagine impostazioni) ===== */
+/* Header indietro senza riga */
 .back-header{
   position:sticky; top:0; z-index:5;
   display:flex; align-items:center; gap:8px;
   height:52px; padding:0 14px;
-  background:var(--bg);
+  background:var(--tint);
   color:var(--text); font-weight:800; letter-spacing:.2px; cursor:pointer;
-  /* eliminata la riga di separazione */
+  border-bottom:none !important;
 }
 .back-header .back-arrow{ font-size:22px; line-height:1; }
 
-/* ===== Container ===== */
-.reminder-container{
+/* Container */
+.settings-container{
   max-width:560px; margin:12px auto 120px; padding:0 16px;
 }
-.reminder-title{
+.settings-title{
   margin:14px 0 6px; font-size:22px; font-weight:900; color:var(--text);
 }
 .info-text{
   margin:0 0 14px; color:var(--muted); line-height:1.35;
 }
 
-/* ===== Card/list ===== */
-.reminder-list{
+/* Lista */
+.settings-list{
   list-style:none; margin:0; padding:0;
   background:var(--card); border:1px solid var(--line); border-radius:16px;
   box-shadow:0 6px 16px rgba(0,0,0,.04);
   overflow:hidden;
 }
-.reminder-list li{
-  display:flex; flex-direction:column; gap:12px;
-  padding:14px 16px; border-top:1px solid var(--line);
-}
-.reminder-list li:first-child{ border-top:none; }
+.settings-list li{ padding:14px 16px; border-top:1px solid var(--line); }
+.settings-list li:first-child{ border-top:none; }
 
-/* Titolo sezione "Testo promemoria" */
-.reminder-list li > .label{
-  font-size:18px; font-weight:900; color:var(--text);
+/* Titoli sezione */
+.section-title{
+  font-size:20px; font-weight:800; color:var(--text); margin:0 0 12px;
 }
 
-/* ===== Variabili cliccabili ===== */
-.vars-help{ margin:0 0 6px; color:var(--muted); }
+/* Variabili */
+.vars-label{ font-size:14px; color:var(--muted); margin-bottom:4px; }
 .vars-row{
-  display:flex;
-  flex-wrap:wrap;   /* vanno a capo se non ci stanno */
-  gap:8px;
-  margin-bottom:6px;
+  display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;
 }
 .token{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  background:#ecd9cd;
-  color:#8c6b58;
-  font-weight:800; font-size:13px;
-  border:0; cursor:pointer;
-  transition:background .2s;
+  display:inline-block; padding:4px 10px; border-radius:999px;
+  background:var(--tile); color:var(--text);
+  font-size:13px; font-weight:700; cursor:pointer;
+  transition:transform .1s;
 }
-.token:hover{ background:var(--tile-hover); }
+.token:active{ transform:scale(.92); background:var(--tile-hover); }
 
-/* ===== Textarea ===== */
-textarea#reminder-template{
+/* Textarea */
+#reminder-template{
   width:100%; min-height:130px; resize:vertical;
   border:1px solid var(--line); border-radius:12px;
   padding:12px 14px; background:#fff; color:var(--text);
   font-size:16px; line-height:1.35; font-family:inherit;
 }
-textarea#reminder-template:focus{
-  outline:none; box-shadow:0 0 0 4px rgba(210,184,163,.18);
-}
 
-/* ===== Pulsanti ===== */
+/* Bottoni */
 .bottoni-form{
   display:flex; justify-content:center; gap:20px; margin-top:10px;
 }
 .bottoni-form button{
-  background:#d2b8a3; color:#fff; border:0; border-radius:10px;
-  padding:12px 22px; font-size:16px; cursor:pointer; font-weight:700;
-  display:flex; align-items:center; gap:8px;
-  -webkit-tap-highlight-color:transparent;
-  transition:transform .12s ease;
+  background:var(--prim); color:#fff; border:0; border-radius:10px;
+  padding:10px 20px; font-size:15px; cursor:pointer; font-weight:700;
+  transition:transform .12s ease; -webkit-tap-highlight-color:transparent;
 }
 .bottoni-form button:active{ transform:scale(.94); }
-
-/* ===== Sezione disabilitata (Invio automatico) ===== */
-.reminder-list li.disabled{
-  opacity:.55; filter:grayscale(8%); pointer-events:none;
-}
-
-/* ===== Accessibilità ===== */
-select:focus, button:focus, input[type="checkbox"]:focus, textarea:focus{
-  outline:3px solid rgba(210,184,163,.28); outline-offset:2px;
-}
-
-/* Piccoli affinamenti responsive */
-@media (min-width:520px){
-  .reminder-list li{ padding:16px 18px; }
-}
