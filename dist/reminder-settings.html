@@ -1,63 +1,80 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Impostazioni Promemoria - BeautyBook</title>
-
-  <!-- Stili globali e pagina -->
-  <link rel="stylesheet" href="navbar.css" />
-  <link rel="stylesheet" href="reminder-settings.css" />
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="reminder-settings.css">
 </head>
 <body>
-  <!-- Navbar (iniettata) -->
   <div id="navbar-placeholder"></div>
 
-  <!-- Header back -->
   <div class="back-header" onclick="location.href='settings.html'">
     <span class="back-arrow">‹</span> Impostazioni
   </div>
 
   <main class="reminder-container">
     <h1 class="reminder-title">Impostazioni Promemoria</h1>
-    <!-- Badge stato (riempito da JS) -->
-    <small id="reminder-status" class="info-text" aria-live="polite"></small>
-    <p class="info-text">Gestisci i promemoria per ricordare gli appuntamenti ai clienti.</p>
+    <p class="info-text">
+      Personalizza il testo del promemoria WhatsApp che invierai ai clienti.
+    </p>
 
-    <!-- Preferenze principali -->
-    <ul class="reminder-list">
+    <!-- Template messaggio (attivo oggi) -->
+    <section class="template-group" aria-labelledby="tit-tpl">
+      <h3 id="tit-tpl">Testo promemoria</h3>
+      <p class="hint">
+        Puoi usare variabili come
+        <span class="token">{NOME}</span>
+        <span class="token">{DATA}</span>
+        <span class="token">{ORA}</span>
+        <span class="token">{TRATTAMENTI}</span>.
+      </p>
+      <textarea id="reminder-template" placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
+      <p class="hint" id="tpl-help">Suggerimento: mantieni il messaggio breve e chiaro.</p>
+    </section>
+
+    <!-- Blocco “in arrivo” per automatico (pulito e disattivato) -->
+    <ul class="reminder-list coming-soon" aria-disabled="true">
       <li>
-        <label for="enable-reminders" style="display:flex;align-items:center;gap:10px;">
-          <input type="checkbox" id="enable-reminders" />
-          <span>Attiva promemoria automatici</span>
+        <label>
+          <input type="checkbox" id="enable-reminders" disabled>
+          Attiva promemoria automatici
         </label>
       </li>
       <li>
-        <label for="reminder-time" style="display:block;margin-bottom:6px;">Anticipo promemoria</label>
-        <select id="reminder-time">
+        <span class="label">Anticipo promemoria</span>
+        <select id="reminder-time" disabled>
           <option value="24h">24 ore prima</option>
           <option value="12h">12 ore prima</option>
           <option value="2h">2 ore prima</option>
         </select>
       </li>
+      <li class="soon-note">
+        <small>Funzione in arrivo: l’app invierà i promemoria in automatico in base all’anticipo scelto.</small>
+      </li>
     </ul>
-
-    <!-- Template messaggio (facoltativo ma già pronto) -->
-    <h2 class="reminder-subtitle">Testo promemoria (WhatsApp)</h2>
-    <p class="info-text">Puoi usare segnaposti: <code>{NOME}</code>, <code>{DATA}</code>, <code>{ORA}</code>, <code>{SERVIZI}</code></p>
-    <textarea id="reminder-template" rows="5" placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
   </main>
 
-  <!-- Inietta navbar -->
   <script>
-    fetch("navbar.html")
-      .then(r => r.text())
-      .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
+    // Navbar
+    fetch("navbar.html").then(r => r.text()).then(h => {
+      document.getElementById("navbar-placeholder").innerHTML = h;
+    });
+
+    // Opzionale: salvataggio locale del template per non perderlo ricaricando la pagina
+    (function(){
+      const ta = document.getElementById('reminder-template');
+      const KEY = 'bb-reminder-template';
+      try {
+        const saved = localStorage.getItem(KEY);
+        if (!ta.value && saved) ta.value = saved;
+        ta.addEventListener('input', () => localStorage.setItem(KEY, ta.value));
+      } catch(e) {}
+    })();
   </script>
 
-  <!-- Script app -->
   <script src="navbar.js"></script>
   <script type="module" src="auth.js"></script>
-  <script type="module" src="reminder-settings.js"></script>
 </body>
 </html>
