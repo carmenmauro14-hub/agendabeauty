@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Impostazioni Promemoria - BeautyBook</title>
 
+  <!-- Stili base -->
   <link rel="stylesheet" href="navbar.css">
   <link rel="stylesheet" href="reminder-settings.css">
 </head>
-<body class="reminder-page">
+<body>
   <div id="navbar-placeholder"></div>
 
-  <!-- Header back (senza riga sotto in questa pagina) -->
-  <div class="settings-back" onclick="location.href='settings.html'">
+  <!-- Header indietro -->
+  <div class="back-header" onclick="location.href='settings.html'">
     <span class="back-arrow">‹</span> Impostazioni
   </div>
 
@@ -22,41 +23,42 @@
       Personalizza il testo del promemoria WhatsApp che invierai ai clienti.
     </p>
 
+    <!-- Card promemoria -->
     <ul class="settings-list" style="list-style:none; padding:0; margin:0;">
-      <!-- Sezione: Testo promemoria -->
-      <li class="card-section">
-        <h2 class="section-title">Testo promemoria</h2>
+      <li style="padding:14px 0; border-bottom:1px solid #e6d9d0;">
+        <div class="section-title">Testo promemoria</div>
 
-        <p class="vars-help">Puoi usare variabili:</p>
+        <div class="vars-label">Puoi usare variabili:</div>
         <div class="vars-row">
-          <button type="button" class="token" data-token="{NOME}">{NOME}</button>
-          <button type="button" class="token" data-token="{DATA}">{DATA}</button>
-          <button type="button" class="token" data-token="{ORA}">{ORA}</button>
-          <button type="button" class="token" data-token="{TRATTAMENTI}">{TRATTAMENTI}</button>
+          <span class="token" data-token="{NOME}">{NOME}</span>
+          <span class="token" data-token="{DATA}">{DATA}</span>
+          <span class="token" data-token="{ORA}">{ORA}</span>
+          <span class="token" data-token="{TRATTAMENTI}">{TRATTAMENTI}</span>
         </div>
 
-        <textarea id="reminder-template" class="template-input"
+        <textarea id="reminder-template"
           placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
 
-        <div class="hint">Suggerimento: mantieni il messaggio breve e chiaro.</div>
+        <div style="font-size:12px; color:#666; margin-top:8px;">
+          Suggerimento: mantieni il messaggio breve e chiaro.
+        </div>
 
-        <div class="bottoni-form">
+        <div class="bottoni-form" style="margin-top:14px;">
           <button type="button" id="btnAnteprima">Anteprima</button>
           <button type="button" id="btnSalvaTemplate">Salva</button>
         </div>
       </li>
 
-      <!-- Sezione: Invio automatico (disabilitata per ora) -->
-      <li class="card-section disabled">
-        <h3 class="auto-title">Invio automatico (in arrivo)</h3>
+      <!-- Sezione invio automatico disabilitata -->
+      <li style="padding:14px 0; border-bottom:1px solid #e6d9d0; opacity:.55; filter:grayscale(8%); pointer-events:none;">
+        <div class="section-title" style="font-size:17px;">Invio automatico (in arrivo)</div>
 
-        <label class="row">
-          <input type="checkbox" disabled>
-          <span>Attiva promemoria automatici</span>
+        <label style="display:flex; align-items:center; gap:10px; color:#a07863; margin:6px 0;">
+          <input type="checkbox" disabled> Attiva promemoria automatici
         </label>
 
-        <div class="row space">
-          <span>Anticipo promemoria</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+          <span style="color:#a07863;">Anticipo promemoria</span>
           <select disabled>
             <option value="24h">24 ore prima</option>
             <option value="12h">12 ore prima</option>
@@ -64,7 +66,7 @@
           </select>
         </div>
 
-        <div class="muted small">
+        <div style="font-size:12px; color:#666;">
           Presto potrai far inviare all’app i promemoria in automatico, all’orario scelto.
         </div>
       </li>
@@ -72,61 +74,12 @@
   </main>
 
   <script>
-    // carica navbar
-    fetch("navbar.html").then(r=>r.text()).then(h=>{
-      document.getElementById("navbar-placeholder").innerHTML = h;
-    });
+    fetch("navbar.html")
+      .then(r => r.text())
+      .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
   </script>
 
-  <script type="module">
-    // ===== Logica minima (salva/anteprima) + inserimento token cliccabili =====
-    const KEY = 'bb-reminder-template';
-    const ta  = document.getElementById('reminder-template');
-    const btnSave = document.getElementById('btnSalvaTemplate');
-    const btnPrev = document.getElementById('btnAnteprima');
-
-    // ripristino
-    try{
-      const saved = localStorage.getItem(KEY);
-      if (!ta.value && saved) ta.value = saved;
-    }catch{}
-
-    // inserisci token dove sta il cursore
-    function insertAtCursor(token){
-      const start = ta.selectionStart ?? ta.value.length;
-      const end   = ta.selectionEnd ?? ta.value.length;
-      const before= ta.value.slice(0, start);
-      const after = ta.value.slice(end);
-      ta.value = before + token + after;
-      const caret = start + token.length;
-      ta.focus();
-      ta.setSelectionRange(caret, caret);
-    }
-    document.querySelectorAll('.token').forEach(btn=>{
-      btn.addEventListener('click', ()=> insertAtCursor(btn.dataset.token));
-    });
-
-    btnSave?.addEventListener('click', ()=>{
-      try{
-        localStorage.setItem(KEY, ta.value || '');
-        btnSave.classList.add('is-tapped'); setTimeout(()=>btnSave.classList.remove('is-tapped'), 160);
-        alert('Template salvato.');
-      }catch{
-        alert('Impossibile salvare il template.');
-      }
-    });
-
-    btnPrev?.addEventListener('click', ()=>{
-      const demo = (ta.value || '')
-        .replaceAll('{NOME}','Giulia')
-        .replaceAll('{DATA}','12/09/2025')
-        .replaceAll('{ORA}','15:00')
-        .replaceAll('{TRATTAMENTI}','Laminazione ciglia');
-      btnPrev.classList.add('is-tapped'); setTimeout(()=>btnPrev.classList.remove('is-tapped'), 160);
-      alert('Anteprima:\n\n' + demo);
-    });
-  </script>
-
+  <script src="reminder-settings.js"></script>
   <script src="navbar.js"></script>
   <script type="module" src="auth.js"></script>
 </body>
