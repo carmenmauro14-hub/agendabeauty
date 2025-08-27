@@ -1,57 +1,59 @@
-// reminder-settings.js
-// Gestione del template promemoria
+// Salvataggio locale + anteprima + inserimento chip nel punto-cursore
+const KEY = 'bb-reminder-template';
 
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const textarea = document.getElementById('reminder-template');
+const btnSave  = document.getElementById('btnSalvaTemplate');
+const btnPrev  = document.getElementById('btnAnteprima');
 
-const db = getFirestore(getApp());
+// 1) carica template (se presente) da localStorage
+try{
+  const saved = localStorage.getItem(KEY);
+  if (!textarea.value && saved) textarea.value = saved;
+}catch{}
 
-const ta      = document.getElementById("reminder-template");
-const btnPrev = document.getElementById("btnAnteprima");
-const btnSave = document.getElementById("btnSalvaTemplate");
-
-const LS_KEY = "bb-reminder-template";
-
-function buildPreview(text){
-  return (text||"")
-    .replaceAll("{NOME}","Giulia")
-    .replaceAll("{DATA}","12/09/2025")
-    .replaceAll("{ORA}","15:00")
-    .replaceAll("{TRATTAMENTI}","Laminazione ciglia");
-}
-
-async function loadTemplate(){
-  try {
-    const snap = await getDoc(doc(db,"settings","reminder"));
-    if (snap.exists()) {
-      const tpl = snap.data().template || "";
-      if (!ta.value) ta.value = tpl;
-      localStorage.setItem(LS_KEY, tpl);
-      return;
-    }
-  } catch {}
-  // fallback LS
-  const saved = localStorage.getItem(LS_KEY);
-  if (!ta.value && saved) ta.value = saved;
-}
-
-async function saveTemplate(){
-  const value = ta.value || "";
-  try {
-    await setDoc(doc(db,"settings","reminder"),{
-      template:value, updatedAt:serverTimestamp()
-    },{merge:true});
-    localStorage.setItem(LS_KEY,value);
-    alert("Template salvato.");
-  } catch(e){
-    localStorage.setItem(LS_KEY,value);
-    alert("Salvato in locale (offline).");
+// 2) inserimento token nel caret
+function insertAtCaret(el, text){
+  // fallback: append
+  if (typeof el.selectionStart !== 'number' || typeof el.selectionEnd !== 'number'){
+    el.value += text;
+    el.focus();
+    return;
   }
+  const start = el.selectionStart;
+  const end   = el.selectionEnd;
+  const before = el.value.slice(0, start);
+  const after  = el.value.slice(end);
+  el.value = before + text + after;
+
+  const pos = start + text.length;
+  el.selectionStart = el.selectionEnd = pos;
+  el.focus();
 }
 
-btnSave?.addEventListener("click", saveTemplate);
-btnPrev?.addEventListener("click", ()=>{
-  alert("Anteprima:\n\n"+buildPreview(ta.value));
+// click sui chip
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const token = chip.dataset.token || chip.textContent.trim();
+    insertAtCaret(textarea, token);
+  });
 });
 
-loadTemplate();
+// 3) Salva
+btnSave?.addEventListener('click', ()=>{
+  try{
+    localStorage.setItem(KEY, textarea.value || '');
+    alert('Template salvato.');
+  }catch{
+    alert('Impossibile salvare il template.');
+  }
+});
+
+// 4) Anteprima (con valori fittizi)
+btnPrev?.addEventListener('click', ()=>{
+  const demo = (textarea.value || '')
+    .replaceAll('{NOME}','Giulia')
+    .replaceAll('{DATA}','12/09/2025')
+    .replaceAll('{ORA}','15:00')
+    .replaceAll('{TRATTAMENTI}','Laminazione ciglia');
+  alert('Anteprima:\n\n' + demo);
+});
