@@ -11,13 +11,14 @@ html,body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
-/* Header indietro (riga eliminata) */
+/* Header indietro */
 .back-header{
   display:flex; align-items:center;
   font-size:18px; font-weight:500;
   color:#d2b8a3; padding:15px 20px 10px;
   background:#fff; cursor:pointer;
-  border-bottom:none; /* ← riga tolta */
+  /* riga eliminata come richiesto */
+  border-bottom:none;
 }
 .back-arrow{ font-size:24px; margin-right:6px; }
 
@@ -44,17 +45,28 @@ html,body{
 }
 .settings-list li{ padding:14px 0; }
 
-/* Titolo sezione (es. Testo promemoria) */
-.block-title{
+/* --- Etichette sezione/sottosezione --- */
+.section-label{
   font-size:18px;
   font-weight:700;
   color:var(--text);
+  margin:4px 0 6px;
+}
+.sub-label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--muted);
   margin:0 0 8px;
 }
-/* Solo il primo (Testo promemoria) più grande */
-.settings-list li:first-child .block-title{
-  font-size:22px;
-  font-weight:800;
+
+/* Riga token (una riga quando c’è spazio, a capo su schermi stretti) */
+.token-row{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;          /* va a capo solo quando serve */
+  gap:10px;
+  margin:2px 0 10px;
 }
 
 /* Textarea */
@@ -77,22 +89,15 @@ textarea:focus{
   box-shadow:0 0 0 3px rgba(210,184,163,.28);
 }
 
-/* Riga variabili */
-.vars-row{
-  display:flex;
-  flex-wrap:wrap;   /* tutte in fila, vanno a capo se lo schermo è stretto */
-  gap:8px;
-  margin:4px 0 12px;
-}
-
 /* Token cliccabili */
 .token{
   display:inline-block;
-  padding:4px 10px;
+  padding:2px 8px;
   border-radius:999px;
   background:#efe2d8;
   color:var(--text);
-  font-size:13px; font-weight:700;
+  font-size:12px; font-weight:700;
+  margin-right:0; /* il gap lo gestisce .token-row */
   cursor:pointer; user-select:none;
   transition:background .2s, transform .1s;
 }
