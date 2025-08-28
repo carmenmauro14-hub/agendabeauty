@@ -163,6 +163,15 @@ async function loadReminderTemplate(){
   return reminderTemplateCache;
 }
 
+// --- helper: apertura WhatsApp con encoding sicuro UTF-8 (emoji ok)
+function openWhatsApp(phoneE164, text){
+  const url = new URL("https://api.whatsapp.com/send");
+  // niente encodeURIComponent manuale: lasciamo fare a URLSearchParams
+  url.searchParams.set("phone", phoneE164);
+  url.searchParams.set("text", text);
+  window.open(url.toString(), "_blank", "noopener");
+}
+
 // ===== Caricamento Cliente =====
 async function caricaCliente(){
   clienteId = getClienteId();
@@ -225,8 +234,7 @@ async function caricaCliente(){
     const template = await loadReminderTemplate();
     const msg = normalizeText(buildReminderMessage(template, clienteData, appt));
 
-    const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank", "noopener");
+    openWhatsApp(telNorm, msg);
   };
 
   await caricaStoricoETotale();
