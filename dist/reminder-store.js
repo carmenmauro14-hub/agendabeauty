@@ -1,50 +1,48 @@
-// ===== Reminder Store (Firestore + localStorage fallback) =====
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } 
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getApp, getApps, initializeApp } 
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// =============== reminder-store.js ==================
+// Piccolo “store” per il template promemoria.
+// Al momento usa localStorage; in futuro potrai
+// sostituire qui l’implementazione (es. Firestore).
 
-// 🔹 Inizializza Firebase solo se non già fatto
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+export const REMINDER_KEY = "bb-reminder-template";
 
-// 🔹 Percorso unico in Firestore (config globale)
-const TEMPLATE_DOC = doc(db, "config", "reminders");
-const TEMPLATE_KEY = "bb-reminder-template"; // copia locale
+export const DEFAULT_TEMPLATE =
+  "Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!";
 
-// Carica template (prima Firestore, poi fallback locale)
-export async function loadReminderTemplate(){
+/** Restituisce il template salvato (o il default se vuoto). */
+export function loadTemplate() {
   try {
-    const snap = await getDoc(TEMPLATE_DOC);
-    if (snap.exists()){
-      const t = snap.data()?.template ?? "";
-      try { localStorage.setItem(TEMPLATE_KEY, t); } catch {}
-      return t;
-    }
-  } catch(e) {
-    console.warn("Errore lettura Firestore template:", e);
+    const v = localStorage.getItem(REMINDER_KEY);
+    return (v && v.length) ? v : DEFAULT_TEMPLATE;
+  } catch {
+    return DEFAULT_TEMPLATE;
   }
-  try { return localStorage.getItem(TEMPLATE_KEY) || ""; } catch { return ""; }
 }
 
-// Salva template (Firestore + fallback locale)
-export async function saveReminderTemplate(text){
-  const cleaned = String(text || "").trim();
+/** Salva il template. Ritorna true/false sul successo. */
+export function saveTemplate(text) {
   try {
-    await setDoc(TEMPLATE_DOC, { 
-      template: cleaned, 
-      updatedAt: serverTimestamp() 
-    }, { merge: true });
-  } catch(e){
-    console.warn("Errore salvataggio Firestore template:", e);
+    localStorage.setItem(REMINDER_KEY, String(text ?? ""));
+    return true;
+  } catch {
+    return false;
   }
-  try { localStorage.setItem(TEMPLATE_KEY, cleaned); } catch {}
+}
+
+/** Ripristina il template di default. */
+export function resetTemplate() {
+  return saveTemplate(DEFAULT_TEMPLATE);
+}
+
+/**
+ * Utilità: genera l’anteprima sostituendo i placeholder.
+ * Esempio d’uso:
+ *   renderPreview("{NOME} {DATA}", {NOME:"Anna", DATA:"10/10"})
+ */
+export function renderPreview(tpl, data) {
+  let out = String(tpl ?? "");
+  Object.entries(data || {}).forEach(([k, v]) => {
+    const token = new RegExp("\\{" + k + "\\}", "g");
+    out = out.replace(token, String(v));
+  });
+  return out;
 }
