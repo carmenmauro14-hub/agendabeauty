@@ -1,22 +1,28 @@
-// === Reminder Settings Page Logic ===
-(function () {
-  const KEY = 'bb-reminder-template';
+// === Reminder Settings Page Logic (con Firestore) ===
+import { loadReminderTemplate, saveReminderTemplate } from "./reminder-store.js";
 
+(function () {
   const textarea = document.getElementById('reminder-template');
   const btnSave  = document.getElementById('btnSalvaTemplate');
   const btnPrev  = document.getElementById('btnAnteprima');
 
-  // Carica eventuale testo salvato
-  try {
-    const saved = localStorage.getItem(KEY);
-    if (!textarea.value && saved) textarea.value = saved;
-  } catch (_) {}
+  // --- Caricamento iniziale dal backend (con fallback interno allo store) ---
+  (async () => {
+    try {
+      const tpl = await loadReminderTemplate();
+      if (!textarea.value && tpl) textarea.value = tpl;
+      setPristine();
+    } catch {
+      // Se qualcosa va storto nello store, lasciamo il campo com'è
+      setPristine();
+    }
+  })();
 
-  // Inserisce testo alla posizione del cursore
+  // --- Util: inserisce testo alla posizione del cursore ---
   function insertAtCursor(el, text) {
     el.focus();
-    const start = el.selectionStart ?? el.value.length;
-    const end   = el.selectionEnd ?? el.value.length;
+    const start  = el.selectionStart ?? el.value.length;
+    const end    = el.selectionEnd ?? el.value.length;
     const before = el.value.slice(0, start);
     const after  = el.value.slice(end);
     el.value = before + text + after;
@@ -25,7 +31,7 @@
     el.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  // Click sui token → inserimento placeholder
+  // --- Token cliccabili → inserimento placeholder ---
   document.querySelectorAll('.token').forEach(tok => {
     tok.addEventListener('click', () => {
       const value = tok.getAttribute('data-insert') || tok.textContent.trim();
@@ -33,19 +39,33 @@
     });
   });
 
-  // Salva localmente
-  btnSave?.addEventListener('click', () => {
+  // --- Stato "modificato/non modificato" per il tasto Salva ---
+  let pristineValue = '';
+  function setPristine() {
+    pristineValue = textarea.value || '';
+    updateSaveButton();
+  }
+  function updateSaveButton() {
+    const dirty = (textarea.value || '') !== pristineValue;
+    if (btnSave) btnSave.disabled = !dirty;
+  }
+  textarea?.addEventListener('input', updateSaveButton);
+
+  // --- SALVA (Firestore + cache locale gestita dallo store) ---
+  btnSave?.addEventListener('click', async () => {
+    btnSave.disabled = true;
     try {
-      localStorage.setItem(KEY, textarea.value || '');
-      btnSave.disabled = true;
-      setTimeout(() => (btnSave.disabled = false), 350);
+      await saveReminderTemplate(textarea.value || '');
+      setPristine();
       alert('Template salvato.');
     } catch (e) {
-      alert('Impossibile salvare il template.');
+      // In caso di errore Firestore, lo store ha già tentato il fallback locale
+      alert('Salvataggio non riuscito. Riprova più tardi.');
+      updateSaveButton();
     }
   });
 
-  // Anteprima semplice (mock)
+  // --- ANTEPRIMA (mock) ---
   btnPrev?.addEventListener('click', () => {
     const demo = (textarea.value || '')
       .replaceAll('{NOME}', 'Giulia')
