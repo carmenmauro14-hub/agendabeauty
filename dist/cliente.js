@@ -46,6 +46,7 @@ function getApptNames(a){
   return a.trattamento || a.titolo || "";
 }
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
+const normalizeText = (s) => (s ?? "").toString().normalize("NFC"); // emoji-safe
 
 // ===== DOM =====
 const backBtn        = document.getElementById("backBtn");
@@ -149,7 +150,7 @@ function buildReminderMessage(template, cliente, appt){
     .replaceAll("{TRATTAMENTI}", tratt);
 }
 
-// --- Loader template da Firestore con cache in memoria + fallback locale ---
+// --- Loader template da Firestore (solo Firestore, emoji-safe) ---
 let reminderTemplateCache = null;
 async function loadReminderTemplate(){
   if (reminderTemplateCache !== null) return reminderTemplateCache;
@@ -158,9 +159,6 @@ async function loadReminderTemplate(){
     reminderTemplateCache = snap.exists() ? (snap.data().template || "") : "";
   }catch(_){
     reminderTemplateCache = "";
-  }
-  if (!reminderTemplateCache) {
-    try { reminderTemplateCache = localStorage.getItem("bb-reminder-template") || ""; } catch(_) {}
   }
   return reminderTemplateCache;
 }
@@ -214,28 +212,19 @@ async function caricaCliente(){
   }
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
 
-  // ——— Promemoria WhatsApp (semi-automatico)
+  // ——— Promemoria WhatsApp
   btnRem.onclick = async (e)=>{
     e.preventDefault();
     const telNorm = normalizePhoneForWA(tel);
-    if(!telNorm){
-      alert("Numero non valido o mancante per WhatsApp.");
-      return;
-    }
-    if(!allAppointmentsRaw.length){
-      alert("Nessun appuntamento per questo cliente.");
-      return;
-    }
+    if(!telNorm){ alert("Numero non valido o mancante per WhatsApp."); return; }
+    if(!allAppointmentsRaw.length){ alert("Nessun appuntamento per questo cliente."); return; }
+
     const appt = findBestAppointmentForReminder(allAppointmentsRaw);
-    if(!appt){
-      alert("Non trovo un appuntamento valido per creare il messaggio.");
-      return;
-    }
+    if(!appt){ alert("Non trovo un appuntamento valido per creare il messaggio."); return; }
 
-    // Carica il template da Firestore (con cache/fallback)
     const template = await loadReminderTemplate();
+    const msg = normalizeText(buildReminderMessage(template, clienteData, appt));
 
-    const msg = buildReminderMessage(template, clienteData, appt);
     const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank", "noopener");
   };
@@ -306,7 +295,7 @@ function renderHistoryList(container, items){
         <div class="h-date">${it.dt ? FMT_DATA.format(it.dt) : "—"}</div>
         <div class="h-tratt">${it.tratt}</div>
       </div>
-        <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
+      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
     container.appendChild(li);
   });
 }
