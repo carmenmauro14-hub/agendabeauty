@@ -28,7 +28,7 @@ function toNumberSafe(v){
 }
 function safeDate(d){
   if(!d) return null;
-  if(d?.toDate) return d.toDate();
+  if(d.toDate) return d.toDate();
   if(typeof d==="number") return new Date(d);
   if(typeof d==="string") return new Date(d);
   return d instanceof Date ? d : null;
@@ -46,7 +46,6 @@ function getApptNames(a){
   return a.trattamento || a.titolo || "";
 }
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
-const normalizeText = (s) => (s ?? "").toString().normalize("NFC"); // emoji-safe
 
 // ===== DOM =====
 const backBtn        = document.getElementById("backBtn");
@@ -98,93 +97,11 @@ let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
 let allYears = [];
-let allAppointmentsRaw = []; // <— per promemoria
 
 // ===== Helpers =====
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
 function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
-
-// --- Helpers promemoria ---
-function normalizePhoneForWA(telRaw){
-  const digits = (telRaw||"").replace(/\D/g,"");
-  if(!digits) return "";
-  if(digits.length === 10 && digits.startsWith("3")) return "39"+digits; // mobile IT
-  return digits;
-}
-function apptToDateTime(a){
-  const dtFull = safeDate(a.dateTime);
-  if(dtFull) return dtFull;
-  const base = safeDate(a.data || a.date);
-  if(!base) return null;
-  const res = new Date(base);
-  const hhmm = (a.ora || "").split(":");
-  const hh = parseInt(hhmm[0]||"0",10);
-  const mm = parseInt(hhmm[1]||"0",10);
-  res.setHours(hh||0, mm||0, 0, 0);
-  return res;
-}
-function findBestAppointmentForReminder(list){
-  const now = new Date();
-  const withDT = list.map(a => ({ a, when: apptToDateTime(a) || safeDate(a.data) || null }))
-                     .filter(x => x.when instanceof Date);
-  const future = withDT.filter(x => x.when >= now).sort((x,y)=> x.when - y.when);
-  if(future.length) return future[0].a;
-  const past = withDT.filter(x => x.when < now).sort((x,y)=> y.when - x.when);
-  return past.length ? past[0].a : null;
-}
-function buildReminderMessage(template, cliente, appt){
-  const nome = cliente?.nome || "";
-  const d = apptToDateTime(appt);
-  const dataStr = d ? FMT_DATA.format(d) : "";
-  const oraStr  = d ? String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0") : (appt?.ora||"");
-  const tratt   = getApptNames(appt) || "";
-
-  const tpl = (template && String(template).trim()) ||
-    "Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. {TRATTAMENTI}. A presto!";
-
-  return tpl
-    .replaceAll("{NOME}", nome)
-    .replaceAll("{DATA}", dataStr)
-    .replaceAll("{ORA}",  oraStr)
-    .replaceAll("{TRATTAMENTI}", tratt);
-}
-
-// --- Loader template da Firestore (solo Firestore, emoji-safe) ---
-let reminderTemplateCache = null;
-async function loadReminderTemplate(){
-  if (reminderTemplateCache !== null) return reminderTemplateCache;
-  try{
-    const snap = await getDoc(doc(db, "settings", "reminder"));
-    reminderTemplateCache = snap.exists() ? (snap.data().template || "") : "";
-  }catch(_){
-    reminderTemplateCache = "";
-  }
-  return reminderTemplateCache;
-}
-
-// --- Apertura WhatsApp: deeplink nativo + fallback web (stesso tab) ---
-function openWhatsAppSmart(telNorm, msg){
-  const nativeUrl = `whatsapp://send?phone=${telNorm}&text=${encodeURIComponent(msg)}`;
-  const webUrl    = `https://wa.me/${telNorm}?text=${encodeURIComponent(msg)}`;
-
-  let jumped = false;
-  const t = setTimeout(() => {
-    if (!jumped) location.href = webUrl; // fallback se il deeplink non parte
-  }, 700);
-
-  // Prova ad aprire l’app nativa
-  try {
-    window.location.href = nativeUrl;
-    jumped = true; // se il browser cambia contesto, al ritorno resterai nel tuo tab
-    // clearTimeout non sempre verrà eseguito (dipende dal cambio app),
-    // ma non è un problema: se non parte, scatterà il fallback sopra.
-    clearTimeout(t);
-  } catch {
-    // se qualcosa va storto, ripiega subito sul web
-    location.href = webUrl;
-  }
-}
 
 // ===== Caricamento Cliente =====
 async function caricaCliente(){
@@ -234,22 +151,7 @@ async function caricaCliente(){
     btnSms.removeAttribute("href"); btnCall.removeAttribute("href"); btnWa.removeAttribute("href");
   }
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
-
-  // ——— Promemoria WhatsApp
-  btnRem.onclick = async (e)=>{
-    e.preventDefault();
-    const telNorm = normalizePhoneForWA(tel);
-    if(!telNorm){ alert("Numero non valido o mancante per WhatsApp."); return; }
-    if(!allAppointmentsRaw.length){ alert("Nessun appuntamento per questo cliente."); return; }
-
-    const appt = findBestAppointmentForReminder(allAppointmentsRaw);
-    if(!appt){ alert("Non trovo un appuntamento valido per creare il messaggio."); return; }
-
-    const template = await loadReminderTemplate();
-    const msg = normalizeText(buildReminderMessage(template, clienteData, appt));
-
-    openWhatsAppSmart(telNorm, msg);
-  };
+  btnRem.onclick = (e)=>{ e.preventDefault(); alert("Promemoria WhatsApp: funzione in sviluppo."); };
 
   await caricaStoricoETotale();
   await popolaAnniERender();
@@ -276,8 +178,6 @@ window.addEventListener('resize', ()=>autosize(noteInput));
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
-  allAppointmentsRaw = [];
-
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
 
@@ -288,9 +188,7 @@ async function caricaStoricoETotale(){
     const dt = safeDate(a.data || a.date || a.dateTime);
     const tot = getApptTotal(a);
     totaleSempre += tot;
-
     allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
-    allAppointmentsRaw.push(a);
   });
 
   allHistoryItems.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
@@ -390,6 +288,7 @@ async function aggiornaStatistiche(anno){
 
 // ===== Bottom-sheet =====
 function preventBackgroundScroll(e){
+  // Blocca lo scroll del body solo se tocchi/clicki FUORI dal pannello
   if (!sheet.hidden && !sheetPanel.contains(e.target)) {
     e.preventDefault();
   }
@@ -410,6 +309,7 @@ function openSheet(){
   document.body.classList.add("sheet-open");
   if (sheetContent) sheetContent.scrollTop = 0;
 
+  // Previeni scroll sotto al foglio
   window.addEventListener("touchmove", preventBackgroundScroll, {passive:false});
   window.addEventListener("wheel",     preventBackgroundScroll, {passive:false});
 }
@@ -435,15 +335,16 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// ===== Drag-to-close =====
+// ===== Drag-to-close: SOLO handle/header + resistenza elastica =====
 (function enableSheetDrag(){
   if(!sheetPanel) return;
 
-  const CLOSE_DISTANCE  = 120;
-  const FLICK_DISTANCE  = 60;
-  const FLICK_VELOCITY  = 0.35;
-  const LINEAR_LIMIT    = 80;
-  const RESISTANCE_GAIN = 0.3;
+  // Parametri “tuning”
+  const CLOSE_DISTANCE  = 120;      // px per chiudere trascinando piano
+  const FLICK_DISTANCE  = 60;       // px min con flick
+  const FLICK_VELOCITY  = 0.35;     // px/ms per chiusura con flick
+  const LINEAR_LIMIT    = 80;       // primi px senza resistenza
+  const RESISTANCE_GAIN = 0.3;      // percentuale oltre il limite
 
   let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
 
@@ -452,6 +353,7 @@ function renderSheetForYear(anno){
   const mapWithResistance = (dy) => {
     if (dy <= 0) return 0;
     if (dy <= LINEAR_LIMIT) return dy;
+    // oltre il limite, applica “elasticità”
     return LINEAR_LIMIT + (dy - LINEAR_LIMIT) * RESISTANCE_GAIN;
   };
 
@@ -460,9 +362,10 @@ function renderSheetForYear(anno){
     lastT  = performance.now();
     velocity = 0;
     dragging = true;
+    // durante il drag niente transizione
     sheetPanel.classList.add("dragging");
     sheetPanel.style.transition = "none";
-    e.preventDefault();
+    e.preventDefault(); // entriamo in drag, non scroll
   };
 
   const onMove = (e)=>{
@@ -481,6 +384,7 @@ function renderSheetForYear(anno){
   };
 
   const springBack = () => {
+    // piccolo rimbalzo per tornare su
     sheetPanel.classList.remove("dragging");
     sheetPanel.style.transition = "transform .18s ease-out";
     sheetPanel.style.transform  = "";
@@ -498,6 +402,7 @@ function renderSheetForYear(anno){
     const dy = Math.max(0, lastY - startY);
     const shouldClose = dy > CLOSE_DISTANCE || (dy > FLICK_DISTANCE && velocity > FLICK_VELOCITY);
 
+    // ripristina eventuale transizione
     sheetPanel.classList.remove("dragging");
     sheetPanel.style.transition = "";
     sheetPanel.style.transform  = "";
@@ -511,6 +416,7 @@ function renderSheetForYear(anno){
 
   const opts = { passive:false };
 
+  // Avvio drag SOLO da handle + header (contenuto scorre liberamente)
   sheetHandle?.addEventListener("touchstart", beginDrag, opts);
   sheetHandle?.addEventListener("mousedown",  beginDrag, opts);
   sheetHeader?.addEventListener("touchstart", beginDrag, opts);
@@ -528,7 +434,7 @@ showAllBtn?.addEventListener("click", openSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
-// Chiudi da backdrop + X
+// Chiudi da backdrop + X (click + touch)
 const doClose = (e)=>{ e.preventDefault?.(); e.stopPropagation?.(); closeSheet(); };
 sheetBackdrop?.addEventListener("click", doClose);
 sheetClose?.addEventListener("click", doClose, {capture:true});
@@ -568,5 +474,3 @@ backBtn.addEventListener("click", ()=>history.back());
 
 // ===== Avvio =====
 caricaCliente();
-// Precarico template per essere pronti al click Promemoria
-loadReminderTemplate();
