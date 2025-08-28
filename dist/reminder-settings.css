@@ -150,3 +150,10 @@ textarea:focus{
 .settings-list::-webkit-scrollbar{ width:4px; }
 .settings-list::-webkit-scrollbar-thumb{ background:#d9b5a3; border-radius:2px; }
 .settings-list::-webkit-scrollbar-track{ background:transparent; }
+
+/* Effetto sezione non disponibile */
+.disabled-block {
+  opacity: .55;          /* semitrasparente */
+  filter: grayscale(10%); /* leggermente spenta */
+  pointer-events: none;  /* disattiva interazioni */
+}
