@@ -108,15 +108,12 @@ function getClienteId(){ const url = new URLSearchParams(location.search); retur
 function normalizePhoneForWA(telRaw){
   const digits = (telRaw||"").replace(/\D/g,"");
   if(!digits) return "";
-  // se mobile IT tipico (10 cifre che inizia con 3), aggiungo prefisso 39
-  if(digits.length === 10 && digits.startsWith("3")) return "39"+digits;
+  if(digits.length === 10 && digits.startsWith("3")) return "39"+digits; // mobile IT
   return digits;
 }
 function apptToDateTime(a){
-  // preferisci a.dateTime (Timestamp) -> Date
   const dtFull = safeDate(a.dateTime);
   if(dtFull) return dtFull;
-  // fallback: a.data (Timestamp/Date) + a.ora "HH:mm"
   const base = safeDate(a.data || a.date);
   if(!base) return null;
   const res = new Date(base);
@@ -128,12 +125,10 @@ function apptToDateTime(a){
 }
 function findBestAppointmentForReminder(list){
   const now = new Date();
-  // separa futuri e passati
   const withDT = list.map(a => ({ a, when: apptToDateTime(a) || safeDate(a.data) || null }))
                      .filter(x => x.when instanceof Date);
   const future = withDT.filter(x => x.when >= now).sort((x,y)=> x.when - y.when);
   if(future.length) return future[0].a;
-  // altrimenti il più recente nel passato
   const past = withDT.filter(x => x.when < now).sort((x,y)=> y.when - x.when);
   return past.length ? past[0].a : null;
 }
@@ -152,6 +147,22 @@ function buildReminderMessage(template, cliente, appt){
     .replaceAll("{DATA}", dataStr)
     .replaceAll("{ORA}",  oraStr)
     .replaceAll("{TRATTAMENTI}", tratt);
+}
+
+// --- Loader template da Firestore con cache in memoria + fallback locale ---
+let reminderTemplateCache = null;
+async function loadReminderTemplate(){
+  if (reminderTemplateCache !== null) return reminderTemplateCache;
+  try{
+    const snap = await getDoc(doc(db, "settings", "reminder"));
+    reminderTemplateCache = snap.exists() ? (snap.data().template || "") : "";
+  }catch(_){
+    reminderTemplateCache = "";
+  }
+  if (!reminderTemplateCache) {
+    try { reminderTemplateCache = localStorage.getItem("bb-reminder-template") || ""; } catch(_) {}
+  }
+  return reminderTemplateCache;
 }
 
 // ===== Caricamento Cliente =====
@@ -204,7 +215,7 @@ async function caricaCliente(){
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
 
   // ——— Promemoria WhatsApp (semi-automatico)
-  btnRem.onclick = (e)=>{
+  btnRem.onclick = async (e)=>{
     e.preventDefault();
     const telNorm = normalizePhoneForWA(tel);
     if(!telNorm){
@@ -220,8 +231,10 @@ async function caricaCliente(){
       alert("Non trovo un appuntamento valido per creare il messaggio.");
       return;
     }
-    let template = "";
-    try{ template = localStorage.getItem("bb-reminder-template") || ""; }catch{}
+
+    // Carica il template da Firestore (con cache/fallback)
+    const template = await loadReminderTemplate();
+
     const msg = buildReminderMessage(template, clienteData, appt);
     const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank", "noopener");
@@ -265,10 +278,7 @@ async function caricaStoricoETotale(){
     const tot = getApptTotal(a);
     totaleSempre += tot;
 
-    // per UI "storico breve"
     allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
-
-    // per promemoria e logica futura
     allAppointmentsRaw.push(a);
   });
 
@@ -547,3 +557,5 @@ backBtn.addEventListener("click", ()=>history.back());
 
 // ===== Avvio =====
 caricaCliente();
+// Precarico “soft” del template per avere tutto pronto quando clicchi Promemoria
+loadReminderTemplate();
