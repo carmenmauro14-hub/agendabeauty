@@ -357,3 +357,62 @@ body {
 
 /* animazione chiusura verso il basso */
 .det-sheet.swipe-out-down{ transform:translateY(100%); }
+
+/* ── Bottoni coerenti con l'app ─────────────────────────── */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:12px 16px;
+  border:0;
+  border-radius:12px;
+  background:#d2b8a3;           /* prim */
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+.btn:active{ transform:scale(.96); }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* variante “ghost” (bordo, sfondo chiaro) */
+.btn.ghost{
+  background:#fff;
+  color:#a07863;                 /* text */
+  border:1px solid #d2b8a3;      /* prim */
+}
+.btn.ghost:hover{ box-shadow:0 0 0 3px rgba(210,184,163,.18); }
+
+/* contenitore azioni nel bottom-sheet */
+.det-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:8px;
+}
+
+/* opzionale: metti i due bottoni su una riga su schermi larghi */
+@media (min-width: 520px){
+  .det-actions{ flex-direction:row; }
+  .det-actions .btn{ width:auto; flex:1; }
+}
+
+/* se vuoi una pill piccola inline (in lista giorno) riutilizzabile */
+.btn-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px;
+  border:1px solid #d2b8a3;
+  border-radius:999px;
+  background:#fff;
+  color:#a07863;
+  font-size:12px; font-weight:700;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn-pill:active{ transform:scale(.96); }
+.btn-pill:hover{ box-shadow:0 0 0 3px rgba(210,184,163,.16); }
