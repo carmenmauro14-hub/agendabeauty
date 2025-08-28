@@ -163,13 +163,27 @@ async function loadReminderTemplate(){
   return reminderTemplateCache;
 }
 
-// --- helper: apertura WhatsApp con encoding sicuro UTF-8 (emoji ok)
-function openWhatsApp(phoneE164, text){
-  const url = new URL("https://api.whatsapp.com/send");
-  // niente encodeURIComponent manuale: lasciamo fare a URLSearchParams
-  url.searchParams.set("phone", phoneE164);
-  url.searchParams.set("text", text);
-  window.open(url.toString(), "_blank", "noopener");
+// --- Apertura WhatsApp: deeplink nativo + fallback web (stesso tab) ---
+function openWhatsAppSmart(telNorm, msg){
+  const nativeUrl = `whatsapp://send?phone=${telNorm}&text=${encodeURIComponent(msg)}`;
+  const webUrl    = `https://wa.me/${telNorm}?text=${encodeURIComponent(msg)}`;
+
+  let jumped = false;
+  const t = setTimeout(() => {
+    if (!jumped) location.href = webUrl; // fallback se il deeplink non parte
+  }, 700);
+
+  // Prova ad aprire l’app nativa
+  try {
+    window.location.href = nativeUrl;
+    jumped = true; // se il browser cambia contesto, al ritorno resterai nel tuo tab
+    // clearTimeout non sempre verrà eseguito (dipende dal cambio app),
+    // ma non è un problema: se non parte, scatterà il fallback sopra.
+    clearTimeout(t);
+  } catch {
+    // se qualcosa va storto, ripiega subito sul web
+    location.href = webUrl;
+  }
 }
 
 // ===== Caricamento Cliente =====
@@ -234,7 +248,7 @@ async function caricaCliente(){
     const template = await loadReminderTemplate();
     const msg = normalizeText(buildReminderMessage(template, clienteData, appt));
 
-    openWhatsApp(telNorm, msg);
+    openWhatsAppSmart(telNorm, msg);
   };
 
   await caricaStoricoETotale();
@@ -421,7 +435,7 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// ===== Drag-to-close: SOLO handle/header + resistenza elastica =====
+// ===== Drag-to-close =====
 (function enableSheetDrag(){
   if(!sheetPanel) return;
 
@@ -514,7 +528,7 @@ showAllBtn?.addEventListener("click", openSheet);
 sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
 document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
 
-// Chiudi da backdrop + X (click + touch)
+// Chiudi da backdrop + X
 const doClose = (e)=>{ e.preventDefault?.(); e.stopPropagation?.(); closeSheet(); };
 sheetBackdrop?.addEventListener("click", doClose);
 sheetClose?.addEventListener("click", doClose, {capture:true});
@@ -554,5 +568,5 @@ backBtn.addEventListener("click", ()=>history.back());
 
 // ===== Avvio =====
 caricaCliente();
-// Precarico “soft” del template per avere tutto pronto quando clicchi Promemoria
+// Precarico template per essere pronti al click Promemoria
 loadReminderTemplate();
