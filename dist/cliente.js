@@ -4,6 +4,10 @@ import {
   getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// === Import modulo promemoria condiviso ===
+// Se il file si chiama reminder-store.js cambia la riga sotto di conseguenza:
+import { openWhatsAppReminder } from "./reminder-core.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -151,7 +155,17 @@ async function caricaCliente(){
     btnSms.removeAttribute("href"); btnCall.removeAttribute("href"); btnWa.removeAttribute("href");
   }
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
-  btnRem.onclick = (e)=>{ e.preventDefault(); alert("Promemoria WhatsApp: funzione in sviluppo."); };
+
+  // ===== Promemoria WhatsApp (usa il modulo condiviso) =====
+  btnRem.onclick = async (e)=>{
+    e.preventDefault();
+    // delego tutta la logica al modulo condiviso:
+    // - carica template da Firestore
+    // - trova appuntamento giusto
+    // - normalizza testo (emoji-safe)
+    // - apre WhatsApp
+    await openWhatsAppReminder(db, clienteId, clienteData);
+  };
 
   await caricaStoricoETotale();
   await popolaAnniERender();
