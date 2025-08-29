@@ -5,7 +5,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // === Import modulo promemoria condiviso ===
-// Se il file si chiama reminder-store.js cambia la riga sotto di conseguenza:
 import { openWhatsAppReminder } from "./reminder-core.js";
 
 const firebaseConfig = {
@@ -32,7 +31,7 @@ function toNumberSafe(v){
 }
 function safeDate(d){
   if(!d) return null;
-  if(d.toDate) return d.toDate();
+  if(d?.toDate) return d.toDate();
   if(typeof d==="number") return new Date(d);
   if(typeof d==="string") return new Date(d);
   return d instanceof Date ? d : null;
@@ -101,6 +100,7 @@ let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
 let allYears = [];
+let allAppointmentsRaw = []; // per promemoria
 
 // ===== Helpers =====
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
@@ -159,12 +159,7 @@ async function caricaCliente(){
   // ===== Promemoria WhatsApp (usa il modulo condiviso) =====
   btnRem.onclick = async (e)=>{
     e.preventDefault();
-    // delego tutta la logica al modulo condiviso:
-    // - carica template da Firestore
-    // - trova appuntamento giusto
-    // - normalizza testo (emoji-safe)
-    // - apre WhatsApp
-    await openWhatsAppReminder(db, clienteId, clienteData);
+    await openWhatsAppReminder(clienteData, allAppointmentsRaw);
   };
 
   await caricaStoricoETotale();
@@ -192,6 +187,8 @@ window.addEventListener('resize', ()=>autosize(noteInput));
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
+  allAppointmentsRaw = [];
+
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
 
@@ -202,7 +199,9 @@ async function caricaStoricoETotale(){
     const dt = safeDate(a.data || a.date || a.dateTime);
     const tot = getApptTotal(a);
     totaleSempre += tot;
+
     allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
+    allAppointmentsRaw.push(a);
   });
 
   allHistoryItems.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
@@ -349,25 +348,22 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// ===== Drag-to-close: SOLO handle/header + resistenza elastica =====
+// ===== Drag-to-close =====
 (function enableSheetDrag(){
   if(!sheetPanel) return;
 
-  // Parametri “tuning”
-  const CLOSE_DISTANCE  = 120;      // px per chiudere trascinando piano
-  const FLICK_DISTANCE  = 60;       // px min con flick
-  const FLICK_VELOCITY  = 0.35;     // px/ms per chiusura con flick
-  const LINEAR_LIMIT    = 80;       // primi px senza resistenza
-  const RESISTANCE_GAIN = 0.3;      // percentuale oltre il limite
+  const CLOSE_DISTANCE  = 120;
+  const FLICK_DISTANCE  = 60;
+  const FLICK_VELOCITY  = 0.35;
+  const LINEAR_LIMIT    = 80;
+  const RESISTANCE_GAIN = 0.3;
 
   let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
 
   const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
-
   const mapWithResistance = (dy) => {
     if (dy <= 0) return 0;
     if (dy <= LINEAR_LIMIT) return dy;
-    // oltre il limite, applica “elasticità”
     return LINEAR_LIMIT + (dy - LINEAR_LIMIT) * RESISTANCE_GAIN;
   };
 
@@ -376,10 +372,9 @@ function renderSheetForYear(anno){
     lastT  = performance.now();
     velocity = 0;
     dragging = true;
-    // durante il drag niente transizione
     sheetPanel.classList.add("dragging");
     sheetPanel.style.transition = "none";
-    e.preventDefault(); // entriamo in drag, non scroll
+    e.preventDefault();
   };
 
   const onMove = (e)=>{
@@ -398,7 +393,6 @@ function renderSheetForYear(anno){
   };
 
   const springBack = () => {
-    // piccolo rimbalzo per tornare su
     sheetPanel.classList.remove("dragging");
     sheetPanel.style.transition = "transform .18s ease-out";
     sheetPanel.style.transform  = "";
@@ -416,7 +410,6 @@ function renderSheetForYear(anno){
     const dy = Math.max(0, lastY - startY);
     const shouldClose = dy > CLOSE_DISTANCE || (dy > FLICK_DISTANCE && velocity > FLICK_VELOCITY);
 
-    // ripristina eventuale transizione
     sheetPanel.classList.remove("dragging");
     sheetPanel.style.transition = "";
     sheetPanel.style.transform  = "";
@@ -429,8 +422,6 @@ function renderSheetForYear(anno){
   };
 
   const opts = { passive:false };
-
-  // Avvio drag SOLO da handle + header (contenuto scorre liberamente)
   sheetHandle?.addEventListener("touchstart", beginDrag, opts);
   sheetHandle?.addEventListener("mousedown",  beginDrag, opts);
   sheetHeader?.addEventListener("touchstart", beginDrag, opts);
