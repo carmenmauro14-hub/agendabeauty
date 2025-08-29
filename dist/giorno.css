@@ -280,6 +280,7 @@ body {
 
 /* ── Icona promemoria accanto ad ogni appuntamento (stile Clienti) ───────────── */
 .promem-ico {
+  margin-left: auto;
   border: none;
   background: var(--tile);
   color: var(--text);
