@@ -25,15 +25,15 @@ const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",
 // Normalizza stringhe per preservare emoji (NFC)
 const normalizeText = (s) => (s ?? "").toString().normalize("NFC");
 
-// Prende solo cifre e aggiunge prefisso IT se necessario
+// Normalizza telefono per WhatsApp (solo cifre + prefisso IT se serve)
 function normalizePhoneForWA(telRaw){
   const digits = (telRaw||"").replace(/\D/g,"");
   if(!digits) return "";
-  if(digits.length === 10 && digits.startsWith("3")) return "39"+digits; // mobile IT standard
+  if(digits.length === 10 && digits.startsWith("3")) return "39"+digits;
   return digits;
 }
 
-// Converte l’oggetto appuntamento in Date coerente
+// Converte in Date coerente
 function safeDate(d){
   if(!d) return null;
   if(d?.toDate) return d.toDate();
@@ -48,9 +48,7 @@ function apptToDateTime(a){
   if(!base) return null;
   const res = new Date(base);
   const hhmm = (a?.ora || "").split(":");
-  const hh = parseInt(hhmm[0]||"0",10);
-  const mm = parseInt(hhmm[1]||"0",10);
-  res.setHours(hh||0, mm||0, 0, 0);
+  res.setHours(parseInt(hhmm[0]||"0",10), parseInt(hhmm[1]||"0",10), 0, 0);
   return res;
 }
 
@@ -90,7 +88,7 @@ export async function loadReminderTemplate(){
 export async function saveReminderTemplate(newTemplate){
   const tpl = (newTemplate ?? "").toString();
   await setDoc(doc(db,"settings","reminder"), { template: tpl }, { merge: true });
-  REMINDER_TEMPLATE_CACHE = tpl; // aggiorna cache
+  REMINDER_TEMPLATE_CACHE = tpl;
   return tpl;
 }
 
@@ -99,7 +97,7 @@ export function buildReminderMessage(template, cliente, appt){
   const nome = cliente?.nome || "";
   const d = apptToDateTime(appt);
   const dataStr = d ? FMT_DATA.format(d) : "";
-  const oraStr  = d ? String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0") : (appt?.ora||"");
+  const oraStr  = d ? String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0") : (appt?.ora||"");
   const tratt   = getApptNames(appt) || "";
 
   const tpl = (template && String(template).trim())
@@ -114,9 +112,8 @@ export function buildReminderMessage(template, cliente, appt){
   );
 }
 
-// ===== Azione principale: apri WhatsApp con il promemoria =====
+// ===== Apertura WhatsApp =====
 export async function openWhatsAppReminder(clienteData, appointmentsList){
-  // 1) Telefono
   const telRaw  = (clienteData?.telefono || "").toString().trim();
   const telNorm = normalizePhoneForWA(telRaw);
   if(!telNorm){
@@ -124,7 +121,6 @@ export async function openWhatsAppReminder(clienteData, appointmentsList){
     return;
   }
 
-  // 2) Appuntamento
   if(!appointmentsList || !appointmentsList.length){
     alert("Nessun appuntamento per questo cliente.");
     return;
@@ -135,17 +131,26 @@ export async function openWhatsAppReminder(clienteData, appointmentsList){
     return;
   }
 
-  // 3) Template
   const template = await loadReminderTemplate();
+  const msg = normalizeText(buildReminderMessage(template, clienteData, appt));
 
-  // 4) Messaggio + apertura
-  const msg = buildReminderMessage(template, clienteData, appt);
-  const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(msg)}`;
-  const w = window.open(url, "_blank", "noopener");
+  // ✅ Deeplink nativo
+  const deepLink = new URL("whatsapp://send");
+  deepLink.searchParams.set("phone", telNorm);
+  deepLink.searchParams.set("text", msg);
 
-  // (Facoltativo) piccola protezione se popup bloccato
-  if(!w){
-    // fallback: apri nella stessa tab
-    location.href = url;
-  }
+  // ✅ Fallback web
+  const webLink = new URL("https://api.whatsapp.com/send");
+  webLink.searchParams.set("phone", telNorm);
+  webLink.searchParams.set("text", msg);
+
+  // Prova deeplink
+  window.location.href = deepLink.toString();
+
+  // Se entro 1.5s non parte WhatsApp, fallback a web
+  setTimeout(()=>{
+    if(document.visibilityState === "visible"){
+      window.location.href = webLink.toString();
+    }
+  },1500);
 }
