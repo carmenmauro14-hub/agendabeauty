@@ -1,4 +1,3 @@
-
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont,
@@ -56,15 +55,8 @@ body {
   -ms-overflow-style: none;
   transition: all 0.2s ease;
 }
-
-.mesi-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.mesi-bar.visibile {
-  display: flex;
-}
-
+.mesi-bar::-webkit-scrollbar { display: none; }
+.mesi-bar.visibile { display: flex; }
 .mesi-bar span {
   flex-shrink: 0;
   background-color: #f4ece7;
@@ -76,13 +68,11 @@ body {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
 .mesi-bar span.attivo {
   background-color: #cdb7ab;
   color: white;
   font-weight: bold;
 }
-
 .mesi-bar .separatore-anno {
   background: none;
   color: #bfa48e;
@@ -121,7 +111,6 @@ body {
   flex-direction: column;
   align-items: flex-start;
 }
-
 .cella .giorno {
   font-weight: bold;
   font-size: 11px;
@@ -129,7 +118,6 @@ body {
   padding-left: 1px;
   padding-top: 1px;
 }
-
 .cella.oggi .giorno {
   background-color: #d2b8a3;
   color: white;
@@ -140,10 +128,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0px;
-  margin-top: 0px;
 }
-
 .cella .evento {
   background-color: #d2b8a3;
   color: white;
@@ -155,6 +140,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.cella.fuori-mese { background-color: #f3f3f3; }
 
 .floating-btn {
   position: fixed;
@@ -172,92 +158,12 @@ body {
   z-index: 9999;
 }
 
-.cella.fuori-mese {
-  background-color: #f3f3f3;
-}
-
-
-/* ─── STILI SPECIFICI PER LA VISTA GIORNO ─────────────────── */
-
-#contenutoGiorno {
-  padding: 16px;
-}
-
-.evento-giorno {
-  background-color: #f4ece7;
-  color: #333;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  font-size: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
+/* ─── VISTA GIORNO ─────────────────── */
+#contenutoGiorno { padding: 16px; }
 #contenutoGiorno p {
   color: #999;
   font-style: italic;
   font-size: 14px;
-}
-
-.mini-calendario {
-  display: none;
-  padding: 10px;
-  margin-top: 6px;
-}
-
-.mini-calendario table {
-  width: 100%;
-  text-align: center;
-  border-spacing: 4px;
-}
-
-.mini-calendario th {
-  font-weight: bold;
-  font-size: 12px;
-  color: #a0846a;
-}
-
-.mini-calendario td {
-  padding: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #333;
-}
-
-.mini-calendario td:hover {
-  background-color: #e5dad2;
-}
-
-.mini-calendario td.oggi {
-  background-color: #d2b8a3;
-  font-weight: bold;
-  color: white;
-}
-
-.mini-calendario td.selezionato {
-  background-color: #f1e7e1;
-  font-weight: bold;
-  color: #8d6e5c;
-  border: 1px solid #d2b8a3;
-}
-
-/* Animazioni slide */
-.slide-left {
-  animation: slideLeft 0.3s ease;
-}
-.slide-right {
-  animation: slideRight 0.3s ease;
-}
-
-@keyframes slideLeft {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideRight {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
 }
 
 .evento-giorno {
@@ -266,52 +172,46 @@ body {
   gap:6px;
   padding:12px 14px;
   border-radius:12px;
-  background:#f7f3f0;
+  background:#f4ece7;
   color:#a07863;
   margin:10px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-
-.eg-ora{ 
-  font-weight:700; 
-  min-width:72px; 
-}
-
-.eg-icone{ 
-  display:flex; 
-  align-items:center; 
-  gap:4px; 
-}
-
+.eg-ora{ font-weight:700; min-width:72px; color:#a07863; }
+.eg-icone{ display:flex; align-items:center; gap:4px; }
 .eg-icone img{ 
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  display: block;
+  width:24px; height:24px; object-fit:contain;
   filter: brightness(0) saturate(100%) invert(44%) sepia(14%) saturate(612%) hue-rotate(341deg) brightness(92%) contrast(88%);
-  opacity: .95;
+  opacity:.95;
 }
-
-@media (max-width: 375px){
-  .eg-icone img{ width: 22px; height: 22px; }
-}
-
+@media (max-width: 375px){ .eg-icone img{ width:22px; height:22px; } }
 .eg-more{ font-size:12px; opacity:.7; }
+.eg-nome{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-.eg-nome{ 
-  font-weight:600; 
-  white-space:nowrap; 
-  overflow:hidden; 
-  text-overflow:ellipsis; 
+.mini-calendario {
+  display: none;
+  padding: 10px;
+  margin-top: 6px;
+}
+.mini-calendario table { width:100%; text-align:center; border-spacing:4px; }
+.mini-calendario th { font-weight:bold; font-size:12px; color:#a0846a; }
+.mini-calendario td {
+  padding:6px; border-radius:6px; cursor:pointer; font-size:13px; color:#333;
+}
+.mini-calendario td:hover { background-color:#e5dad2; }
+.mini-calendario td.oggi { background-color:#d2b8a3; color:#fff; font-weight:bold; }
+.mini-calendario td.selezionato {
+  background-color:#f1e7e1; border:1px solid #d2b8a3;
+  font-weight:bold; color:#8d6e5c;
 }
 
-.evento-giorno{
-  background: #f4ece7;
-  color: #a07863;
-}
+/* Animazioni slide */
+.slide-left { animation: slideLeft 0.3s ease; }
+.slide-right{ animation: slideRight 0.3s ease; }
+@keyframes slideLeft { from{transform:translateX(100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+@keyframes slideRight{ from{transform:translateX(-100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
 
-.eg-ora{ color:#a07863; }
-
-/* ── Modal dettaglio appuntamento (additivo) ───────────────────── */
+/* ── Modal dettaglio appuntamento ─────────────── */
 .det-modal{
   display:none; position:fixed; inset:0;
   background:rgba(0,0,0,.5); z-index:1000;
@@ -321,23 +221,19 @@ body {
   width:100%; max-width:520px; height:95vh; margin:0 auto;
   background:#fff; border-radius:16px 16px 0 0; overflow:auto;
   position:relative; transform:translateY(0); transition:transform .2s ease;
-  padding-top:52px; /* spazio per maniglia + X */
+  padding-top:52px;
 }
 .det-topbar{
   position:absolute; top:0; left:0; right:0; height:44px;
   display:flex; align-items:center; justify-content:center;
   -webkit-user-select:none; user-select:none; touch-action:none;
 }
-.det-grabber{
-  width:48px; height:5px; border-radius:3px; background:#e6d9d0;
-}
+.det-grabber{ width:48px; height:5px; border-radius:3px; background:#e6d9d0; }
 .det-close{
   position:absolute; top:6px; right:8px; width:32px; height:32px;
   border:0; background:transparent; font-size:22px; line-height:32px;
   color:#a07863; opacity:.85; cursor:pointer;
 }
-.det-close:hover{ opacity:1; }
-
 .det-body{ padding:12px 16px 24px; }
 .det-title{ margin:6px 0 12px; color:#222; font-size:28px; font-weight:900; }
 .det-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #f0e8e2; }
@@ -345,7 +241,6 @@ body {
 .det-value{ color:#6d584b; font-weight:700; }
 .det-sep{ border:0; border-top:1px solid #f0e8e2; margin:12px 0; }
 .det-section-title{ font-weight:900; color:#a07863; margin-bottom:6px; }
-.det-tratt-list{ }
 .det-tratt-item{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #e6d9d0; }
 .det-tratt-item:last-child{ border-bottom:0; }
 .det-tratt-nome{ color:#6d584b; }
@@ -354,64 +249,30 @@ body {
 .det-total-label{ font-weight:900; color:#a07863; }
 .det-total-value{ color:#6d584b; font-weight:800; }
 .det-action{ width:100%; margin-top:8px; background:#d2b8a3; }
-
-/* animazione chiusura verso il basso */
 .det-sheet.swipe-out-down{ transform:translateY(100%); }
 
-/* ── Bottoni coerenti con l'app ─────────────────────────── */
+/* ── Bottoni ─────────────────────────── */
 .btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  width:100%;
-  padding:12px 16px;
-  border:0;
-  border-radius:12px;
-  background:#d2b8a3;           /* prim */
-  color:#fff;
-  font-size:15px;
-  font-weight:700;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; padding:12px 16px; border:0; border-radius:12px;
+  background:#d2b8a3; color:#fff; font-size:15px; font-weight:700;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
   transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
 }
 .btn:active{ transform:scale(.96); }
 .btn:disabled{ opacity:.6; cursor:not-allowed; }
-
-/* variante “ghost” (bordo, sfondo chiaro) */
-.btn.ghost{
-  background:#fff;
-  color:#a07863;                 /* text */
-  border:1px solid #d2b8a3;      /* prim */
-}
+.btn.ghost{ background:#fff; color:#a07863; border:1px solid #d2b8a3; }
 .btn.ghost:hover{ box-shadow:0 0 0 3px rgba(210,184,163,.18); }
 
-/* contenitore azioni nel bottom-sheet */
-.det-actions{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-top:8px;
-}
+.det-actions{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+@media (min-width:520px){ .det-actions{ flex-direction:row; } .det-actions .btn{ width:auto; flex:1; } }
 
-/* opzionale: metti i due bottoni su una riga su schermi larghi */
-@media (min-width: 520px){
-  .det-actions{ flex-direction:row; }
-  .det-actions .btn{ width:auto; flex:1; }
-}
-
-/* se vuoi una pill piccola inline (in lista giorno) riutilizzabile */
+/* pill inline */
 .btn-pill{
   display:inline-flex; align-items:center; gap:6px;
-  padding:6px 10px;
-  border:1px solid #d2b8a3;
-  border-radius:999px;
-  background:#fff;
-  color:#a07863;
-  font-size:12px; font-weight:700;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+  padding:6px 10px; border:1px solid #d2b8a3; border-radius:999px;
+  background:#fff; color:#a07863; font-size:12px; font-weight:700;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
   transition:transform .12s ease, box-shadow .12s ease;
 }
 .btn-pill:active{ transform:scale(.96); }
