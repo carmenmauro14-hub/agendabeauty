@@ -278,21 +278,21 @@ body {
 .btn-pill:active{ transform:scale(.96); }
 .btn-pill:hover{ box-shadow:0 0 0 3px rgba(210,184,163,.16); }
 
-/* ── Icona promemoria accanto ad ogni appuntamento ───────────── */
+/* ── Icona promemoria accanto ad ogni appuntamento (stile Clienti) ───────────── */
 .promem-ico {
-  border: 0;
-  background: #fff;
-  color: #a07863;
-  border: 1px solid #d2b8a3;
-  border-radius: 999px;
-  width: 28px;
-  height: 28px;
+  border: none;
+  background: var(--tile);
+  color: var(--text);
+  border-radius: 14px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, background 0.2s ease;
 }
-.promem-ico:active { transform: scale(0.9); }
-.promem-ico:hover { box-shadow: 0 0 0 3px rgba(210,184,163,.16); }
+.promem-ico:active { transform: scale(0.92); }
+.promem-ico:hover { background: var(--tile-hover); }
+.promem-ico i { font-size: 16px; }
