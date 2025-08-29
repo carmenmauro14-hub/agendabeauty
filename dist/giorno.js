@@ -1,4 +1,4 @@
-// giorno.js — COMPLETO (Timestamp-based) + fix area swipe
+// giorno.js — COMPLETO (Timestamp-based) + fix area swipe + bottone Promemoria
 
 // Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -7,6 +7,9 @@ import {
   orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { abilitaSwipe, abilitaSwipeVerticale } from "./swipe.js";
+
+// Modulo promemoria condiviso
+import { openWhatsAppReminder } from "./reminder-core.js";
 
 let dataCorrente;      // Date (giorno visualizzato)
 let meseMiniCorrente;  // numero mese per mini-cal
@@ -262,11 +265,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       const a = d.data();
       const idCliente = a.clienteId;
 
-      let nomeCliente = clientiCache[idCliente];
-      if (!nomeCliente) {
-        const cliDoc = await getDoc(doc(db,"clienti",idCliente));
-        nomeCliente = cliDoc.exists() ? (cliDoc.data().nome || "") : "";
-        clientiCache[idCliente] = nomeCliente;
+      // CACHE cliente: nome + telefono (serve per promemoria)
+      let cli = clientiCache[idCliente];
+      if (!cli) {
+        const cliDoc = await getDoc(doc(db, "clienti", idCliente));
+        cli = cliDoc.exists()
+          ? { nome: (cliDoc.data().nome || ""), telefono: (cliDoc.data().telefono || "") }
+          : { nome: "", telefono: "" };
+        clientiCache[idCliente] = cli;
       }
 
       const { iso: isoApp } = pickDate(a.data);
@@ -275,7 +281,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         id: d.id,
         data: isoApp,
         ora: a.ora || "",
-        nome: nomeCliente,
+        nome: cli.nome,
+        cliente: cli, // <— ci serve per il tasto promemoria
         trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
       });
     }
@@ -317,9 +324,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       nomeEl.className = "eg-nome";
       nomeEl.textContent = app.nome;
 
+      // ── Bottone Promemoria (coerente) ─────────────────────
+      const promBtn = document.createElement("button");
+      promBtn.className = "eg-reminder";
+      promBtn.type = "button";
+      promBtn.title = "Invia promemoria WhatsApp";
+      promBtn.setAttribute("aria-label", "Invia promemoria WhatsApp");
+      promBtn.innerHTML = "🔔";
+      promBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation(); // evita apertura modale
+        const apptForReminder = {
+          date: app.data,           // YYYY-MM-DD
+          ora: app.ora,
+          trattamenti: app.trattamenti
+        };
+        openWhatsAppReminder(app.cliente, [apptForReminder]);
+      });
+
       row.appendChild(oraEl);
       row.appendChild(iconeEl);
       row.appendChild(nomeEl);
+      row.appendChild(promBtn); // allineato a destra grazie al CSS
       contenuto.appendChild(row);
 
       row.addEventListener("click", () => openModal(row._appt));
