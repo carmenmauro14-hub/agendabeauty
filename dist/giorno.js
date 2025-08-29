@@ -6,9 +6,9 @@ import {
   getFirestore, collection, query, where, orderBy,
   getDocs, doc, getDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-// Promemoria condiviso
 import { openWhatsAppReminder } from "./reminder-core.js";
 
+// ── Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -17,17 +17,16 @@ const firebaseConfig = {
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
-
-// riusa l'app se esiste già
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ─── Stato ─────────────────────────────────────────────
+// ── Stato
 let dataCorrente;
 let appuntamenti = [];
 const clientiCache = {};
+let openingWA = false; // anti-doppio-tap
 
-// ─── DOM ──────────────────────────────────────────────
+// ── DOM
 const contenuto      = document.getElementById("contenutoGiorno");
 const mesiBar        = document.getElementById("mesiBar");
 const miniCalendario = document.getElementById("miniCalendario");
@@ -35,7 +34,7 @@ const lblMese        = document.getElementById("meseCorrente");
 const lblAnno        = document.getElementById("annoCorrente");
 const btnOggi        = document.getElementById("btnTornaOggi");
 
-// Modal dettaglio (resta invariato)
+// Modal (già in HTML)
 const detModal     = document.getElementById("detModal");
 const detSheet     = detModal.querySelector(".det-sheet");
 const detCloseBtn  = document.getElementById("detCloseBtn");
@@ -48,7 +47,7 @@ const elTotale     = document.getElementById("detTotale");
 const btnModifica  = document.getElementById("detModifica");
 const btnPromem    = document.getElementById("detPromemoria");
 
-// ─── Utils ────────────────────────────────────────────
+// ── Utils
 const fmtEuro = (n) => Number(n || 0).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
 
 function dayRangeFromISO(iso) {
@@ -75,7 +74,8 @@ function pickDate(d){
 function trovaIcona(nome) {
   const icone = [
     "makeup_sposa","makeup","microblading","extension_ciglia",
-    "laminazione_ciglia","filo_arabo","architettura_sopracciglia","airbrush_sopracciglia","microblinding"
+    "laminazione_ciglia","filo_arabo","architettura_sopracciglia",
+    "airbrush_sopracciglia","microblinding"
   ];
   const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
   for (const base of icone) if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
@@ -88,7 +88,16 @@ function ensureMinHeight() {
   contenuto.style.minHeight = (vh - extra) + "px";
 }
 
-// ─── Modal ────────────────────────────────────────────
+// Normalizza l’oggetto appuntamento per reminder-core
+function apptForReminder(appt){
+  return {
+    data: appt.iso,                // stringa "YYYY-MM-DD"
+    ora: appt.ora || "",
+    trattamenti: appt.trattamenti || []
+  };
+}
+
+// ── Modal
 function openModal(appt){
   elTitolo.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
   elData.textContent   = appt.iso || "";
@@ -116,8 +125,11 @@ function openModal(appt){
     if (appt.id) location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
   };
   btnPromem.onclick = async () => {
+    if (openingWA) return;
+    openingWA = true;
     const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
-    await openWhatsAppReminder(cliente, [appt]);
+    try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+    finally { setTimeout(()=>openingWA=false, 1800); }
   };
 
   detModal.setAttribute("aria-hidden","false");
@@ -135,10 +147,40 @@ function closeModal(){
   setTimeout(finish, 200);
   detSheet.addEventListener("transitionend", finish);
 }
+
 detCloseBtn.addEventListener("click", closeModal);
 detModal.addEventListener("click", (e) => { if (e.target === detModal) closeModal(); });
 
-// ─── Render lista appuntamenti ────────────────────────
+// swipe-down sulla topbar del modal
+(() => {
+  let startY=0, dragging=false, lastY=0, lastT=0, velocity=0;
+  const getY = (e)=> e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
+  const begin = (e)=>{ dragging=true; startY=lastY=getY(e); lastT=performance.now(); velocity=0; detSheet.style.transition="none"; e.preventDefault(); };
+  const move  = (e)=>{
+    if(!dragging) return;
+    const y=getY(e), now=performance.now(), dy=Math.max(0, y-startY);
+    const dt=Math.max(1, now-lastT);
+    velocity=(y-lastY)/dt; lastY=y; lastT=now;
+    detSheet.style.transform=`translateY(${dy}px)`; e.preventDefault();
+  };
+  const end   = ()=>{
+    if(!dragging) return; dragging=false; detSheet.style.transition="";
+    detSheet.style.transform="";
+    const dy = Math.max(0, lastY-startY);
+    const shouldClose = dy>120 || (dy>60 && velocity>0.35);
+    if(shouldClose) closeModal();
+  };
+  const opts={passive:false};
+  detTopbar.addEventListener("touchstart", begin, opts);
+  detTopbar.addEventListener("mousedown",  begin, opts);
+  window.addEventListener("touchmove", move, opts);
+  window.addEventListener("mousemove",  move, opts);
+  window.addEventListener("touchend",  end);
+  window.addEventListener("mouseup",   end);
+  window.addEventListener("touchcancel", end);
+})();
+
+// ── Render lista
 function renderLista(items){
   contenuto.innerHTML = "";
 
@@ -177,19 +219,29 @@ function renderLista(items){
       img.alt = t.nome || "";
       iconeEl.appendChild(img);
     });
+    if ((appt.trattamenti||[]).length > 6) {
+      const more = document.createElement("span");
+      more.className = "eg-more";
+      more.textContent = `+${appt.trattamenti.length-6}`;
+      iconeEl.appendChild(more);
+    }
 
     const nomeEl = document.createElement("span");
     nomeEl.className = "eg-nome";
     nomeEl.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
 
-    // 🔔 Bottone Promemoria accanto ad ogni appuntamento
+    // 🔔 Campanella promemoria inline
     const promemEl = document.createElement("button");
     promemEl.className = "btn-pill promem-ico";
-    promemEl.innerHTML = "🔔"; 
-    promemEl.addEventListener("click", (e) => {
+    promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
+    promemEl.innerHTML = "🔔";
+    promemEl.addEventListener("click", async (e) => {
       e.stopPropagation();
+      if (openingWA) return;
+      openingWA = true;
       const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
-      openWhatsAppReminder(cliente, [appt]);
+      try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+      finally { setTimeout(()=>openingWA=false, 1800); }
     });
 
     row.appendChild(oraEl);
@@ -204,7 +256,7 @@ function renderLista(items){
   ensureMinHeight();
 }
 
-// ─── Query Firestore ──────────────────────────────────
+// ── Query Firestore (data = Timestamp)
 async function caricaAppuntamentiGiornoISO(iso){
   appuntamenti = [];
   const { start, end } = dayRangeFromISO(iso);
@@ -247,7 +299,7 @@ async function caricaAppuntamentiGiornoISO(iso){
   renderLista(appuntamenti);
 }
 
-// ─── Header + Navigazione ─────────────────────────────
+// ── Header + navigazione
 function aggiornaHeader(){
   lblMese.textContent = dataCorrente.toLocaleDateString("it-IT",{month:"long"});
   lblAnno.textContent = dataCorrente.getFullYear();
@@ -269,7 +321,7 @@ function vaiAData(dateObj, anim){
   caricaAppuntamentiGiornoISO(iso);
 }
 
-// ─── Init ─────────────────────────────────────────────
+// ── Init
 (function init(){
   const params = new URLSearchParams(location.search);
   const dataParam = params.get("data");
