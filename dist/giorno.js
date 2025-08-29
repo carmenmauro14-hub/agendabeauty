@@ -235,7 +235,7 @@ const promemEl = document.createElement("button");
 promemEl.className = "btn-pill promem-ico";
 promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
 promemEl.title = "Promemoria WhatsApp";
-promemEl.innerHTML = '<i class="fa-regular fa-bell"></i>';
+promemEl.innerHTML = '<i class="fa-solid fa-bell"></i>';
 
 promemEl.addEventListener("click", async (e) => {
   e.stopPropagation();
