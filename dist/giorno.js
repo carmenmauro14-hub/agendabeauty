@@ -6,6 +6,8 @@ import {
   getFirestore, collection, query, where, orderBy,
   getDocs, doc, getDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Promemoria condiviso (emoji-safe, template da Firestore)
+import { openWhatsAppReminder } from "./reminder-core.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
