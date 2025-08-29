@@ -32,7 +32,7 @@ body {
   color: var(--text);
   padding: 18px 16px 8px;
   border-bottom: 1px solid var(--line);
-  background: var(--tile);
+  background: fff;
 }
 
 /* Lista impostazioni */
@@ -66,6 +66,6 @@ body {
 
 /* Icona freccia */
 .arrow {
-  font-size: 16px;
+  font-size: 20px;
   color: var(--prim);
 }
