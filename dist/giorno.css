@@ -280,20 +280,27 @@ body {
 
 /* ── Icona promemoria accanto ad ogni appuntamento (stile Clienti) ───────────── */
 .promem-ico {
-  margin-left: auto;
-  border: none;
-  background: var(--tile);
-  color: var(--text);
-  border-radius: 14px;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
+  margin-left: auto;            
+  display: flex; 
+  align-items: center; 
   justify-content: center;
-  font-size: 15px;
+  min-width: 34px; 
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;             /* angoli arrotondati, non cerchio */
+  background: #f4ece7;            /* tinta card */
+  border: 1px solid #d2b8a3;      /* bordo palette */
+  color: #a07863;
+  font-size: 18px;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.2s ease;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
 }
-.promem-ico:active { transform: scale(0.92); }
-.promem-ico:hover { background: var(--tile-hover); }
-.promem-ico i { font-size: 16px; }
+
+.promem-ico:hover {
+  background: #e8d7cb;            /* hover più scuro */
+  box-shadow: 0 0 0 3px rgba(210,184,163,.16);
+}
+
+.promem-ico:active { 
+  transform: scale(.95); 
+}
