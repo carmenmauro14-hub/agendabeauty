@@ -1,16 +1,12 @@
 // giorno.js — VISTA GIORNO (modal statico) + promemoria WA per singolo appuntamento
 
-// Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp, getApps, getApp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, query, where, orderBy,
   getDocs, doc, getDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Promemoria condiviso (emoji-safe, template da Firestore)
-import { openWhatsAppReminder } from "./reminder-core.js";
-
-// ─── Inizializzazione Firebase ──────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -19,7 +15,9 @@ const firebaseConfig = {
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
-const app = initializeApp(firebaseConfig);
+
+// riusa l'app se esiste già
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 // ─── Stato ──────────────────────────────────────────────────────────────────
