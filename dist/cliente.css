@@ -251,6 +251,23 @@ a.qa:focus, button:focus, select:focus, .link:focus{
   outline:3px solid rgba(210,184,163,.28); outline-offset:2px; border-radius:12px;
 }
 
+/* campanella inline coerente con Clienti */
+.promem-ico{
+  display:inline-flex; align-items:center; justify-content:center;
+  background: var(--tile);
+  color: var(--text);
+  border:none; border-radius:14px;
+  width: 32px; height: 28px; /* pill piccola */
+  padding:0 8px; cursor:pointer;
+  transition:transform .08s ease, background .2s ease;
+}
+.promem-ico i{ font-size:14px; line-height:1; }
+.promem-ico:hover{ background: var(--tile-hover); }
+.promem-ico:active{ transform: scale(.95); }
+
+/* allinea la pill a destra nella riga appuntamento */
+.evento-giorno .eg-nome{ margin-right: 8px; }
+.evento-giorno .promem-ico{ margin-left:auto; }
 @supports(padding:max(0px)){
   .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
 }
