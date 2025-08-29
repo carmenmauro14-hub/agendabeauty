@@ -1,23 +1,41 @@
+:root {
+  --prim:#d2b8a3;
+  --text:#a07863;
+  --muted:#7c6a60;
+  --line:#e6d9d0;
+  --bg:#fff;
+  --tile:#f7ede6;
+  --tile-hover:#efe2d8;
+}
+
 body {
   margin: 0;
   padding: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
                "Helvetica Neue", sans-serif;
-  background: #ffffff;
-  color: #333;
 }
 
+/* Contenitore */
 .settings-container {
-  padding: 20px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-bottom: 80px;
 }
 
+/* Titolo pagina */
 .settings-title {
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  padding: 18px 16px 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--tile);
 }
 
+/* Lista impostazioni */
 .settings-list {
   list-style: none;
   padding: 0;
@@ -28,18 +46,26 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 18px;
-  font-size: 18px;
-  border-bottom: 1px solid #eee;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .settings-list li:hover {
-  background-color: #f9f9f9;
+  background: var(--tile-hover);
 }
 
+.settings-list li:first-child {
+  border-top: 1px solid var(--line);
+}
+
+/* Icona freccia */
 .arrow {
-  font-size: 22px;
-  color: #d2b8a3;
+  font-size: 16px;
+  color: var(--prim);
 }
