@@ -230,19 +230,21 @@ function renderLista(items){
     nomeEl.className = "eg-nome";
     nomeEl.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
 
-    // 🔔 Campanella promemoria inline
-    const promemEl = document.createElement("button");
-    promemEl.className = "btn-pill promem-ico";
-    promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
-    promemEl.innerHTML = "🔔";
-    promemEl.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if (openingWA) return;
-      openingWA = true;
-      const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
-      try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
-      finally { setTimeout(()=>openingWA=false, 1800); }
-    });
+    // 🔔 Campanella promemoria inline (Font Awesome)
+const promemEl = document.createElement("button");
+promemEl.className = "btn-pill promem-ico";
+promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
+promemEl.title = "Promemoria WhatsApp";
+promemEl.innerHTML = '<i class="fa-regular fa-bell"></i>';
+
+promemEl.addEventListener("click", async (e) => {
+  e.stopPropagation();
+  if (openingWA) return;
+  openingWA = true;
+  const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
+  try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+  finally { setTimeout(() => (openingWA = false), 1800); }
+});
 
     row.appendChild(oraEl);
     row.appendChild(iconeEl);
