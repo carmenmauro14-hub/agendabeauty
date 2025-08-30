@@ -1,4 +1,4 @@
-// giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA)
+// giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA + mini-calendario on-demand)
 
 import { initializeApp, getApps, getApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -25,6 +25,10 @@ let dataCorrente;
 let appuntamenti = [];
 const clientiCache = {};
 let openingWA = false; // anti-doppio-tap
+
+// mini-cal
+let meseMiniCorrente = null;
+let annoMiniCorrente = null;
 
 // ── DOM
 const contenuto      = document.getElementById("contenutoGiorno");
@@ -95,6 +99,145 @@ function apptForReminder(appt){
     ora: appt.ora || "",
     trattamenti: appt.trattamenti || []
   };
+}
+
+// ── Mini-calendario (render + barra mesi + swipe interno) ─────────────────────
+function generaBarraMesiCompleta() {
+  mesiBar.innerHTML = "";
+  let currentSpan = null;
+  for (let anno = 2020; anno <= 2050; anno++) {
+    const sep = document.createElement("span");
+    sep.textContent = anno;
+    sep.classList.add("separatore-anno");
+    mesiBar.appendChild(sep);
+
+    for (let mese = 0; mese < 12; mese++) {
+      const span = document.createElement("span");
+      span.textContent = new Date(anno, mese).toLocaleDateString("it-IT", { month: "short" });
+      span.dataset.mese = mese;
+      span.dataset.anno = anno;
+
+      if (mese === dataCorrente.getMonth() && anno === dataCorrente.getFullYear()) {
+        span.classList.add("attivo");
+        currentSpan = span;
+      }
+
+      span.addEventListener("click", () => {
+        renderMiniCalendario(anno, mese);
+        mesiBar.querySelectorAll("span").forEach(s => s.classList.remove("attivo"));
+        span.classList.add("attivo");
+      });
+
+      mesiBar.appendChild(span);
+    }
+  }
+  // scroll alla posizione corrente
+  setTimeout(() => {
+    if (currentSpan) currentSpan.scrollIntoView({ behavior: "smooth", inline: "center" });
+  }, 50);
+}
+
+function renderMiniCalendario(anno, mese) {
+  miniCalendario.innerHTML = "";
+  meseMiniCorrente = mese;
+  annoMiniCorrente = anno;
+
+  const oggiStr = new Date().toISOString().slice(0,10);
+  const giornoVisualizzato = dataCorrente.toISOString().slice(0,10);
+
+  const primaGiorno = new Date(anno, mese, 1).getDay();     // 0=Dom
+  const ultimoGiorno = new Date(anno, mese+1, 0).getDate();
+
+  const giorniSettimana = ["L","M","M","G","V","S","D"];
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const trHead = document.createElement("tr");
+  giorniSettimana.forEach(g => {
+    const th = document.createElement("th");
+    th.textContent = g;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  let tr = document.createElement("tr");
+  let dayCount = 0;
+
+  // offset: in JS 0=Dom → spostiamo per avere Lunedì come primo
+  const offset = (primaGiorno + 6) % 7;
+  for (let i=0; i<offset; i++) {
+    tr.appendChild(document.createElement("td"));
+    dayCount++;
+  }
+
+  for (let giorno=1; giorno<=ultimoGiorno; giorno++) {
+    if (dayCount % 7 === 0) {
+      tbody.appendChild(tr);
+      tr = document.createElement("tr");
+    }
+    const td = document.createElement("td");
+    const dataStr = `${anno}-${String(mese+1).padStart(2,"0")}-${String(giorno).padStart(2,"0")}`;
+    td.textContent = giorno;
+
+    if (dataStr === oggiStr) td.classList.add("oggi");
+    if (dataStr === giornoVisualizzato) td.classList.add("selezionato");
+
+    td.addEventListener("click", () => {
+      const nuovaData = new Date(dataStr);
+      vaiAData(nuovaData, "");
+      // se il mini è aperto, resta aperto e si aggiorna la selezione
+      if (miniCalendario.style.display === "block") {
+        renderMiniCalendario(nuovaData.getFullYear(), nuovaData.getMonth());
+      }
+    });
+
+    tr.appendChild(td);
+    dayCount++;
+  }
+  tbody.appendChild(tr);
+  table.appendChild(tbody);
+  miniCalendario.appendChild(table);
+
+  // evidenzia mese attivo in barra
+  document.querySelectorAll("#mesiBar span").forEach(s => {
+    const sm = parseInt(s.dataset.mese);
+    const sa = parseInt(s.dataset.anno);
+    s.classList.toggle("attivo", sm === mese && sa === anno);
+  });
+
+  // Swipe orizzontale interno al mini-cal per cambiare mese
+  enableLocalSwipe(miniCalendario,
+    () => { // next
+      const next = new Date(anno, mese+1, 1);
+      renderMiniCalendario(next.getFullYear(), next.getMonth());
+    },
+    () => { // prev
+      const prev = new Date(anno, mese-1, 1);
+      renderMiniCalendario(prev.getFullYear(), prev.getMonth());
+    }
+  );
+}
+
+// swipe minimale orizzontale per un contenitore
+function enableLocalSwipe(el, onLeft, onRight) {
+  let startX = 0, tracking = false;
+  const TH = 40;
+
+  el.addEventListener("touchstart", (e)=>{
+    if (e.touches.length !== 1) return;
+    tracking = true;
+    startX = e.touches[0].clientX;
+  }, {passive:true});
+
+  el.addEventListener("touchend", (e)=>{
+    if (!tracking) return;
+    const endX = (e.changedTouches && e.changedTouches[0]?.clientX) || startX;
+    const dx = endX - startX;
+    tracking = false;
+    if (dx < -TH) { onLeft?.(); }
+    if (dx >  TH) { onRight?.(); }
+  }, {passive:true});
 }
 
 // ── Modal
@@ -231,20 +374,20 @@ function renderLista(items){
     nomeEl.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
 
     // 🔔 Campanella promemoria inline (Font Awesome)
-const promemEl = document.createElement("button");
-promemEl.className = "btn-pill promem-ico";
-promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
-promemEl.title = "Promemoria WhatsApp";
-promemEl.innerHTML = '<i class="fa-solid fa-bell"></i>';
+    const promemEl = document.createElement("button");
+    promemEl.className = "btn-pill promem-ico";
+    promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
+    promemEl.title = "Promemoria WhatsApp";
+    promemEl.innerHTML = '<i class="fa-solid fa-bell"></i>';
 
-promemEl.addEventListener("click", async (e) => {
-  e.stopPropagation();
-  if (openingWA) return;
-  openingWA = true;
-  const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
-  try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
-  finally { setTimeout(() => (openingWA = false), 1800); }
-});
+    promemEl.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (openingWA) return;
+      openingWA = true;
+      const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
+      try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+      finally { setTimeout(() => (openingWA = false), 1800); }
+    });
 
     row.appendChild(oraEl);
     row.appendChild(iconeEl);
@@ -321,6 +464,11 @@ function vaiAData(dateObj, anim){
 
   renderLista([]);
   caricaAppuntamentiGiornoISO(iso);
+
+  // Se il mini è visibile, resta visibile e si aggiorna al mese corretto
+  if (miniCalendario.style.display === "block") {
+    renderMiniCalendario(dataCorrente.getFullYear(), dataCorrente.getMonth());
+  }
 }
 
 // ── Init
@@ -346,13 +494,31 @@ function vaiAData(dateObj, anim){
     location.href = `giorno.html?data=${isoOggi}`;
   });
 
+  // Toggle mese/mini-calendario (solo quando premi)
   document.getElementById("meseSwitch").addEventListener("click", ()=>{
     const vis = mesiBar.classList.contains("visibile");
-    mesiBar.classList.toggle("visibile", !vis);
-    mesiBar.style.display = vis ? "none" : "flex";
-    miniCalendario.style.display = vis ? "none" : "block";
+    if (vis) {
+      mesiBar.classList.remove("visibile");
+      mesiBar.style.display = "none";
+      miniCalendario.style.display = "none";
+    } else {
+      mesiBar.classList.add("visibile");
+      mesiBar.style.display = "flex";
+      miniCalendario.style.display = "block";
+
+      // prima apertura: genera barra se vuota, poi render del mese corrente
+      if (!mesiBar.dataset.built) {
+        generaBarraMesiCompleta();
+        mesiBar.dataset.built = "1";
+      }
+      renderMiniCalendario(dataCorrente.getFullYear(), dataCorrente.getMonth());
+      // scroll alla pill del mese corrente
+      const attivo = mesiBar.querySelector(".attivo");
+      if (attivo) attivo.scrollIntoView({ behavior:"smooth", inline:"center" });
+    }
   });
 
+  // Swipe tra giorni nella lista
   let startX=0, swiping=false;
   contenuto.addEventListener("touchstart",(e)=>{ if(e.touches.length===1){ swiping=true; startX=e.touches[0].clientX; }}, {passive:true});
   contenuto.addEventListener("touchend",(e)=>{
