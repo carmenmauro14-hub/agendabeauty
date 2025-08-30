@@ -27,12 +27,14 @@ const applyBtn  = document.getElementById("applyRange");
 const elRevenue = document.getElementById("kpiRevenue");
 const elCount   = document.getElementById("kpiCount");
 const elAvg     = document.getElementById("kpiAvg");
+const elTopTr   = document.getElementById("kpiTopTreatment");
 
 const listTopTreatments = document.getElementById("listTopTreatments");
-const listTopClients    = document.getElementById("listTopClients"); // ⬅️ nuova lista
-const barsContainer = document.getElementById("barsContainer");
-const barsLegend    = document.getElementById("barsLegend");
-const trendCard     = document.getElementById("trendCard");
+const listTopClients    = document.getElementById("listTopClients");
+const trendCard         = document.getElementById("trendCard");
+const barsContainer     = document.getElementById("barsContainer");
+const barsLabels        = document.getElementById("barsLabels");
+const barsLegend        = document.getElementById("barsLegend");
 
 // Utils
 const euro = (n)=> Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
@@ -78,6 +80,8 @@ function getRange(type, fromStr, toStr){
 }
 
 // Query appuntamenti nel range (campo "data" Timestamp o ISO)
+// NB: per semplicità usiamo "timestamp oppure iso", non li uniamo.
+// Se vuoi un'unione di entrambi i formati, dimmelo e ti passo una versione che merge-a i risultati.
 async function fetchAppointmentsInRange(start, end){
   // caso Timestamp
   const qTs = query(
@@ -184,9 +188,9 @@ function renderTopTreatments(byTreatment){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-// ⬇️ Nuova: Top 10 clienti (ID risolti a nome; fallback chiave testuale)
+// Top 10 clienti (ID risolti a nome; fallback chiave testuale)
 async function renderTopClients(byClientId, byClientKey){
-  if (!listTopClients) return; // nel caso la sezione non sia in pagina
+  if (!listTopClients) return;
 
   const rows = [];
 
@@ -213,12 +217,13 @@ async function renderTopClients(byClientId, byClientKey){
 }
 
 function renderBars(byDay, start, end){
-  // Mostra il grafico solo se il range è dentro un singolo mese naturale
+  // mostra il grafico solo se il range è dentro un singolo mese naturale
   const sameMonth = start.getFullYear()===end.getFullYear() && start.getMonth()===end.getMonth()-1;
   trendCard.classList.toggle("hidden", !sameMonth);
 
   barsContainer.innerHTML = "";
   barsLegend.textContent  = "";
+  if (barsLabels) barsLabels.innerHTML = "";
 
   if (!sameMonth) return;
 
@@ -230,6 +235,7 @@ function renderBars(byDay, start, end){
   }
   const max = Math.max(1, ...values.map(v=>v.sum));
 
+  // barre
   values.forEach(v=>{
     const bar = document.createElement("div");
     bar.className = "bar";
@@ -238,8 +244,26 @@ function renderBars(byDay, start, end){
     barsContainer.appendChild(bar);
   });
 
+  // etichette giorni
+  if (barsLabels){
+    values.forEach(v=>{
+      const s = document.createElement("span");
+      s.textContent = v.day;
+      barsLabels.appendChild(s);
+    });
+  }
+
+  // legenda
   barsLegend.textContent =
     `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
+
+  // sincronizza scroll tra barre e etichette (bidirezionale)
+  if (barsLabels){
+    const syncA = () => { barsLabels.scrollLeft = barsContainer.scrollLeft; };
+    const syncB = () => { barsContainer.scrollLeft = barsLabels.scrollLeft; };
+    barsContainer.addEventListener("scroll", syncA, { passive: true });
+    barsLabels.addEventListener("scroll", syncB, { passive: true });
+  }
 }
 
 // Tabs
@@ -287,6 +311,7 @@ async function run(type=currentType){
   elRevenue.textContent = euro(agg.revenue);
   elCount.textContent   = String(agg.count);
   elAvg.textContent     = euro(agg.avg);
+  if (elTopTr) elTopTr.textContent = agg.topTreat;
 
   // Liste e grafico
   renderTopTreatments(agg.byTreatment);
