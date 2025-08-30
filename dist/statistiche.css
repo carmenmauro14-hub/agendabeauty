@@ -95,8 +95,18 @@ html,body{
 }
 .bar:hover .tip{ opacity:1; }
 .bars-legend{
-  margin-top:6px; font-size:12px; color:#9a8b82;
+  margin-top:6px; font-size:12px; color:#/* Evita che i contenuti finiscano sotto la navbar */
+.stats-container {
+  padding: 20px;
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 90px; /* ✅ spazio extra sotto */
 }
+
+
 
 /* Utility */
 .hidden{ display:none !important; }
