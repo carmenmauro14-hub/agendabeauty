@@ -46,7 +46,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
   color: var(--text);
   border-bottom: 1px solid var(--line);
@@ -59,8 +59,8 @@ body {
   background: var(--tile-hover);
 }
 
-.settings-list li:first-child {
-  border-top: 1px solid var(--line);
+.settings-list li:last-child {
+  border-bottom: none;
 }
 
 /* Icona freccia */
