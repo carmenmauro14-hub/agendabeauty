@@ -1,371 +1,302 @@
 // statistiche.js
-// Dipendenze: Firebase v10+ già inizializzato altrove (initializeApp), qui usiamo Firestore
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, query, where, getDocs, doc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const db = getFirestore();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Utilità
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────── Utilità ─────────────
 const € = (n) => (n ?? 0).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
+const startOfDay = (d)=>{const x=new Date(d); x.setHours(0,0,0,0); return x;};
+const endOfDay   = (d)=>{const x=new Date(d); x.setHours(23,59,59,999); return x;};
+const dayKey   = (d)=> new Date(d).toISOString().slice(0,10);             // yyyy-mm-dd
+const monthKey = (d)=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
-function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
-function endOfDay(d){ const x=new Date(d); x.setHours(23,59,59,999); return x; }
-
-function monthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-function dayKey(d){ return d.toISOString().slice(0,10); }
-
-function ensureChartJs() {
-  return new Promise((res) => {
-    if (window.Chart) return res();
-    const s = document.createElement('script');
-    s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js";
-    s.onload = () => res();
-    document.head.appendChild(s);
-  });
-}
-
-// Fallback semplice se nel trattamento non troviamo l’icona salvata
-function trovaIconaLocale(nome="") {
-  const base = nome.toLowerCase();
-  const mappa = [
-    { k: "microblading", p: "icones_trattamenti/microblading.png" },
-    { k: "makeup", p: "icones_trattamenti/makeup.png" },
-    { k: "sposa", p: "icones_trattamenti/makeup_sposa.png" },
-    { k: "extension", p: "icones_trattamenti/extension_ciglia.png" },
-    { k: "architettura", p: "icones_trattamenti/arch_sopracciglia.png" },
-    { k: "filo", p: "icones_trattamenti/filo_arabo.png" },
-    { k: "airbrush", p: "icones_trattamenti/airbrush.png" },
+function trovaIconaLocale(nome=""){ // se vuoi usarla per mostrare anche l'icona
+  const base = String(nome).toLowerCase();
+  const m = [
+    {k:"microblading", p:"icones_trattamenti/microblading.png"},
+    {k:"makeup sposa", p:"icones_trattamenti/makeup_sposa.png"},
+    {k:"makeup",       p:"icones_trattamenti/makeup.png"},
+    {k:"extension",    p:"icones_trattamenti/extension_ciglia.png"},
+    {k:"architettura", p:"icones_trattamenti/arch_sopracciglia.png"},
+    {k:"filo",         p:"icones_trattamenti/filo_arabo.png"},
+    {k:"airbrush",     p:"icones_trattamenti/airbrush.png"},
   ];
-  return (mappa.find(m => base.includes(m.k))?.p) || "icone_uniformate_colore/setting.png";
+  return (m.find(x=>base.includes(x.k))?.p) || "icone_uniformate_colore/setting.png";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Lettura UI (bottoni periodo)
-// ─────────────────────────────────────────────────────────────────────────────
-const el = {
-  fatturato: document.querySelector('#fatturatoTotale'),
-  appuntamenti: document.querySelector('#numeroAppuntamenti'),
-  scontrino: document.querySelector('#scontrinoMedio'),
-  trattTopNome: document.querySelector('#trattamentoTopNome'),
-  trattTopIcona: document.querySelector('#trattamentoTopIcona'),
-  clienteTop: document.querySelector('#clienteTopNome'),
-  listaTop: document.querySelector('#listaTopTrattamenti'),
-  canvas: document.querySelector('#chartAndamento'),
+// ───────────── Riferimenti DOM ─────────────
+const els = {
+  tabs: document.getElementById('periodTabs'),
+  customWrap: document.getElementById('customRange'),
+  dateFrom: document.getElementById('dateFrom'),
+  dateTo: document.getElementById('dateTo'),
+  applyRange: document.getElementById('applyRange'),
 
-  btnMeseCorrente: document.querySelector('#btnMeseCorrente'),
-  btnMeseScorso: document.querySelector('#btnMeseScorso'),
-  btnAnnoCorrente: document.querySelector('#btnAnnoCorrente'),
-  dataInizio: document.querySelector('#dataInizio'),
-  dataFine: document.querySelector('#dataFine'),
-  btnApplicaIntervallo: document.querySelector('#btnApplicaIntervallo'),
+  kpiRevenue: document.getElementById('kpiRevenue'),
+  kpiCount: document.getElementById('kpiCount'),
+  kpiAvg: document.getElementById('kpiAvg'),
+  kpiTopTreatment: document.getElementById('kpiTopTreatment'),
+  kpiTopClient: document.getElementById('kpiTopClient'),
+
+  listTopTreatments: document.getElementById('listTopTreatments'),
+  bars: document.getElementById('barsContainer'),
+  legend: document.getElementById('barsLegend'),
+  trendCard: document.getElementById('trendCard'),
 };
 
-function getRangeMeseCorrente(){
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth()+1, 0);
-  return { start: startOfDay(start), end: endOfDay(end) };
+// ───────────── Range helper ─────────────
+function rangeMeseCorrente(){
+  const now=new Date();
+  return {
+    start: startOfDay(new Date(now.getFullYear(), now.getMonth(), 1)),
+    end:   endOfDay(new Date(now.getFullYear(), now.getMonth()+1, 0))
+  };
 }
-function getRangeMeseScorso(){
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  const end = new Date(now.getFullYear(), now.getMonth(), 0);
-  return { start: startOfDay(start), end: endOfDay(end) };
+function rangeMeseScorso(){
+  const now=new Date();
+  return {
+    start: startOfDay(new Date(now.getFullYear(), now.getMonth()-1, 1)),
+    end:   endOfDay(new Date(now.getFullYear(), now.getMonth(), 0))
+  };
 }
-function getRangeAnnoCorrente(){
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const end = new Date(now.getFullYear(), 11, 31);
-  return { start: startOfDay(start), end: endOfDay(end) };
+function rangeAnnoCorrente(){
+  const now=new Date();
+  return {
+    start: startOfDay(new Date(now.getFullYear(), 0, 1)),
+    end:   endOfDay(new Date(now.getFullYear(),11,31))
+  };
 }
-function getRangePersonalizzato(){
-  if (!el.dataInizio?.value || !el.dataFine?.value) return null;
-  const start = startOfDay(new Date(el.dataInizio.value));
-  const end = endOfDay(new Date(el.dataFine.value));
-  if (isNaN(start) || isNaN(end)) return null;
-  return { start, end };
+function rangeCustom(){
+  if(!els.dateFrom.value || !els.dateTo.value) return null;
+  return {
+    start: startOfDay(new Date(els.dateFrom.value)),
+    end:   endOfDay(new Date(els.dateTo.value))
+  };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Fetch appuntamenti dal range
-// Struttura attesa documento appuntamento:
-// - data (Firestore Timestamp)  ❗️obbligatorio
-// - clienteId (string)
-// - totale (number)            ➜ se non presente, somma prezzi trattamenti
-// - trattamenti: [{ nome, prezzo, icona? }, ...]
-// ─────────────────────────────────────────────────────────────────────────────
-async function getAppuntamentiNelRange(startDate, endDate){
-  const col = collection(db, 'appuntamenti');
-  const qy = query(
-    col,
-    where('data', '>=', startDate),
-    where('data', '<=', endDate)
-  );
+// ───────────── Fetch & aggregazione ─────────────
+async function fetchAppuntamenti(start, end){
+  const col = collection(db,'appuntamenti');
+  const qy = query(col, where('data','>=',start), where('data','<=',end));
   const snap = await getDocs(qy);
-  const list = [];
-  snap.forEach(docu => {
-    const d = docu.data();
-    // Normalizza
-    const when = d.data?.toDate ? d.data.toDate() : (d.data instanceof Date ? d.data : null);
-    if (!when) return; // salta se manca
-    list.push({
-      id: docu.id,
+  const out = [];
+  snap.forEach(d=>{
+    const v = d.data();
+    const when = v.data?.toDate ? v.data.toDate() : (v.data instanceof Date ? v.data : null);
+    if(!when) return;
+    out.push({
+      id: d.id,
       data: when,
-      clienteId: d.clienteId || d.cliente || null,
-      totale: typeof d.totale === 'number' ? d.totale : null,
-      trattamenti: Array.isArray(d.trattamenti) ? d.trattamenti : [],
+      clienteId: v.clienteId || v.cliente || null,
+      totale: typeof v.totale==='number' ? v.totale : null,
+      trattamenti: Array.isArray(v.trattamenti)? v.trattamenti : [],
     });
   });
-  return list;
+  return out;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Aggregazioni
-// ─────────────────────────────────────────────────────────────────────────────
-function calcolaTotaleAppuntamento(app){
-  if (typeof app.totale === 'number') return app.totale;
-  const somma = app.trattamenti.reduce((s,t) => s + (Number(t.prezzo)||0), 0);
-  return somma;
+function totaleApp(a){
+  if(typeof a.totale==='number') return a.totale;
+  return a.trattamenti.reduce((s,t)=> s + (Number(t.prezzo)||0), 0);
 }
 
-function aggregaStatistiche(appuntamenti){
-  let fatturato = 0;
-  const perGiorno = new Map();  // key: yyyy-mm-dd -> totale
-  const perMese = new Map();    // key: yyyy-mm -> totale
-  const perTratt = new Map();   // key: nome -> { count, totale, icona? }
-  const perCliente = new Map(); // key: clienteId -> totale
+function aggrega(apps){
+  let fatturato=0;
+  const perGiorno=new Map(), perMese=new Map();
+  const perTratt=new Map(); // nome -> {count, totale, icona?}
+  const perCliente=new Map(); // id -> totale
 
-  for (const a of appuntamenti){
-    const tot = calcolaTotaleAppuntamento(a);
+  for(const a of apps){
+    const tot = totaleApp(a);
     fatturato += tot;
 
-    // giorno / mese
     const dk = dayKey(a.data);
     perGiorno.set(dk, (perGiorno.get(dk)||0) + tot);
 
     const mk = monthKey(a.data);
     perMese.set(mk, (perMese.get(mk)||0) + tot);
 
-    // per trattamento
-    for (const t of a.trattamenti){
+    // trattamenti
+    for(const t of a.trattamenti){
       const nome = t?.nome || 'Trattamento';
-      const cur = perTratt.get(nome) || { count:0, totale:0, icona: null };
+      const cur = perTratt.get(nome) || {count:0, totale:0, icona:null};
       cur.count += 1;
       cur.totale += Number(t?.prezzo)||0;
-      // preferisci icona salvata nel DB, altrimenti fallback
       cur.icona = cur.icona || t?.icona || trovaIconaLocale(nome);
       perTratt.set(nome, cur);
     }
 
-    // per cliente
-    if (a.clienteId){
+    // cliente
+    if(a.clienteId){
       perCliente.set(a.clienteId, (perCliente.get(a.clienteId)||0) + tot);
     }
   }
 
-  const appuntamentiCount = appuntamenti.length;
-  const scontrinoMedio = appuntamentiCount ? (fatturato / appuntamentiCount) : 0;
+  const count = apps.length;
+  const avg = count ? (fatturato / count) : 0;
 
   // top trattamento
-  let topTratt = null;
-  for (const [nome, v] of perTratt.entries()){
-    if (!topTratt || v.totale > topTratt.totale) topTratt = { nome, ...v };
+  let topTratt=null;
+  for(const [nome,v] of perTratt.entries()){
+    if(!topTratt || v.totale > topTratt.totale) topTratt = {nome, ...v};
   }
 
   // top cliente
-  let topCliente = null;
-  for (const [cid, tot] of perCliente.entries()){
-    if (!topCliente || tot > topCliente.totale) topCliente = { clienteId: cid, totale: tot };
+  let topCliente=null;
+  for(const [cid,tot] of perCliente.entries()){
+    if(!topCliente || tot > topCliente.totale) topCliente = {clienteId: cid, totale: tot};
   }
 
-  // ordina top trattamenti per totale desc
-  const listaTopTratt = [...perTratt.entries()]
-    .map(([nome,v]) => ({ nome, ...v }))
-    .sort((a,b) => b.totale - a.totale);
+  const topList = [...perTratt.entries()]
+    .map(([nome,v]) => ({nome, ...v}))
+    .sort((a,b)=> b.totale - a.totale);
 
-  return {
-    fatturato,
-    appuntamentiCount,
-    scontrinoMedio,
-    topTratt,
-    topCliente,
-    perGiorno,
-    perMese,
-    listaTopTratt,
-  };
+  return { fatturato, count, avg, perGiorno, perMese, topTratt, topCliente, topList };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UI Rendering
-// ─────────────────────────────────────────────────────────────────────────────
-async function nomeClienteDaId(clienteId){
-  if (!clienteId) return null;
-  try {
-    const d = await getDoc(doc(db, 'clienti', clienteId));
-    if (!d.exists()) return clienteId; // fallback: mostra id se non trovi
+// ───────────── Rendering ─────────────
+async function nomeCliente(clienteId){
+  if(!clienteId) return '—';
+  try{
+    const d = await getDoc(doc(db,'clienti',clienteId));
+    if(!d.exists()) return clienteId;
     const c = d.data();
     const nome = c.nome || c.firstName || '';
     const cognome = c.cognome || c.lastName || '';
-    const display = `${nome} ${cognome}`.trim();
-    return display || (c.displayName || clienteId);
-  } catch {
+    const disp = `${nome} ${cognome}`.trim();
+    return disp || (c.displayName || clienteId);
+  }catch{
     return clienteId;
   }
 }
 
-function renderTopTrattamenti(lista){
-  if (!el.listaTop) return;
-  el.listaTop.innerHTML = ''; // pulisci
-  for (const item of lista){
-    const li = document.createElement('div');
-    li.className = 'riga-trattamento'; // usa le tue classi esistenti se serve
-    li.innerHTML = `
-      <div class="riga-trattamento__sx">
-        <img class="tratt-icona" alt="" src="${item.icona || trovaIconaLocale(item.nome)}" />
-        <span class="tratt-nome">${item.nome}</span>
-      </div>
-      <div class="riga-trattamento__dx">
-        <span class="tratt-qta">${item.count}</span>
-        <span class="puntatore">•</span>
-        <span class="tratt-totale">${€(item.totale)}</span>
-      </div>
-    `;
-    el.listaTop.appendChild(li);
-  }
+function renderKPI({fatturato, count, avg, topTratt, topClienteName}){
+  els.kpiRevenue.textContent = €(fatturato);
+  els.kpiCount.textContent   = String(count);
+  els.kpiAvg.textContent     = €(avg);
+  els.kpiTopTreatment.textContent = topTratt ? topTratt.nome : '—';
+  els.kpiTopClient.textContent    = topClienteName || '—';
 }
 
-let chartRef = null;
-async function renderChart(perGiorno, perMese, rangeStart, rangeEnd){
-  if (!el.canvas) return;
-  await ensureChartJs();
+function renderTopTreatments(list){
+  els.listTopTreatments.innerHTML = '';
+  list.forEach(item=>{
+    const li = document.createElement('li');
+    li.className = 'list-item';
+    li.innerHTML = `
+      <span class="li-name">${item.nome}</span>
+      <span class="li-vals"><strong>${item.count}</strong> <span class="dot">•</span> ${€(item.totale)}</span>
+    `;
+    els.listTopTreatments.appendChild(li);
+  });
+}
 
-  // Decide granularità
-  const diffMs = endOfDay(rangeEnd) - startOfDay(rangeStart);
-  const diffDays = Math.round(diffMs / (1000*60*60*24)) + 1;
-  const granularita = diffDays <= 35 ? 'daily' : 'monthly';
+function renderBars(rangeStart, rangeEnd, perGiorno, perMese){
+  els.bars.innerHTML = '';
+  els.legend.innerHTML = '';
 
-  let labels = [];
-  let data = [];
+  // scegli granularità: daily se <= 35 giorni, altrimenti monthly
+  const days = Math.round((endOfDay(rangeEnd)-startOfDay(rangeStart))/(1000*60*60*24))+1;
+  const daily = days <= 35;
 
-  if (granularita === 'daily'){
-    // costruisci tutti i giorni nel range
-    const cur = new Date(rangeStart);
-    while (cur <= rangeEnd){
-      const k = dayKey(cur);
-      labels.push(k.slice(8,10) + '/' + k.slice(5,7)); // gg/mm
-      data.push(perGiorno.get(k) || 0);
+  let labels=[], data=[];
+  if(daily){
+    const cur=new Date(rangeStart);
+    while(cur<=rangeEnd){
+      const k=dayKey(cur);
+      labels.push(k.slice(8,10)); // gg
+      data.push(perGiorno.get(k)||0);
       cur.setDate(cur.getDate()+1);
     }
-  } else {
-    // tutti i mesi nel range
-    let cur = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
-    const stop = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1);
-    while (cur <= stop){
-      const k = monthKey(cur);
-      const label = cur.toLocaleString('it-IT', { month: 'short' }).replace('.','');
-      labels.push(label.charAt(0).toUpperCase()+label.slice(1));
-      data.push(perMese.get(k) || 0);
+    els.trendCard.querySelector('.card-title').textContent = 'Andamento giorno per giorno';
+  }else{
+    let cur=new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
+    const stop=new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1);
+    while(cur<=stop){
+      const k=monthKey(cur);
+      const lbl = cur.toLocaleString('it-IT',{month:'short'}).replace('.','');
+      labels.push(lbl.charAt(0).toUpperCase()+lbl.slice(1));
+      data.push(perMese.get(k)||0);
       cur.setMonth(cur.getMonth()+1);
     }
+    els.trendCard.querySelector('.card-title').textContent = 'Andamento mese per mese';
   }
 
-  if (chartRef) { chartRef.destroy(); }
-  chartRef = new Chart(el.canvas.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Ricavi',
-        data,
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          ticks: {
-            callback: (v) => €(v)
-          }
-        }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => ' ' + €(ctx.parsed.y || 0)
-          }
-        }
-      }
-    }
+  const max = Math.max(...data, 0);
+  const safeMax = max || 1;
+
+  data.forEach((val,i)=>{
+    const h = Math.round((val / safeMax) * 100); // % altezza
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = h + '%';
+    bar.title = `${labels[i]}: ${€(val)}`;
+    els.bars.appendChild(bar);
+
+    const l = document.createElement('span');
+    l.className = 'legend-item';
+    l.textContent = labels[i];
+    els.legend.appendChild(l);
   });
 }
 
-async function aggiornaUI(range){
-  // 1) fetch
-  const apps = await getAppuntamentiNelRange(range.start, range.end);
+// ───────────── Controller principale ─────────────
+async function aggiorna(range){
+  const apps = await fetchAppuntamenti(range.start, range.end);
+  const agg  = aggrega(apps);
 
-  // 2) aggrega
-  const agg = aggregaStatistiche(apps);
+  const topClienteName = agg.topCliente?.clienteId
+    ? await nomeCliente(agg.topCliente.clienteId)
+    : '—';
 
-  // 3) numeri principali
-  if (el.fatturato) el.fatturato.textContent = €(agg.fatturato);
-  if (el.appuntamenti) el.appuntamenti.textContent = agg.appuntamentiCount.toString();
-  if (el.scontrino) el.scontrino.textContent = €(agg.scontrinoMedio);
-
-  // 4) trattamento top (nome + icona)
-  if (agg.topTratt){
-    if (el.trattTopNome) el.trattTopNome.textContent = agg.topTratt.nome;
-    if (el.trattTopIcona){
-      el.trattTopIcona.innerHTML = '';
-      const img = document.createElement('img');
-      img.alt = '';
-      img.src = agg.topTratt.icona || trovaIconaLocale(agg.topTratt.nome);
-      img.style.width = '28px';
-      img.style.height = '28px';
-      img.style.objectFit = 'contain';
-      el.trattTopIcona.appendChild(img);
-    }
-  } else {
-    if (el.trattTopNome) el.trattTopNome.textContent = '—';
-    if (el.trattTopIcona) el.trattTopIcona.innerHTML = '';
-  }
-
-  // 5) cliente top (nome e cognome al posto dell’ID)
-  if (agg.topCliente?.clienteId){
-    const nome = await nomeClienteDaId(agg.topCliente.clienteId);
-    if (el.clienteTop) el.clienteTop.textContent = nome;
-  } else {
-    if (el.clienteTop) el.clienteTop.textContent = '—';
-  }
-
-  // 6) lista top trattamenti
-  renderTopTrattamenti(agg.listaTopTratt);
-
-  // 7) grafico
-  await renderChart(agg.perGiorno, agg.perMese, range.start, range.end);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Wiring filtri UI
-// ─────────────────────────────────────────────────────────────────────────────
-function setupFiltri(){
-  el?.btnMeseCorrente?.addEventListener('click', () => aggiornaUI(getRangeMeseCorrente()));
-  el?.btnMeseScorso?.addEventListener('click', () => aggiornaUI(getRangeMeseScorso()));
-  el?.btnAnnoCorrente?.addEventListener('click', () => aggiornaUI(getRangeAnnoCorrente()));
-  el?.btnApplicaIntervallo?.addEventListener('click', () => {
-    const r = getRangePersonalizzato();
-    if (r) aggiornaUI(r);
+  renderKPI({
+    fatturato: agg.fatturato,
+    count: agg.count,
+    avg: agg.avg,
+    topTratt: agg.topTratt,
+    topClienteName
   });
+
+  renderTopTreatments(agg.topList);
+  renderBars(range.start, range.end, agg.perGiorno, agg.perMese);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  setupFiltri();
-  // avvio con "Mese corrente"
-  await aggiornaUI(getRangeMeseCorrente());
+// ───────────── Wiring UI ─────────────
+function setActiveTab(btn){
+  els.tabs.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function handleTabClick(e){
+  const btn = e.target.closest('button.tab');
+  if(!btn) return;
+  const rangeType = btn.dataset.range;
+  setActiveTab(btn);
+  if(rangeType==='custom'){
+    els.customWrap.hidden = false;
+    const r = rangeCustom();
+    if(r) aggiorna(r);
+  }else{
+    els.customWrap.hidden = true;
+    if(rangeType==='month')      aggiorna(rangeMeseCorrente());
+    if(rangeType==='lastmonth')  aggiorna(rangeMeseScorso());
+    if(rangeType==='year')       aggiorna(rangeAnnoCorrente());
+  }
+}
+
+function handleApply(){
+  const r = rangeCustom();
+  if(r) aggiorna(r);
+}
+
+// ───────────── Init ─────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+  els.tabs.addEventListener('click', handleTabClick);
+  els.applyRange.addEventListener('click', handleApply);
+
+  // default: Mese corrente
+  setActiveTab(els.tabs.querySelector('[data-range="month"]'));
+  aggiorna(rangeMeseCorrente());
 });
