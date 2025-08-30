@@ -1,302 +1,290 @@
-// statistiche.js
+// Statistiche – BeautyBook
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, query, where, getDocs, doc, getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  getFirestore, collection, query, where, orderBy, getDocs,
+  Timestamp, doc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const db = getFirestore();
+// Firebase (coerente con il resto dell'app)
+const firebaseConfig = {
+  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
+  authDomain: "agenda-carmenmauro.firebaseapp.com",
+  projectId: "agenda-carmenmauro",
+  storageBucket: "agenda-carmenmauro.appspot.com",
+  messagingSenderId: "959324976221",
+  appId: "1:959324976221:web:780c8e9195965cea0749b4"
+};
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db  = getFirestore(app);
 
-// ───────────── Utilità ─────────────
-const € = (n) => (n ?? 0).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
-const startOfDay = (d)=>{const x=new Date(d); x.setHours(0,0,0,0); return x;};
-const endOfDay   = (d)=>{const x=new Date(d); x.setHours(23,59,59,999); return x;};
-const dayKey   = (d)=> new Date(d).toISOString().slice(0,10);             // yyyy-mm-dd
-const monthKey = (d)=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+// DOM
+const tabs = document.getElementById("periodTabs");
+const customBox = document.getElementById("customRange");
+const dateFrom = document.getElementById("dateFrom");
+const dateTo   = document.getElementById("dateTo");
+const applyBtn = document.getElementById("applyRange");
 
-function trovaIconaLocale(nome=""){ // se vuoi usarla per mostrare anche l'icona
-  const base = String(nome).toLowerCase();
-  const m = [
-    {k:"microblading", p:"icones_trattamenti/microblading.png"},
-    {k:"makeup sposa", p:"icones_trattamenti/makeup_sposa.png"},
-    {k:"makeup",       p:"icones_trattamenti/makeup.png"},
-    {k:"extension",    p:"icones_trattamenti/extension_ciglia.png"},
-    {k:"architettura", p:"icones_trattamenti/arch_sopracciglia.png"},
-    {k:"filo",         p:"icones_trattamenti/filo_arabo.png"},
-    {k:"airbrush",     p:"icones_trattamenti/airbrush.png"},
-  ];
-  return (m.find(x=>base.includes(x.k))?.p) || "icone_uniformate_colore/setting.png";
-}
+const elRevenue = document.getElementById("kpiRevenue");
+const elCount   = document.getElementById("kpiCount");
+const elAvg     = document.getElementById("kpiAvg");
+const elTopTr   = document.getElementById("kpiTopTreatment");
+const elTopCl   = document.getElementById("kpiTopClient");
 
-// ───────────── Riferimenti DOM ─────────────
-const els = {
-  tabs: document.getElementById('periodTabs'),
-  customWrap: document.getElementById('customRange'),
-  dateFrom: document.getElementById('dateFrom'),
-  dateTo: document.getElementById('dateTo'),
-  applyRange: document.getElementById('applyRange'),
+const listTopTreatments = document.getElementById("listTopTreatments");
+const barsContainer = document.getElementById("barsContainer");
+const barsLegend    = document.getElementById("barsLegend");
+const trendCard     = document.getElementById("trendCard");
 
-  kpiRevenue: document.getElementById('kpiRevenue'),
-  kpiCount: document.getElementById('kpiCount'),
-  kpiAvg: document.getElementById('kpiAvg'),
-  kpiTopTreatment: document.getElementById('kpiTopTreatment'),
-  kpiTopClient: document.getElementById('kpiTopClient'),
-
-  listTopTreatments: document.getElementById('listTopTreatments'),
-  bars: document.getElementById('barsContainer'),
-  legend: document.getElementById('barsLegend'),
-  trendCard: document.getElementById('trendCard'),
+// Utils
+const euro = (n)=> Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
+const toNumberSafe = (v)=>{
+  if(v==null) return 0;
+  if(typeof v==="number") return isFinite(v)?v:0;
+  if(typeof v==="string"){
+    const n = parseFloat(v.replace(/[€\s]/g,"").replace(",","."));
+    return isNaN(n)?0:n;
+  }
+  return 0;
+};
+const safeDate = (d)=>{
+  if(!d) return null;
+  if(d?.toDate) return d.toDate();
+  if(typeof d==="number") return new Date(d);
+  if(typeof d==="string") return new Date(d.length===10 ? d+"T00:00:00" : d);
+  return d instanceof Date ? d : null;
 };
 
-// ───────────── Range helper ─────────────
-function rangeMeseCorrente(){
-  const now=new Date();
-  return {
-    start: startOfDay(new Date(now.getFullYear(), now.getMonth(), 1)),
-    end:   endOfDay(new Date(now.getFullYear(), now.getMonth()+1, 0))
-  };
-}
-function rangeMeseScorso(){
-  const now=new Date();
-  return {
-    start: startOfDay(new Date(now.getFullYear(), now.getMonth()-1, 1)),
-    end:   endOfDay(new Date(now.getFullYear(), now.getMonth(), 0))
-  };
-}
-function rangeAnnoCorrente(){
-  const now=new Date();
-  return {
-    start: startOfDay(new Date(now.getFullYear(), 0, 1)),
-    end:   endOfDay(new Date(now.getFullYear(),11,31))
-  };
-}
-function rangeCustom(){
-  if(!els.dateFrom.value || !els.dateTo.value) return null;
-  return {
-    start: startOfDay(new Date(els.dateFrom.value)),
-    end:   endOfDay(new Date(els.dateTo.value))
-  };
+// Calcolo range
+function getRange(type, fromStr, toStr){
+  const now = new Date();
+  if(type==="month"){
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end   = new Date(now.getFullYear(), now.getMonth()+1, 1);
+    return {start,end,label:`${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()}`};
+  }
+  if(type==="lastmonth"){
+    const start = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const end   = new Date(now.getFullYear(), now.getMonth(), 1);
+    return {start,end,label:`${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()}`};
+  }
+  if(type==="year"){
+    const start = new Date(now.getFullYear(), 0, 1);
+    const end   = new Date(now.getFullYear()+1, 0, 1);
+    return {start,end,label:`${start.getFullYear()}`};
+  }
+  // custom
+  const s = fromStr ? new Date(fromStr+"T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
+  const e = toStr ? new Date(toStr+"T00:00:00")     : new Date(now.getFullYear(), now.getMonth()+1, 1);
+  return {start:s, end:e, label:`${fromStr||""} → ${toStr||""}`};
 }
 
-// ───────────── Fetch & aggregazione ─────────────
-async function fetchAppuntamenti(start, end){
-  const col = collection(db,'appuntamenti');
-  const qy = query(col, where('data','>=',start), where('data','<=',end));
-  const snap = await getDocs(qy);
-  const out = [];
-  snap.forEach(d=>{
-    const v = d.data();
-    const when = v.data?.toDate ? v.data.toDate() : (v.data instanceof Date ? v.data : null);
-    if(!when) return;
-    out.push({
-      id: d.id,
-      data: when,
-      clienteId: v.clienteId || v.cliente || null,
-      totale: typeof v.totale==='number' ? v.totale : null,
-      trattamenti: Array.isArray(v.trattamenti)? v.trattamenti : [],
-    });
-  });
-  return out;
+// Query appuntamenti nel range (campo "data" Timestamp o ISO)
+async function fetchAppointmentsInRange(start, end){
+  // caso Timestamp
+  const qTs = query(
+    collection(db,"appuntamenti"),
+    where("data", ">=", Timestamp.fromDate(start)),
+    where("data", "<",  Timestamp.fromDate(end))
+  );
+  const snap = await getDocs(qTs);
+  if (snap.size > 0) return snap.docs.map(d=>d.data());
+
+  // fallback ISO (YYYY-MM-DD)
+  const isoFrom = start.toISOString().slice(0,10);
+  const isoTo   = end.toISOString().slice(0,10);
+
+  const qIso = query(
+    collection(db,"appuntamenti"),
+    where("data", ">=", isoFrom),
+    where("data", "<",  isoTo),
+    orderBy("data","asc")
+  );
+  const snapIso = await getDocs(qIso);
+  return snapIso.docs.map(d=>d.data());
 }
 
-function totaleApp(a){
-  if(typeof a.totale==='number') return a.totale;
-  return a.trattamenti.reduce((s,t)=> s + (Number(t.prezzo)||0), 0);
+// Mappa ID cliente -> nome (per KPI "Cliente top")
+async function resolveClientNames(appts){
+  const ids = new Set();
+  for (const a of appts){
+    const id = (a.clienteId || "").toString().trim();
+    if (id) ids.add(id);
+  }
+  const map = new Map();
+  await Promise.all([...ids].map(async (id)=>{
+    try{
+      const cs = await getDoc(doc(db,"clienti",id));
+      if (cs.exists()){
+        const nome = cs.data()?.nome || "";
+        if (nome) map.set(id, nome);
+      }
+    }catch{}
+  }));
+  return map;
 }
 
-function aggrega(apps){
-  let fatturato=0;
-  const perGiorno=new Map(), perMese=new Map();
-  const perTratt=new Map(); // nome -> {count, totale, icona?}
-  const perCliente=new Map(); // id -> totale
+function aggregateStats(appts){
+  let revenue = 0;
+  let count   = 0;
+  const byTreatment = {}; // nome -> {count,sum}
+  const byClientId  = {}; // id -> {sum}
+  const byClientKey = {}; // nome/altro -> {sum} (fallback)
+  const byDay = {};       // YYYY-MM-DD -> sum
 
-  for(const a of apps){
-    const tot = totaleApp(a);
-    fatturato += tot;
-
-    const dk = dayKey(a.data);
-    perGiorno.set(dk, (perGiorno.get(dk)||0) + tot);
-
-    const mk = monthKey(a.data);
-    perMese.set(mk, (perMese.get(mk)||0) + tot);
-
-    // trattamenti
-    for(const t of a.trattamenti){
-      const nome = t?.nome || 'Trattamento';
-      const cur = perTratt.get(nome) || {count:0, totale:0, icona:null};
-      cur.count += 1;
-      cur.totale += Number(t?.prezzo)||0;
-      cur.icona = cur.icona || t?.icona || trovaIconaLocale(nome);
-      perTratt.set(nome, cur);
+  for (const a of appts){
+    // totale appuntamento
+    let tot = 0;
+    if(Array.isArray(a.trattamenti) && a.trattamenti.length){
+      for (const t of a.trattamenti){
+        const n = (t?.nome || t?.titolo || "Trattamento").trim();
+        const p = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
+        tot += p;
+        if(!byTreatment[n]) byTreatment[n] = {count:0,sum:0};
+        byTreatment[n].count += 1;
+        byTreatment[n].sum   += p;
+      }
+    } else {
+      tot = toNumberSafe(a.prezzo ?? a.totale ?? a.price ?? a.costo);
     }
 
-    // cliente
-    if(a.clienteId){
-      perCliente.set(a.clienteId, (perCliente.get(a.clienteId)||0) + tot);
+    revenue += tot;
+    count   += 1;
+
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    if (dt){
+      const key = dt.toISOString().slice(0,10);
+      byDay[key] = (byDay[key] || 0) + tot;
+    }
+
+    const id  = (a.clienteId || "").toString();
+    const key = (a.clienteNome || a.cliente || a.clienteId || "").toString();
+    if (id){
+      if(!byClientId[id]) byClientId[id] = {sum:0};
+      byClientId[id].sum += tot;
+    } else if (key){
+      if(!byClientKey[key]) byClientKey[key] = {sum:0};
+      byClientKey[key].sum += tot;
     }
   }
 
-  const count = apps.length;
-  const avg = count ? (fatturato / count) : 0;
+  const avg = count>0 ? revenue / count : 0;
 
-  // top trattamento
-  let topTratt=null;
-  for(const [nome,v] of perTratt.entries()){
-    if(!topTratt || v.totale > topTratt.totale) topTratt = {nome, ...v};
+  // Top trattamento
+  const topTreat = Object.entries(byTreatment)
+    .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum)[0]?.[0] || "—";
+
+  // Top client (preferisci ID, poi fallback a key testo)
+  let topClientKey = "—";
+  let topIsId = false;
+  if (Object.keys(byClientId).length){
+    topClientKey = Object.entries(byClientId).sort((a,b)=> b[1].sum - a[1].sum)[0][0];
+    topIsId = true;
+  } else if (Object.keys(byClientKey).length){
+    topClientKey = Object.entries(byClientKey).sort((a,b)=> b[1].sum - a[1].sum)[0][0];
+    topIsId = false;
   }
 
-  // top cliente
-  let topCliente=null;
-  for(const [cid,tot] of perCliente.entries()){
-    if(!topCliente || tot > topCliente.totale) topCliente = {clienteId: cid, totale: tot};
+  return { revenue, count, avg, byTreatment, byDay, topTreat, topClientKey, topIsId };
+}
+
+function renderTopTreatments(byTreatment){
+  const arr = Object.entries(byTreatment)
+    .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count)
+    .slice(0,10);
+
+  listTopTreatments.innerHTML = arr.length
+    ? arr.map(([nome,v]) =>
+        `<li><span class="name">${nome}</span><span class="meta">${v.count} • ${euro(v.sum)}</span></li>`
+      ).join("")
+    : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
+}
+
+function renderBars(byDay, start, end){
+  // Mostra il grafico solo se il range è dentro un singolo mese naturale
+  const sameMonth = start.getFullYear()===end.getFullYear() && start.getMonth()===end.getMonth()-1;
+  trendCard.classList.toggle("hidden", !sameMonth);
+
+  barsContainer.innerHTML = "";
+  barsLegend.textContent  = "";
+
+  if (!sameMonth) return;
+
+  const daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
+  const values = [];
+  for (let d=1; d<=daysInMonth; d++){
+    const key = `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    values.push({ day:d, sum: byDay[key] || 0 });
   }
+  const max = Math.max(1, ...values.map(v=>v.sum));
 
-  const topList = [...perTratt.entries()]
-    .map(([nome,v]) => ({nome, ...v}))
-    .sort((a,b)=> b.totale - a.totale);
-
-  return { fatturato, count, avg, perGiorno, perMese, topTratt, topCliente, topList };
-}
-
-// ───────────── Rendering ─────────────
-async function nomeCliente(clienteId){
-  if(!clienteId) return '—';
-  try{
-    const d = await getDoc(doc(db,'clienti',clienteId));
-    if(!d.exists()) return clienteId;
-    const c = d.data();
-    const nome = c.nome || c.firstName || '';
-    const cognome = c.cognome || c.lastName || '';
-    const disp = `${nome} ${cognome}`.trim();
-    return disp || (c.displayName || clienteId);
-  }catch{
-    return clienteId;
-  }
-}
-
-function renderKPI({fatturato, count, avg, topTratt, topClienteName}){
-  els.kpiRevenue.textContent = €(fatturato);
-  els.kpiCount.textContent   = String(count);
-  els.kpiAvg.textContent     = €(avg);
-  els.kpiTopTreatment.textContent = topTratt ? topTratt.nome : '—';
-  els.kpiTopClient.textContent    = topClienteName || '—';
-}
-
-function renderTopTreatments(list){
-  els.listTopTreatments.innerHTML = '';
-  list.forEach(item=>{
-    const li = document.createElement('li');
-    li.className = 'list-item';
-    li.innerHTML = `
-      <span class="li-name">${item.nome}</span>
-      <span class="li-vals"><strong>${item.count}</strong> <span class="dot">•</span> ${€(item.totale)}</span>
-    `;
-    els.listTopTreatments.appendChild(li);
+  values.forEach(v=>{
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.height = Math.round((v.sum / max) * 100) + "%";
+    bar.innerHTML = `<div class="tip">${v.day}: ${euro(v.sum)}</div>`;
+    barsContainer.appendChild(bar);
   });
+
+  barsLegend.textContent =
+    `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
 }
 
-function renderBars(rangeStart, rangeEnd, perGiorno, perMese){
-  els.bars.innerHTML = '';
-  els.legend.innerHTML = '';
+// Interazione filtri
+let currentType = "month";
+tabs.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    tabs.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const t = btn.dataset.range;
 
-  // scegli granularità: daily se <= 35 giorni, altrimenti monthly
-  const days = Math.round((endOfDay(rangeEnd)-startOfDay(rangeStart))/(1000*60*60*24))+1;
-  const daily = days <= 35;
+    const showCustom = t === "custom";
+    customBox.hidden = !showCustom;
 
-  let labels=[], data=[];
-  if(daily){
-    const cur=new Date(rangeStart);
-    while(cur<=rangeEnd){
-      const k=dayKey(cur);
-      labels.push(k.slice(8,10)); // gg
-      data.push(perGiorno.get(k)||0);
-      cur.setDate(cur.getDate()+1);
+    // Precompila date nel caso "Intervallo"
+    if (showCustom) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      const pad = n => String(n).padStart(2, "0");
+      const from = `${y}-${pad(m+1)}-01`;
+      const to   = `${y}-${pad(m+1)}-${pad(new Date(y, m+1, 0).getDate())}`;
+      if (!dateFrom.value) dateFrom.value = from;
+      if (!dateTo.value)   dateTo.value   = to;
     }
-    els.trendCard.querySelector('.card-title').textContent = 'Andamento giorno per giorno';
-  }else{
-    let cur=new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
-    const stop=new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1);
-    while(cur<=stop){
-      const k=monthKey(cur);
-      const lbl = cur.toLocaleString('it-IT',{month:'short'}).replace('.','');
-      labels.push(lbl.charAt(0).toUpperCase()+lbl.slice(1));
-      data.push(perMese.get(k)||0);
-      cur.setMonth(cur.getMonth()+1);
-    }
-    els.trendCard.querySelector('.card-title').textContent = 'Andamento mese per mese';
-  }
 
-  const max = Math.max(...data, 0);
-  const safeMax = max || 1;
-
-  data.forEach((val,i)=>{
-    const h = Math.round((val / safeMax) * 100); // % altezza
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    bar.style.height = h + '%';
-    bar.title = `${labels[i]}: ${€(val)}`;
-    els.bars.appendChild(bar);
-
-    const l = document.createElement('span');
-    l.className = 'legend-item';
-    l.textContent = labels[i];
-    els.legend.appendChild(l);
+    run(t);
   });
-}
-
-// ───────────── Controller principale ─────────────
-async function aggiorna(range){
-  const apps = await fetchAppuntamenti(range.start, range.end);
-  const agg  = aggrega(apps);
-
-  const topClienteName = agg.topCliente?.clienteId
-    ? await nomeCliente(agg.topCliente.clienteId)
-    : '—';
-
-  renderKPI({
-    fatturato: agg.fatturato,
-    count: agg.count,
-    avg: agg.avg,
-    topTratt: agg.topTratt,
-    topClienteName
-  });
-
-  renderTopTreatments(agg.topList);
-  renderBars(range.start, range.end, agg.perGiorno, agg.perMese);
-}
-
-// ───────────── Wiring UI ─────────────
-function setActiveTab(btn){
-  els.tabs.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-function handleTabClick(e){
-  const btn = e.target.closest('button.tab');
-  if(!btn) return;
-  const rangeType = btn.dataset.range;
-  setActiveTab(btn);
-  if(rangeType==='custom'){
-    els.customWrap.hidden = false;
-    const r = rangeCustom();
-    if(r) aggiorna(r);
-  }else{
-    els.customWrap.hidden = true;
-    if(rangeType==='month')      aggiorna(rangeMeseCorrente());
-    if(rangeType==='lastmonth')  aggiorna(rangeMeseScorso());
-    if(rangeType==='year')       aggiorna(rangeAnnoCorrente());
-  }
-}
-
-function handleApply(){
-  const r = rangeCustom();
-  if(r) aggiorna(r);
-}
-
-// ───────────── Init ─────────────
-document.addEventListener('DOMContentLoaded', ()=>{
-  els.tabs.addEventListener('click', handleTabClick);
-  els.applyRange.addEventListener('click', handleApply);
-
-  // default: Mese corrente
-  setActiveTab(els.tabs.querySelector('[data-range="month"]'));
-  aggiorna(rangeMeseCorrente());
 });
+
+// Applica intervallo
+applyBtn.addEventListener("click", ()=> run("custom"));
+
+// Avvio
+run("month");
+
+// ---------------- Core run ----------------
+async function run(type=currentType){
+  currentType = type;
+  const {start,end} = getRange(type, dateFrom.value, dateTo.value);
+
+  const appts = await fetchAppointmentsInRange(start,end);
+  const agg   = aggregateStats(appts);
+
+  // KPI base
+  elRevenue.textContent = euro(agg.revenue);
+  elCount.textContent   = String(agg.count);
+  elAvg.textContent     = euro(agg.avg);
+  elTopTr.textContent   = agg.topTreat;
+
+  // Cliente top: risolvi nome se key è un ID
+  if (agg.topIsId) {
+    const names = await resolveClientNames(appts);
+    elTopCl.textContent = names.get(agg.topClientKey) || agg.topClientKey || "—";
+  } else {
+    elTopCl.textContent = agg.topClientKey || "—";
+  }
+
+  // Liste e grafico
+  renderTopTreatments(agg.byTreatment);
+  renderBars(agg.byDay, start, end);
+}
