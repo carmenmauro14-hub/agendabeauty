@@ -140,5 +140,29 @@ html,body{
   color:#9a8b82;
 }
 
+/* --- Etichette sotto al grafico --- */
+.bars {
+  overflow-x: auto;              /* lo scroll orizzontale resta confinato nel grafico */
+}
+
+.bars-labels{
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 2px 0;
+  margin-top: 4px;
+  overflow-x: auto;              /* scroll sincronizzato col grafico */
+  -webkit-overflow-scrolling: touch;
+}
+
+.bars-labels span{
+  flex: 1 0 12px;                /* stessa base delle barre */
+  min-width: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #9a8b82;
+  user-select: none;
+}
+
 /* Utility */
 .hidden{ display:none !important; }
