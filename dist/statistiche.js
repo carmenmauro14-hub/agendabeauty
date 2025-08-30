@@ -18,19 +18,18 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 // DOM
-const tabs = document.getElementById("periodTabs");
+const tabs      = document.getElementById("periodTabs");
 const customBox = document.getElementById("customRange");
-const dateFrom = document.getElementById("dateFrom");
-const dateTo   = document.getElementById("dateTo");
-const applyBtn = document.getElementById("applyRange");
+const dateFrom  = document.getElementById("dateFrom");
+const dateTo    = document.getElementById("dateTo");
+const applyBtn  = document.getElementById("applyRange");
 
 const elRevenue = document.getElementById("kpiRevenue");
 const elCount   = document.getElementById("kpiCount");
 const elAvg     = document.getElementById("kpiAvg");
-const elTopTr   = document.getElementById("kpiTopTreatment");
-const elTopCl   = document.getElementById("kpiTopClient");
 
 const listTopTreatments = document.getElementById("listTopTreatments");
+const listTopClients    = document.getElementById("listTopClients"); // ⬅️ nuova lista
 const barsContainer = document.getElementById("barsContainer");
 const barsLegend    = document.getElementById("barsLegend");
 const trendCard     = document.getElementById("trendCard");
@@ -103,13 +102,8 @@ async function fetchAppointmentsInRange(start, end){
   return snapIso.docs.map(d=>d.data());
 }
 
-// Mappa ID cliente -> nome (per KPI "Cliente top")
-async function resolveClientNames(appts){
-  const ids = new Set();
-  for (const a of appts){
-    const id = (a.clienteId || "").toString().trim();
-    if (id) ids.add(id);
-  }
+// Mappa ID cliente -> nome (per la Top 10)
+async function resolveClientNames(ids){
   const map = new Map();
   await Promise.all([...ids].map(async (id)=>{
     try{
@@ -126,9 +120,10 @@ async function resolveClientNames(appts){
 function aggregateStats(appts){
   let revenue = 0;
   let count   = 0;
+
   const byTreatment = {}; // nome -> {count,sum}
   const byClientId  = {}; // id -> {sum}
-  const byClientKey = {}; // nome/altro -> {sum} (fallback)
+  const byClientKey = {}; // nomeTesto/altro -> {sum} (fallback)
   const byDay = {};       // YYYY-MM-DD -> sum
 
   for (const a of appts){
@@ -156,8 +151,9 @@ function aggregateStats(appts){
       byDay[key] = (byDay[key] || 0) + tot;
     }
 
-    const id  = (a.clienteId || "").toString();
-    const key = (a.clienteNome || a.cliente || a.clienteId || "").toString();
+    const id  = (a.clienteId || "").toString().trim();
+    const key = (a.clienteNome || a.cliente || "").toString().trim();
+
     if (id){
       if(!byClientId[id]) byClientId[id] = {sum:0};
       byClientId[id].sum += tot;
@@ -169,22 +165,11 @@ function aggregateStats(appts){
 
   const avg = count>0 ? revenue / count : 0;
 
-  // Top trattamento
+  // Top trattamento (per KPI)
   const topTreat = Object.entries(byTreatment)
     .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum)[0]?.[0] || "—";
 
-  // Top client (preferisci ID, poi fallback a key testo)
-  let topClientKey = "—";
-  let topIsId = false;
-  if (Object.keys(byClientId).length){
-    topClientKey = Object.entries(byClientId).sort((a,b)=> b[1].sum - a[1].sum)[0][0];
-    topIsId = true;
-  } else if (Object.keys(byClientKey).length){
-    topClientKey = Object.entries(byClientKey).sort((a,b)=> b[1].sum - a[1].sum)[0][0];
-    topIsId = false;
-  }
-
-  return { revenue, count, avg, byTreatment, byDay, topTreat, topClientKey, topIsId };
+  return { revenue, count, avg, byTreatment, byDay, topTreat, byClientId, byClientKey };
 }
 
 function renderTopTreatments(byTreatment){
@@ -196,6 +181,34 @@ function renderTopTreatments(byTreatment){
     ? arr.map(([nome,v]) =>
         `<li><span class="name">${nome}</span><span class="meta">${v.count} • ${euro(v.sum)}</span></li>`
       ).join("")
+    : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
+}
+
+// ⬇️ Nuova: Top 10 clienti (ID risolti a nome; fallback chiave testuale)
+async function renderTopClients(byClientId, byClientKey){
+  if (!listTopClients) return; // nel caso la sezione non sia in pagina
+
+  const rows = [];
+
+  for (const [id,v] of Object.entries(byClientId)){
+    rows.push({ key:id, sum:v.sum, isId:true });
+  }
+  for (const [k,v] of Object.entries(byClientKey)){
+    rows.push({ key:k, sum:v.sum, isId:false });
+  }
+
+  rows.sort((a,b)=> b.sum - a.sum);
+  const top10 = rows.slice(0,10);
+
+  // risolvi nomi per gli ID presenti nei top10
+  const idSet = new Set(top10.filter(r=>r.isId).map(r=>r.key));
+  const names = idSet.size ? await resolveClientNames(idSet) : new Map();
+
+  listTopClients.innerHTML = top10.length
+    ? top10.map(r=>{
+        const nome = r.isId ? (names.get(r.key) || r.key) : r.key;
+        return `<li><span class="name">${nome}</span><span class="meta">${euro(r.sum)}</span></li>`;
+      }).join("")
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
@@ -229,7 +242,7 @@ function renderBars(byDay, start, end){
     `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
 }
 
-// Interazione filtri
+// Tabs
 let currentType = "month";
 tabs.querySelectorAll(".tab").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -270,21 +283,13 @@ async function run(type=currentType){
   const appts = await fetchAppointmentsInRange(start,end);
   const agg   = aggregateStats(appts);
 
-  // KPI base
+  // KPI
   elRevenue.textContent = euro(agg.revenue);
   elCount.textContent   = String(agg.count);
   elAvg.textContent     = euro(agg.avg);
-  elTopTr.textContent   = agg.topTreat;
-
-  // Cliente top: risolvi nome se key è un ID
-  if (agg.topIsId) {
-    const names = await resolveClientNames(appts);
-    elTopCl.textContent = names.get(agg.topClientKey) || agg.topClientKey || "—";
-  } else {
-    elTopCl.textContent = agg.topClientKey || "—";
-  }
 
   // Liste e grafico
   renderTopTreatments(agg.byTreatment);
+  await renderTopClients(agg.byClientId, agg.byClientKey);
   renderBars(agg.byDay, start, end);
 }
