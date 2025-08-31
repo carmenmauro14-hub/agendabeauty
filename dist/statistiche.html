@@ -20,20 +20,28 @@
     <p class="info-text">Riepilogo ricavi e trattamenti sul periodo selezionato.</p>
 
     <!-- Filtro periodo -->
-    <section class="filters">
-      <div class="period-tabs" id="periodTabs">
-        <button data-range="month" class="tab active">Mese corrente</button>
-        <button data-range="lastmonth" class="tab">Mese scorso</button>
-        <button data-range="year" class="tab">Anno corrente</button>
-        <button data-range="custom" class="tab">Intervallo</button>
-      </div>
-      <div class="custom-range" id="customRange" hidden>
-        <input type="date" id="dateFrom">
-        <span class="dash">–</span>
-        <input type="date" id="dateTo">
-        <button id="applyRange" class="btn-apply">Applica</button>
-      </div>
-    </section>
+<section class="filters">
+  <div class="period-tabs" id="periodTabs">
+    <button data-range="month" class="tab active">Mese corrente</button>
+    <button data-range="lastmonth" class="tab">Mese scorso</button>
+    <button data-range="year" class="tab">Anno corrente</button>
+    <button data-range="custom" class="tab">Intervallo</button>
+  </div>
+
+  <!-- ⬇️ Nuovi controlli anno -->
+  <div class="year-controls" id="yearControls" hidden>
+    <button id="prevYear" class="year-btn" aria-label="Anno precedente">‹</button>
+    <span id="yearLabel" class="year-label">2025</span>
+    <button id="nextYear" class="year-btn" aria-label="Anno successivo">›</button>
+  </div>
+
+  <div class="custom-range" id="customRange" hidden>
+    <input type="date" id="dateFrom">
+    <span class="dash">–</span>
+    <input type="date" id="dateTo">
+    <button id="applyRange" class="btn-apply">Applica</button>
+  </div>
+</section>
 
     <!-- KPI -->
     <section class="kpi-grid">
