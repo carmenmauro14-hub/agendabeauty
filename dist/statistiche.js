@@ -5,7 +5,7 @@ import {
   Timestamp, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase (coerente con il resto dell'app)
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -33,7 +33,6 @@ const listTopTreatments = document.getElementById("listTopTreatments");
 const listTopClients    = document.getElementById("listTopClients");
 const trendCard         = document.getElementById("trendCard");
 const barsContainer     = document.getElementById("barsContainer");
-const barsLabels        = document.getElementById("barsLabels");
 const barsLegend        = document.getElementById("barsLegend");
 
 // Utils
@@ -55,35 +54,32 @@ const safeDate = (d)=>{
   return d instanceof Date ? d : null;
 };
 
-// Calcolo range
+// Range
 function getRange(type, fromStr, toStr){
   const now = new Date();
   if(type==="month"){
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end   = new Date(now.getFullYear(), now.getMonth()+1, 1);
-    return {start,end,label:`${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()}`};
+    return {start,end};
   }
   if(type==="lastmonth"){
     const start = new Date(now.getFullYear(), now.getMonth()-1, 1);
     const end   = new Date(now.getFullYear(), now.getMonth(), 1);
-    return {start,end,label:`${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()}`};
+    return {start,end};
   }
   if(type==="year"){
     const start = new Date(now.getFullYear(), 0, 1);
     const end   = new Date(now.getFullYear()+1, 0, 1);
-    return {start,end,label:`${start.getFullYear()}`};
+    return {start,end};
   }
   // custom
   const s = fromStr ? new Date(fromStr+"T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
   const e = toStr ? new Date(toStr+"T00:00:00")     : new Date(now.getFullYear(), now.getMonth()+1, 1);
-  return {start:s, end:e, label:`${fromStr||""} → ${toStr||""}`};
+  return {start:s, end:e};
 }
 
-// Query appuntamenti nel range (campo "data" Timestamp o ISO)
-// NB: per semplicità usiamo "timestamp oppure iso", non li uniamo.
-// Se vuoi un'unione di entrambi i formati, dimmelo e ti passo una versione che merge-a i risultati.
+// Query appuntamenti
 async function fetchAppointmentsInRange(start, end){
-  // caso Timestamp
   const qTs = query(
     collection(db,"appuntamenti"),
     where("data", ">=", Timestamp.fromDate(start)),
@@ -92,10 +88,9 @@ async function fetchAppointmentsInRange(start, end){
   const snap = await getDocs(qTs);
   if (snap.size > 0) return snap.docs.map(d=>d.data());
 
-  // fallback ISO (YYYY-MM-DD)
+  // fallback ISO
   const isoFrom = start.toISOString().slice(0,10);
   const isoTo   = end.toISOString().slice(0,10);
-
   const qIso = query(
     collection(db,"appuntamenti"),
     where("data", ">=", isoFrom),
@@ -106,7 +101,7 @@ async function fetchAppointmentsInRange(start, end){
   return snapIso.docs.map(d=>d.data());
 }
 
-// Mappa ID cliente -> nome (per la Top 10)
+// Risolvi nomi clienti da ID
 async function resolveClientNames(ids){
   const map = new Map();
   await Promise.all([...ids].map(async (id)=>{
@@ -122,13 +117,11 @@ async function resolveClientNames(ids){
 }
 
 function aggregateStats(appts){
-  let revenue = 0;
-  let count   = 0;
-
+  let revenue = 0, count = 0;
   const byTreatment = {}; // nome -> {count,sum}
   const byClientId  = {}; // id -> {sum}
-  const byClientKey = {}; // nomeTesto/altro -> {sum} (fallback)
-  const byDay = {};       // YYYY-MM-DD -> sum
+  const byClientKey = {}; // nome testo -> {sum}
+  const byDay       = {}; // YYYY-MM-DD -> sum
 
   for (const a of appts){
     // totale appuntamento
@@ -146,8 +139,7 @@ function aggregateStats(appts){
       tot = toNumberSafe(a.prezzo ?? a.totale ?? a.price ?? a.costo);
     }
 
-    revenue += tot;
-    count   += 1;
+    revenue += tot; count += 1;
 
     const dt = safeDate(a.data || a.date || a.dateTime);
     if (dt){
@@ -157,7 +149,6 @@ function aggregateStats(appts){
 
     const id  = (a.clienteId || "").toString().trim();
     const key = (a.clienteNome || a.cliente || "").toString().trim();
-
     if (id){
       if(!byClientId[id]) byClientId[id] = {sum:0};
       byClientId[id].sum += tot;
@@ -168,8 +159,6 @@ function aggregateStats(appts){
   }
 
   const avg = count>0 ? revenue / count : 0;
-
-  // Top trattamento (per KPI)
   const topTreat = Object.entries(byTreatment)
     .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum)[0]?.[0] || "—";
 
@@ -188,23 +177,16 @@ function renderTopTreatments(byTreatment){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-// Top 10 clienti (ID risolti a nome; fallback chiave testuale)
 async function renderTopClients(byClientId, byClientKey){
   if (!listTopClients) return;
 
   const rows = [];
-
-  for (const [id,v] of Object.entries(byClientId)){
-    rows.push({ key:id, sum:v.sum, isId:true });
-  }
-  for (const [k,v] of Object.entries(byClientKey)){
-    rows.push({ key:k, sum:v.sum, isId:false });
-  }
+  for (const [id,v] of Object.entries(byClientId)) rows.push({ key:id, sum:v.sum, isId:true });
+  for (const [k,v] of Object.entries(byClientKey)) rows.push({ key:k, sum:v.sum, isId:false });
 
   rows.sort((a,b)=> b.sum - a.sum);
   const top10 = rows.slice(0,10);
 
-  // risolvi nomi per gli ID presenti nei top10
   const idSet = new Set(top10.filter(r=>r.isId).map(r=>r.key));
   const names = idSet.size ? await resolveClientNames(idSet) : new Map();
 
@@ -216,14 +198,13 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
+// Barre con numero del giorno integrato
 function renderBars(byDay, start, end){
-  // mostra il grafico solo se il range è dentro un singolo mese naturale
   const sameMonth = start.getFullYear()===end.getFullYear() && start.getMonth()===end.getMonth()-1;
   trendCard.classList.toggle("hidden", !sameMonth);
 
   barsContainer.innerHTML = "";
   barsLegend.textContent  = "";
-  if (barsLabels) barsLabels.innerHTML = "";
 
   if (!sameMonth) return;
 
@@ -235,35 +216,19 @@ function renderBars(byDay, start, end){
   }
   const max = Math.max(1, ...values.map(v=>v.sum));
 
-  // barre
   values.forEach(v=>{
     const bar = document.createElement("div");
     bar.className = "bar";
     bar.style.height = Math.round((v.sum / max) * 100) + "%";
-    bar.innerHTML = `<div class="tip">${v.day}: ${euro(v.sum)}</div>`;
+    bar.innerHTML = `
+      <div class="tip">${v.day}: ${euro(v.sum)}</div>
+      <div class="day-label">${v.day}</div>
+    `;
     barsContainer.appendChild(bar);
   });
 
-  // etichette giorni
-  if (barsLabels){
-    values.forEach(v=>{
-      const s = document.createElement("span");
-      s.textContent = v.day;
-      barsLabels.appendChild(s);
-    });
-  }
-
-  // legenda
   barsLegend.textContent =
     `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
-
-  // sincronizza scroll tra barre e etichette (bidirezionale)
-  if (barsLabels){
-    const syncA = () => { barsLabels.scrollLeft = barsContainer.scrollLeft; };
-    const syncB = () => { barsContainer.scrollLeft = barsLabels.scrollLeft; };
-    barsContainer.addEventListener("scroll", syncA, { passive: true });
-    barsLabels.addEventListener("scroll", syncB, { passive: true });
-  }
 }
 
 // Tabs
@@ -277,7 +242,6 @@ tabs.querySelectorAll(".tab").forEach(btn=>{
     const showCustom = t === "custom";
     customBox.hidden = !showCustom;
 
-    // Precompila date nel caso "Intervallo"
     if (showCustom) {
       const now = new Date();
       const y = now.getFullYear();
@@ -299,7 +263,7 @@ applyBtn.addEventListener("click", ()=> run("custom"));
 // Avvio
 run("month");
 
-// ---------------- Core run ----------------
+// Core
 async function run(type=currentType){
   currentType = type;
   const {start,end} = getRange(type, dateFrom.value, dateTo.value);
@@ -307,13 +271,11 @@ async function run(type=currentType){
   const appts = await fetchAppointmentsInRange(start,end);
   const agg   = aggregateStats(appts);
 
-  // KPI
   elRevenue.textContent = euro(agg.revenue);
   elCount.textContent   = String(agg.count);
   elAvg.textContent     = euro(agg.avg);
   if (elTopTr) elTopTr.textContent = agg.topTreat;
 
-  // Liste e grafico
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
   renderBars(agg.byDay, start, end);
