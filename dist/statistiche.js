@@ -72,9 +72,11 @@ function getRange(type, fromStr, toStr){
     const end   = new Date(y+1, 0, 1);
     return {start,end};
   }
-  // custom
+  // custom (end esclusivo -> aggiungo +1 giorno per includere la data finale selezionata)
   const s = fromStr ? new Date(fromStr+"T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
-  const e = toStr ? new Date(toStr+"T00:00:00")     : new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const e = toStr
+    ? (()=>{ const d=new Date(toStr+"T00:00:00"); d.setDate(d.getDate()+1); return d; })()
+    : new Date(now.getFullYear(), now.getMonth()+1, 1);
   return {start:s, end:e};
 }
 
@@ -125,7 +127,6 @@ function aggregateStats(appts){
   const byMonth     = {}; // YYYY-MM -> sum
 
   for (const a of appts){
-    // totale appuntamento
     let tot = 0;
     if(Array.isArray(a.trattamenti) && a.trattamenti.length){
       for (const t of a.trattamenti){
@@ -276,7 +277,7 @@ tabs.querySelectorAll(".tab").forEach(btn=>{
     btn.classList.add("active");
     const t = btn.dataset.range;
 
-    customBox.hidden = (t !== "custom"); // mostra la scelta date solo per Intervallo
+    customBox.hidden = (t !== "custom"); // mostra date solo per Intervallo
     run(t);
   });
 });
@@ -306,8 +307,22 @@ async function run(type=currentType){
 
   // Grafici
   if (type === "year"){
+    // anno corrente
     renderYearBars(agg.byMonth, start.getFullYear());
+  } else if (type === "custom") {
+    // se l'intervallo copre esattamente un anno (1 gen -> 1 gen anno dopo) mostra il grafico annuale
+    const s = new Date(start);
+    const e = new Date(end);
+    const isFullYear =
+      s.getMonth()===0 && s.getDate()===1 &&
+      e.getMonth()===0 && e.getDate()===1 &&
+      e.getFullYear() === s.getFullYear()+1;
+    if (isFullYear){
+      renderYearBars(agg.byMonth, s.getFullYear());
+    } else {
+      renderMonthBars(agg.byDay, start, end); // se è un mese pieno, appare il grafico mese; altrimenti card nascosta
+    }
   } else {
-    renderMonthBars(agg.byDay, start, end); // mostrato solo se range = mese pieno
+    renderMonthBars(agg.byDay, start, end);
   }
 }
