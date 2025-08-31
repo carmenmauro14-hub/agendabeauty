@@ -117,10 +117,10 @@ async function resolveClientNames(ids){
 
 function aggregateStats(appts){
   let revenue = 0, count = 0;
-  const byTreatment = {}; // nome -> {count,sum}
-  const byClientId  = {}; // id -> {sum}
-  const byClientKey = {}; // nome testo -> {sum}
-  const byDay       = {}; // YYYY-MM-DD -> sum
+  const byTreatment = {}; 
+  const byClientId  = {}; 
+  const byClientKey = {}; 
+  const byDay       = {}; 
 
   for (const a of appts){
     let tot = 0;
@@ -160,10 +160,10 @@ function aggregateStats(appts){
   return { revenue, count, avg, byTreatment, byDay, byClientId, byClientKey };
 }
 
+// 🔹 ora senza .slice(0,10)
 function renderTopTreatments(byTreatment){
   const arr = Object.entries(byTreatment)
-    .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count)
-    .slice(0,10);
+    .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count);
 
   listTopTreatments.innerHTML = arr.length
     ? arr.map(([nome,v]) =>
@@ -180,7 +180,7 @@ async function renderTopClients(byClientId, byClientKey){
   for (const [k,v] of Object.entries(byClientKey)) rows.push({ key:k, sum:v.sum, isId:false });
 
   rows.sort((a,b)=> b.sum - a.sum);
-  const top10 = rows.slice(0,10);
+  const top10 = rows.slice(0,10);   // 🔹 resta top 10
 
   const idSet = new Set(top10.filter(r=>r.isId).map(r=>r.key));
   const names = idSet.size ? await resolveClientNames(idSet) : new Map();
