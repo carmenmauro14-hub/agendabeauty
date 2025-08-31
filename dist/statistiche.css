@@ -34,9 +34,11 @@ html,body{
 
 /* ===== Titolo & intro ===== */
 .stats-title{
-  font-size:24px; font-weight:800; margin:0 0 6px;
-  letter-spacing:-.15px; color:var(--text);
-}
+font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  padding: 18px 16px 8px;
+  
 .info-text{
   font-size:14px; color:var(--muted);
   margin:0 0 12px; line-height:1.35;
