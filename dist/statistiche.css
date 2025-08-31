@@ -102,20 +102,40 @@ html,body{
   border:1px dashed var(--line);
   border-radius:12px;
   background:#fff;
-  overflow-x:auto;       /* scroll solo dentro il grafico */
+  overflow-x:auto;              /* scroll confinato nel grafico */
   overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
   width:100%;
   box-sizing:border-box;
   min-width:100%;
 }
+
 .bar{
-  flex:0 0 24px; /* ogni barra ha larghezza minima 24px */
+  flex:0 0 24px;                /* larghezza minima per ogni barra */
   background:#f0dfd4;
   border:1px solid #e6d9d0;
   border-radius:6px 6px 0 0;
   position:relative;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  min-height: 8px;              /* evita scomparsa totale con valore 0 */
 }
+
+/* numerino del giorno dentro la barra */
+.bar .day-label{
+  position:absolute;
+  bottom:2px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:10px;
+  line-height:1;
+  color:#a07863;
+  pointer-events:none;
+  user-select:none;
+  opacity:.95;
+}
+
 .bar .tip{
   position:absolute;
   bottom:100%;
@@ -138,30 +158,6 @@ html,body{
   margin-top:6px;
   font-size:12px;
   color:#9a8b82;
-}
-
-/* --- Etichette sotto al grafico --- */
-.bars {
-  overflow-x: auto;              /* lo scroll orizzontale resta confinato nel grafico */
-}
-
-.bars-labels{
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 2px 2px 0;
-  margin-top: 4px;
-  overflow-x: auto;              /* scroll sincronizzato col grafico */
-  -webkit-overflow-scrolling: touch;
-}
-
-.bars-labels span{
-  flex: 1 0 12px;                /* stessa base delle barre */
-  min-width: 10px;
-  text-align: center;
-  font-size: 11px;
-  color: #9a8b82;
-  user-select: none;
 }
 
 /* Utility */
