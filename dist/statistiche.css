@@ -46,7 +46,7 @@ html,body{
 }
 .info-text{
   font-size:14px;
-  color:var(--muted);
+  color:666;
   margin:0 0 12px;
   line-height:2;
 }
