@@ -75,12 +75,6 @@ function getRange(type, fromStr, toStr){
     const end   = new Date(now.getFullYear(), now.getMonth(), 1);
     return {start,end};
   }
-  if(type==="year"){
-    const y = selectedYear; // ← usa l'anno scelto
-    const start = new Date(y, 0, 1);
-    const end   = new Date(y+1, 0, 1);
-    return {start,end};
-  }
   // custom
   const s = fromStr ? new Date(fromStr+"T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
   const e = toStr ? new Date(toStr+"T00:00:00")     : new Date(now.getFullYear(), now.getMonth()+1, 1);
