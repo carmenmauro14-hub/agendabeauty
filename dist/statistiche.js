@@ -27,7 +27,6 @@ const applyBtn  = document.getElementById("applyRange");
 const elRevenue = document.getElementById("kpiRevenue");
 const elCount   = document.getElementById("kpiCount");
 const elAvg     = document.getElementById("kpiAvg");
-const elTopTr   = document.getElementById("kpiTopTreatment");
 
 const listTopTreatments = document.getElementById("listTopTreatments");
 const listTopClients    = document.getElementById("listTopClients");
