@@ -119,5 +119,17 @@ html,body{
 
 .bars-legend{ margin-top:6px; font-size:12px; color:#9a8b82; }
 
+.year-controls{
+  display:flex; align-items:center; gap:12px;
+  margin-top:4px; user-select:none;
+}
+.year-btn{
+  min-width:36px; height:36px; border-radius:10px; border:1px solid var(--line);
+  background:#fff; font-size:18px; font-weight:800; color:var(--text);
+}
+.year-label{
+  font-weight:800; color:var(--text);
+}
+
 /* Utility */
 .hidden{ display:none !important; }
