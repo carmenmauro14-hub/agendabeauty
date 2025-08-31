@@ -92,17 +92,19 @@ html,body{
 .list .name{ font-weight:800; color:var(--text); }
 .list .meta{ color:#6d584b; font-feature-settings:"tnum" 1; }
 
+/* ...tutto il resto invariato... */
+
 /* Bars – andamento mese */
 .bars{
   display:flex;
   align-items:flex-end;
   gap:6px;
   height:140px;
-  padding:8px 2px;
+  padding:8px 2px;                 /* niente barra separata: i numeri sono dentro */
   border:1px dashed var(--line);
   border-radius:12px;
   background:#fff;
-  overflow-x:auto;              /* scroll confinato nel grafico */
+  overflow-x:auto;                 /* scroll confinato nel grafico */
   overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
   width:100%;
@@ -111,7 +113,7 @@ html,body{
 }
 
 .bar{
-  flex:0 0 24px;                /* larghezza minima per ogni barra */
+  flex:0 0 24px;
   background:#f0dfd4;
   border:1px solid #e6d9d0;
   border-radius:6px 6px 0 0;
@@ -119,13 +121,13 @@ html,body{
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  min-height: 8px;              /* evita scomparsa totale con valore 0 */
+  min-height: 14px;               /* ← altezza minima per ospitare il numero */
 }
 
 /* numerino del giorno dentro la barra */
 .bar .day-label{
   position:absolute;
-  bottom:2px;
+  bottom:2px;                      /* all’interno della barra */
   left:50%;
   transform:translateX(-50%);
   font-size:10px;
