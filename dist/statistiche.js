@@ -123,7 +123,6 @@ function aggregateStats(appts){
   const byDay       = {}; // YYYY-MM-DD -> sum
 
   for (const a of appts){
-    // totale appuntamento
     let tot = 0;
     if(Array.isArray(a.trattamenti) && a.trattamenti.length){
       for (const t of a.trattamenti){
@@ -158,10 +157,7 @@ function aggregateStats(appts){
   }
 
   const avg = count>0 ? revenue / count : 0;
-  const topTreat = Object.entries(byTreatment)
-    .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum)[0]?.[0] || "—";
-
-  return { revenue, count, avg, byTreatment, byDay, topTreat, byClientId, byClientKey };
+  return { revenue, count, avg, byTreatment, byDay, byClientId, byClientKey };
 }
 
 function renderTopTreatments(byTreatment){
@@ -197,14 +193,16 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-// Barre con numero del giorno integrato
 function renderBars(byDay, start, end){
-  const sameMonth = start.getFullYear()===end.getFullYear() && start.getMonth()===end.getMonth()-1;
-  trendCard.classList.toggle("hidden", !sameMonth);
+  const lastMoment = new Date(end.getTime() - 1);
+  const sameMonth =
+    start.getFullYear() === lastMoment.getFullYear() &&
+    start.getMonth()    === lastMoment.getMonth() &&
+    start.getDate()     === 1;
 
+  trendCard.classList.toggle("hidden", !sameMonth);
   barsContainer.innerHTML = "";
   barsLegend.textContent  = "";
-
   if (!sameMonth) return;
 
   const daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
@@ -256,7 +254,6 @@ tabs.querySelectorAll(".tab").forEach(btn=>{
   });
 });
 
-// Applica intervallo
 applyBtn.addEventListener("click", ()=> run("custom"));
 
 // Avvio
@@ -273,7 +270,6 @@ async function run(type=currentType){
   elRevenue.textContent = euro(agg.revenue);
   elCount.textContent   = String(agg.count);
   elAvg.textContent     = euro(agg.avg);
-  if (elTopTr) elTopTr.textContent = agg.topTreat;
 
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
