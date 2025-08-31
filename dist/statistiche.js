@@ -18,16 +18,11 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 // DOM
-const tabs        = document.getElementById("periodTabs");
-const customBox   = document.getElementById("customRange");
-const dateFrom    = document.getElementById("dateFrom");
-const dateTo      = document.getElementById("dateTo");
-const applyBtn    = document.getElementById("applyRange");
-
-const yearControls= document.getElementById("yearControls");
-const yearLabel   = document.getElementById("yearLabel");
-const prevYearBtn = document.getElementById("prevYear");
-const nextYearBtn = document.getElementById("nextYear");
+const tabs      = document.getElementById("periodTabs");
+const customBox = document.getElementById("customRange");
+const dateFrom  = document.getElementById("dateFrom");
+const dateTo    = document.getElementById("dateTo");
+const applyBtn  = document.getElementById("applyRange");
 
 const elRevenue = document.getElementById("kpiRevenue");
 const elCount   = document.getElementById("kpiCount");
@@ -38,10 +33,6 @@ const listTopClients    = document.getElementById("listTopClients");
 const trendCard         = document.getElementById("trendCard");
 const barsContainer     = document.getElementById("barsContainer");
 const barsLegend        = document.getElementById("barsLegend");
-
-// Stato
-let currentType  = "month";
-let selectedYear = new Date().getFullYear(); // ← anno navigabile
 
 // Utils
 const euro = (n)=> Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
@@ -73,6 +64,12 @@ function getRange(type, fromStr, toStr){
   if(type==="lastmonth"){
     const start = new Date(now.getFullYear(), now.getMonth()-1, 1);
     const end   = new Date(now.getFullYear(), now.getMonth(), 1);
+    return {start,end};
+  }
+  if(type==="year"){
+    const y = new Date().getFullYear();
+    const start = new Date(y, 0, 1);
+    const end   = new Date(y+1, 0, 1);
     return {start,end};
   }
   // custom
@@ -128,6 +125,7 @@ function aggregateStats(appts){
   const byMonth     = {}; // YYYY-MM -> sum
 
   for (const a of appts){
+    // totale appuntamento
     let tot = 0;
     if(Array.isArray(a.trattamenti) && a.trattamenti.length){
       for (const t of a.trattamenti){
@@ -148,7 +146,7 @@ function aggregateStats(appts){
     if (dt){
       const dKey = dt.toISOString().slice(0,10);
       const mKey = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
-      byDay[dKey] = (byDay[dKey] || 0) + tot;
+      byDay[dKey]   = (byDay[dKey]   || 0) + tot;
       byMonth[mKey] = (byMonth[mKey] || 0) + tot;
     }
 
@@ -167,7 +165,7 @@ function aggregateStats(appts){
   return { revenue, count, avg, byTreatment, byDay, byMonth, byClientId, byClientKey };
 }
 
-// Top trattamenti: TUTTI (ordinati per fatturato)
+// Top trattamenti: TUTTI
 function renderTopTreatments(byTreatment){
   const arr = Object.entries(byTreatment)
     .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count);
@@ -204,13 +202,13 @@ async function renderTopClients(byClientId, byClientKey){
 // Grafico giornaliero (per mese)
 function renderMonthBars(byDay, start, end){
   const lastMoment = new Date(end.getTime() - 1);
-  const sameMonth =
+  const isFullMonth =
     start.getFullYear() === lastMoment.getFullYear() &&
     start.getMonth()    === lastMoment.getMonth() &&
     start.getDate()     === 1;
 
-  trendCard.classList.toggle("hidden", !sameMonth);
-  if (!sameMonth) return;
+  trendCard.classList.toggle("hidden", !isFullMonth);
+  if (!isFullMonth) return;
 
   trendCard.querySelector(".card-title").textContent = "Andamento mese";
   barsContainer.innerHTML = "";
@@ -271,42 +269,22 @@ function renderYearBars(byMonth, year){
 }
 
 // Tabs
+let currentType = "month";
 tabs.querySelectorAll(".tab").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     tabs.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
     const t = btn.dataset.range;
 
-    const isYear   = t === "year";
-    const isCustom = t === "custom";
-    yearControls.hidden = !isYear;
-    customBox.hidden    = !isCustom;
-
-    if (isCustom) {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth();
-      const pad = n => String(n).padStart(2, "0");
-      const from = `${y}-${pad(m+1)}-01`;
-      const to   = `${y}-${pad(m+1)}-${pad(new Date(y, m+1, 0).getDate())}`;
-      if (!dateFrom.value) dateFrom.value = from;
-      if (!dateTo.value)   dateTo.value   = to;
-    }
-
+    customBox.hidden = (t !== "custom"); // mostra la scelta date solo per Intervallo
     run(t);
   });
 });
 
-// Navigazione anno
-function refreshYearLabel(){ yearLabel.textContent = String(selectedYear); }
-prevYearBtn?.addEventListener("click", ()=>{ selectedYear--; refreshYearLabel(); run("year"); });
-nextYearBtn?.addEventListener("click", ()=>{ selectedYear++; refreshYearLabel(); run("year"); });
-
-// Applica intervallo custom
+// Intervallo personalizzato
 applyBtn.addEventListener("click", ()=> run("custom"));
 
 // Avvio
-refreshYearLabel();
 run("month");
 
 // Core
@@ -317,17 +295,19 @@ async function run(type=currentType){
   const appts = await fetchAppointmentsInRange(start,end);
   const agg   = aggregateStats(appts);
 
+  // KPI
   elRevenue.textContent = euro(agg.revenue);
   elCount.textContent   = String(agg.count);
   elAvg.textContent     = euro(agg.avg);
 
+  // Liste
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
-  // grafici
+  // Grafici
   if (type === "year"){
     renderYearBars(agg.byMonth, start.getFullYear());
   } else {
-    renderMonthBars(agg.byDay, start, end); // mostra mese solo se l'intervallo è un mese pieno
+    renderMonthBars(agg.byDay, start, end); // mostrato solo se range = mese pieno
   }
 }
