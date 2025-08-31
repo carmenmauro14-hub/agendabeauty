@@ -19,21 +19,23 @@
     <h1 class="stats-title">Statistiche</h1>
     <p class="info-text">Riepilogo ricavi e trattamenti sul periodo selezionato.</p>
 
-    <!-- Filtro periodo -->
-<section class="filters">
-  <div class="period-tabs" id="periodTabs">
-    <button data-range="month" class="tab active">Mese corrente</button>
-    <button data-range="lastmonth" class="tab">Mese scorso</button>
-    <button data-range="year" class="tab">Anno corrente</button>
-    <button data-range="custom" class="tab">Intervallo</button>
-  </div>
-  <div class="custom-range" id="customRange" hidden>
-    <input type="date" id="dateFrom">
-    <span class="dash">–</span>
-    <input type="date" id="dateTo">
-    <button id="applyRange" class="btn-apply">Applica</button>
-  </div>
-</section>
+    <!-- Filtri -->
+    <section class="filters">
+      <div class="period-tabs" id="periodTabs">
+        <button data-range="month" class="tab active">Mese corrente</button>
+        <button data-range="lastmonth" class="tab">Mese scorso</button>
+        <button data-range="year" class="tab">Anno corrente</button>
+        <button data-range="custom" class="tab">Intervallo</button>
+      </div>
+
+      <!-- Solo per intervallo personalizzato -->
+      <div class="custom-range" id="customRange" hidden>
+        <input type="date" id="dateFrom">
+        <span class="dash">–</span>
+        <input type="date" id="dateTo">
+        <button id="applyRange" class="btn-apply">Applica</button>
+      </div>
+    </section>
 
     <!-- KPI -->
     <section class="kpi-grid">
@@ -63,9 +65,9 @@
       <ul class="list" id="listTopClients"></ul>
     </section>
 
-    <!-- Andamento mensile -->
+    <!-- Andamento -->
     <section class="card" id="trendCard">
-      <div class="card-title">Andamento mese</div>
+      <div class="card-title">Andamento</div>
       <div class="bars" id="barsContainer"></div>
       <div class="bars-legend" id="barsLegend"></div>
     </section>
