@@ -18,11 +18,16 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 // DOM
-const tabs      = document.getElementById("periodTabs");
-const customBox = document.getElementById("customRange");
-const dateFrom  = document.getElementById("dateFrom");
-const dateTo    = document.getElementById("dateTo");
-const applyBtn  = document.getElementById("applyRange");
+const tabs        = document.getElementById("periodTabs");
+const customBox   = document.getElementById("customRange");
+const dateFrom    = document.getElementById("dateFrom");
+const dateTo      = document.getElementById("dateTo");
+const applyBtn    = document.getElementById("applyRange");
+
+const yearControls= document.getElementById("yearControls");
+const yearLabel   = document.getElementById("yearLabel");
+const prevYearBtn = document.getElementById("prevYear");
+const nextYearBtn = document.getElementById("nextYear");
 
 const elRevenue = document.getElementById("kpiRevenue");
 const elCount   = document.getElementById("kpiCount");
@@ -33,6 +38,10 @@ const listTopClients    = document.getElementById("listTopClients");
 const trendCard         = document.getElementById("trendCard");
 const barsContainer     = document.getElementById("barsContainer");
 const barsLegend        = document.getElementById("barsLegend");
+
+// Stato
+let currentType  = "month";
+let selectedYear = new Date().getFullYear(); // ← anno navigabile
 
 // Utils
 const euro = (n)=> Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
@@ -67,8 +76,9 @@ function getRange(type, fromStr, toStr){
     return {start,end};
   }
   if(type==="year"){
-    const start = new Date(now.getFullYear(), 0, 1);
-    const end   = new Date(now.getFullYear()+1, 0, 1);
+    const y = selectedYear; // ← usa l'anno scelto
+    const start = new Date(y, 0, 1);
+    const end   = new Date(y+1, 0, 1);
     return {start,end};
   }
   // custom
@@ -117,10 +127,11 @@ async function resolveClientNames(ids){
 
 function aggregateStats(appts){
   let revenue = 0, count = 0;
-  const byTreatment = {}; 
-  const byClientId  = {}; 
-  const byClientKey = {}; 
-  const byDay       = {}; 
+  const byTreatment = {}; // nome -> {count,sum}
+  const byClientId  = {}; // id -> {sum}
+  const byClientKey = {}; // nome -> {sum}
+  const byDay       = {}; // YYYY-MM-DD -> sum
+  const byMonth     = {}; // YYYY-MM -> sum
 
   for (const a of appts){
     let tot = 0;
@@ -141,8 +152,10 @@ function aggregateStats(appts){
 
     const dt = safeDate(a.data || a.date || a.dateTime);
     if (dt){
-      const key = dt.toISOString().slice(0,10);
-      byDay[key] = (byDay[key] || 0) + tot;
+      const dKey = dt.toISOString().slice(0,10);
+      const mKey = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
+      byDay[dKey] = (byDay[dKey] || 0) + tot;
+      byMonth[mKey] = (byMonth[mKey] || 0) + tot;
     }
 
     const id  = (a.clienteId || "").toString().trim();
@@ -157,10 +170,10 @@ function aggregateStats(appts){
   }
 
   const avg = count>0 ? revenue / count : 0;
-  return { revenue, count, avg, byTreatment, byDay, byClientId, byClientKey };
+  return { revenue, count, avg, byTreatment, byDay, byMonth, byClientId, byClientKey };
 }
 
-// 🔹 ora senza .slice(0,10)
+// Top trattamenti: TUTTI (ordinati per fatturato)
 function renderTopTreatments(byTreatment){
   const arr = Object.entries(byTreatment)
     .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count);
@@ -172,6 +185,7 @@ function renderTopTreatments(byTreatment){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
+// Top clienti: TOP 10
 async function renderTopClients(byClientId, byClientKey){
   if (!listTopClients) return;
 
@@ -180,7 +194,7 @@ async function renderTopClients(byClientId, byClientKey){
   for (const [k,v] of Object.entries(byClientKey)) rows.push({ key:k, sum:v.sum, isId:false });
 
   rows.sort((a,b)=> b.sum - a.sum);
-  const top10 = rows.slice(0,10);   // 🔹 resta top 10
+  const top10 = rows.slice(0,10);
 
   const idSet = new Set(top10.filter(r=>r.isId).map(r=>r.key));
   const names = idSet.size ? await resolveClientNames(idSet) : new Map();
@@ -193,7 +207,8 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-function renderBars(byDay, start, end){
+// Grafico giornaliero (per mese)
+function renderMonthBars(byDay, start, end){
   const lastMoment = new Date(end.getTime() - 1);
   const sameMonth =
     start.getFullYear() === lastMoment.getFullYear() &&
@@ -201,9 +216,11 @@ function renderBars(byDay, start, end){
     start.getDate()     === 1;
 
   trendCard.classList.toggle("hidden", !sameMonth);
+  if (!sameMonth) return;
+
+  trendCard.querySelector(".card-title").textContent = "Andamento mese";
   barsContainer.innerHTML = "";
   barsLegend.textContent  = "";
-  if (!sameMonth) return;
 
   const daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
   const values = [];
@@ -228,18 +245,50 @@ function renderBars(byDay, start, end){
     `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
 }
 
+// Grafico annuale (12 mesi)
+function renderYearBars(byMonth, year){
+  trendCard.classList.remove("hidden");
+  trendCard.querySelector(".card-title").textContent = "Andamento anno";
+  barsContainer.innerHTML = "";
+  barsLegend.textContent  = "";
+
+  const monthNames = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+  const values = [];
+  for (let m=1; m<=12; m++){
+    const key = `${year}-${String(m).padStart(2,"0")}`;
+    values.push({ m, sum: byMonth[key] || 0 });
+  }
+  const max = Math.max(1, ...values.map(v=>v.sum));
+
+  values.forEach(v=>{
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.height = Math.round((v.sum / max) * 100) + "%";
+    bar.innerHTML = `
+      <div class="tip">${monthNames[v.m-1]}: ${euro(v.sum)}</div>
+      <div class="day-label">${monthNames[v.m-1]}</div>
+    `;
+    barsContainer.appendChild(bar);
+  });
+
+  const maxMonthIdx = values.reduce((best,i,idx,arr)=> i.sum>arr[best].sum ? idx : best ,0);
+  barsLegend.textContent =
+    `${year} • mese top ${monthNames[maxMonthIdx]} (${euro(values[maxMonthIdx].sum)})`;
+}
+
 // Tabs
-let currentType = "month";
 tabs.querySelectorAll(".tab").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     tabs.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
     const t = btn.dataset.range;
 
-    const showCustom = t === "custom";
-    customBox.hidden = !showCustom;
+    const isYear   = t === "year";
+    const isCustom = t === "custom";
+    yearControls.hidden = !isYear;
+    customBox.hidden    = !isCustom;
 
-    if (showCustom) {
+    if (isCustom) {
       const now = new Date();
       const y = now.getFullYear();
       const m = now.getMonth();
@@ -254,9 +303,16 @@ tabs.querySelectorAll(".tab").forEach(btn=>{
   });
 });
 
+// Navigazione anno
+function refreshYearLabel(){ yearLabel.textContent = String(selectedYear); }
+prevYearBtn?.addEventListener("click", ()=>{ selectedYear--; refreshYearLabel(); run("year"); });
+nextYearBtn?.addEventListener("click", ()=>{ selectedYear++; refreshYearLabel(); run("year"); });
+
+// Applica intervallo custom
 applyBtn.addEventListener("click", ()=> run("custom"));
 
 // Avvio
+refreshYearLabel();
 run("month");
 
 // Core
@@ -273,5 +329,11 @@ async function run(type=currentType){
 
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
-  renderBars(agg.byDay, start, end);
+
+  // grafici
+  if (type === "year"){
+    renderYearBars(agg.byMonth, start.getFullYear());
+  } else {
+    renderMonthBars(agg.byDay, start, end); // mostra mese solo se l'intervallo è un mese pieno
+  }
 }
