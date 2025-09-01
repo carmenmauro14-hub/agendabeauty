@@ -230,6 +230,3 @@ html,body{
 
 /* ===== Responsive ===== */
 @media (max-width:420px){
-  .stats-title{ font-size:22px; }
-  .kpi-value{ font-size:14px; } /* resta 14 anche su mobile */
-}
