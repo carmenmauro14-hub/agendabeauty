@@ -26,24 +26,21 @@ html,body{
 .rubrica-container{
   max-width:520px;           /* uguale a settings */
   margin:0 auto;
-  padding:0;                 /* rientri gestiti da titolo/righe */
-  padding-bottom:calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 16px);
+  /* 1px di padding-top per evitare margin-collapsing col ::before */
+  padding:1px 0 calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 16px);
 }
 
 /* ─── Titolo (identico a settings-title) ───────── */
-/* Titolo: stessa spaziatura + correzione metrica */
 .rubrica-container::before{
   content:"Clienti";
   display:block;
   font-size:24px;
   font-weight:800;
   color:var(--text);
-  padding:18px 16px 8px;   /* come Impostazioni/Statistiche */
-  line-height:1.2;         /* evita riga "alta" */
+  padding:18px 16px 8px;     /* 18 / 16 / 8 come gli altri */
+  line-height:1.2;
   background:#fff;
-  margin:0;
-  position:relative;
-  top:17px;                /* nudge: alza il titolo di 2px per pareggiare */
+  margin:17px 0 0;           /* spinge in giù senza overlap */
 }
 
 /* Quando la rubrica è dentro la modale dello step: nascondi il titolo */
