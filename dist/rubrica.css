@@ -8,25 +8,32 @@ body {
   color: #a07863;
 }
 
+/* Contenitore come Impostazioni (max-width 520, no padding ai lati) */
 .rubrica-container {
-  max-width: 480px;
+  max-width: 520px;          /* prima era 480 */
   margin: 0 auto;
-  padding: 16px;
+  padding: 0;                 /* rientri dati dal titolo e dalle sezioni */
+  padding-bottom: 80px;       /* come settings-container */
 }
 
+/* Titolo come settings-title: 18 / 16 / 8 */
 .rubrica-container::before {
   content: "Clienti";
   display: block;
   font-size: 24px;
   font-weight: 800;
-  margin-bottom: 24px;
   color: #a07863;
+  padding: 18px 16px 8px;     /* uguale a Impostazioni */
+  background: #fff;           /* fix: non "fff" senza # */
+  margin: 0;
 }
 
+/* Barra superiore con rientro ai lati */
 .top-bar {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+  padding: 0 16px;            /* allineata al titolo */
 }
 
 .top-bar input {
@@ -57,6 +64,7 @@ body {
   cursor: pointer;
 }
 
+/* Lista principale */
 #clientList {
   list-style: none;
   padding: 0;
@@ -64,7 +72,7 @@ body {
 }
 
 #clientList li.section {
-  padding: 8px 12px;
+  padding: 8px 16px;          /* allineata al titolo */
   margin: 8px 0 4px;
   font-weight: 900;
   text-transform: uppercase;
@@ -73,7 +81,7 @@ body {
 }
 
 #clientList li.item {
-  padding: 10px 80px 10px 16px;
+  padding: 10px 80px 10px 16px; /* left 16 per allinearsi al titolo */
   font-size: 16px;
   color: #a07863;
   position: relative;
@@ -94,6 +102,7 @@ body {
   background-color: #e6d9d0;
 }
 
+/* Navigazione lettere */
 .letter-nav {
   position: fixed;
   top: 50%;
@@ -116,6 +125,7 @@ body {
   color: #b08b65;
 }
 
+/* Modal */
 .modal {
   display: none;
   position: fixed;
@@ -158,6 +168,7 @@ body {
   cursor: pointer;
 }
 
+/* Form nel modal */
 form {
   display: flex;
   flex-direction: column;
@@ -180,6 +191,7 @@ form input:focus {
   outline: none;
 }
 
+/* Azioni */
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -190,6 +202,7 @@ button i {
   margin-right: 6px;
 }
 
+/* Bottoni */
 .btn-primary {
   background: #d2b8a3;
   color: #fff;
@@ -220,11 +233,10 @@ button i {
   cursor: pointer;
 }
 
-.hidden {
-  display: none;
-}
+/* Utility */
+.hidden { display: none; }
 
-/* (Selezori duplicati presenti in originale mantenuti) */
+/* (Selettori duplicati mantenuti) */
 #clientList,
 #clientListPicker {
   list-style: none;
@@ -234,7 +246,7 @@ button i {
 
 #clientList li.section,
 #clientListPicker li.section {
-  padding: 8px 12px;
+  padding: 8px 16px;
   margin: 8px 0 4px;
   font-weight: 900;
   text-transform: uppercase;
