@@ -30,21 +30,24 @@ html,body{
   padding:1px 0 calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 16px);
 }
 
-/* ─── Titolo (identico a settings-title) ───────── */
-.rubrica-container::before{
+/* Titolo nella pagina autonoma */
+.rubrica-container::before {
   content:"Clienti";
   display:block;
   font-size:24px;
   font-weight:800;
   color:var(--text);
-  padding:18px 16px 8px;     /* 18 / 16 / 8 come gli altri */
+  padding:18px 16px 8px;
   line-height:1.2;
   background:#fff;
-  margin:17px 0 0;           /* spinge in giù senza overlap */
+  margin:17px 0 0;
 }
 
-/* Quando la rubrica è dentro la modale dello step: nascondi il titolo */
-.is-modal .rubrica-container::before{ content:none; }
+/* Titolo quando la rubrica è dentro una modale */
+.modal .rubrica-container::before {
+  margin:0;         /* elimina il 17px */
+  padding-top:12px; /* più aderente al grabber */
+}
 
 /* ─── Barra ricerca/azione ─────────────────────── */
 .top-bar{
