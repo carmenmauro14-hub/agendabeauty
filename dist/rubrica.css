@@ -43,7 +43,7 @@ html,body{
   background:#fff;
   margin:0;
   position:relative;
-  top:-2px;                /* nudge: alza il titolo di 2px per pareggiare */
+  top:4px;                /* nudge: alza il titolo di 2px per pareggiare */
 }
 
 /* Quando la rubrica è dentro la modale dello step: nascondi il titolo */
