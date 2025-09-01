@@ -28,19 +28,19 @@ html,body{
 }
 
 /* ===== Container pagina ===== */
-.stats-container{
-  max-width:520px;
-  margin:0 auto;
-  padding:14px 16px;
-  padding-top:calc(20px + env(safe-area-inset-top)); /* spazio top dopo rimozione header */
-  padding-bottom:calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 16px);
+.stats-container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px;
+  padding-bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 16px);
 }
+
 
 /* ===== Titolo & intro ===== */
 .stats-title{
   font-size:24px;
   font-weight:800;
-  margin:18px 16px 8px;;
+  margin:18px 0px 8px;;
   letter-spacing:-.15px;
   color:var(--text);
 }
