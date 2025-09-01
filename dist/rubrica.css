@@ -17,7 +17,7 @@ body {
 .rubrica-container::before {
   content: "Clienti";
   display: block;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
   margin-bottom: 24px;
   color: #a07863;
