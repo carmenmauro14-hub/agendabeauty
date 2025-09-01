@@ -39,7 +39,7 @@ html,body{
 /* ===== Titolo & intro ===== */
 .stats-title{
   font-size:24px;
-  font-weight:700;
+  font-weight:800;
   margin:6px 0 8px;
   letter-spacing:-.15px;
   color:var(--text);
