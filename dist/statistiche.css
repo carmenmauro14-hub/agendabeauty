@@ -134,16 +134,19 @@ html,body{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:12px 0;
   border-top:1px solid var(--line);
-  font-size:14px; color:var(--text);
+  font-size:15px; color:var(--text);
+  font-weight:700;
 }
 .list li:first-child{ border-top:none; }
 .list .name{
-  font-weight:700;
+  font-size:14px
+  font-weight:400;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .list .meta{
   white-space:nowrap;
-  font-weight:600;
+  font-size:14px
+  font-weight:400;
   font-variant-numeric:tabular-nums;
 }
 
@@ -154,7 +157,7 @@ html,body{
   display:inline-flex; align-items:center; justify-content:center;
   border:1px solid var(--line); border-radius:999px;
   background:#fff; color:var(--text);
-  font-weight:700; font-size:13px;
+  font-weight:409; font-size:14px;
 }
 
 /* ===== Grafico: Andamento mese (colonne) ===== */
