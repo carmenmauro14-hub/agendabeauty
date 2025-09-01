@@ -139,13 +139,13 @@ html,body{
 }
 .list li:first-child{ border-top:none; }
 .list .name{
-  font-size:14px
+  font-size:14px;
   font-weight:400;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .list .meta{
   white-space:nowrap;
-  font-size:14px
+  font-size:14px;
   font-weight:400;
   font-variant-numeric:tabular-nums;
 }
