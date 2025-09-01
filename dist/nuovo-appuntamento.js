@@ -124,6 +124,26 @@ btnRubricaClose?.addEventListener("click", () => {
   }, { once: true });
 });
 
+// --- Drag-to-close anche per la Rubrica nello step clienti ---
+const rubricaHeaderEl  = document.querySelector('#rubricaModal .rubrica-header'); // zona con la maniglia
+const rubricaPanelEl   = rubricaPanel; // già definito sopra (".rubrica-container")
+
+function chiudiRubricaConAnimazione() {
+  if (!rubricaPanelEl) { rubricaModal.style.display = "none"; return; }
+  rubricaPanelEl.classList.add('swipe-out-down');
+  rubricaPanelEl.addEventListener('transitionend', () => {
+    rubricaPanelEl.classList.remove('swipe-out-down');
+    rubricaModal.style.display = 'none';
+    rubricaPanelEl.style.transform = 'translateY(0)'; // reset per apertura successiva
+  }, { once:true });
+}
+
+// attiva il drag verticale sulla maniglia della rubrica
+if (rubricaHeaderEl && rubricaPanelEl) {
+  // firma: abilitaSwipeVerticale(handleEl, panelEl, onClose, soloVersoGiu=true, sogliaPx)
+  abilitaSwipeVerticale(rubricaHeaderEl, rubricaPanelEl, chiudiRubricaConAnimazione, true, 80);
+}
+
 function renderRubrica(clienti) {
   const groups = {};
   clienti.forEach(c => {
