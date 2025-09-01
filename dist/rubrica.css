@@ -31,20 +31,23 @@ html,body{
 }
 
 /* ─── Titolo (identico a settings-title) ───────── */
+/* Titolo: stessa spaziatura + correzione metrica */
 .rubrica-container::before{
   content:"Clienti";
   display:block;
   font-size:24px;
   font-weight:800;
   color:var(--text);
-  padding:18px 16px 8px;    
-  line-height: 1.2;
+  padding:18px 16px 8px;   /* come Impostazioni/Statistiche */
+  line-height:1.2;         /* evita riga "alta" */
   background:#fff;
   margin:0;
+  position:relative;
+  top:-2px;                /* nudge: alza il titolo di 2px per pareggiare */
 }
-.is-modal .rubrica-container::before {
-  content: none;
-}
+
+/* Quando la rubrica è dentro la modale dello step: nascondi il titolo */
+.is-modal .rubrica-container::before{ content:none; }
 
 /* ─── Barra ricerca/azione ─────────────────────── */
 .top-bar{
