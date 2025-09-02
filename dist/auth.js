@@ -1,4 +1,4 @@
-// auth.js
+// auth.js — versione anti-loop con index protetta
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -9,21 +9,20 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// === Firebase config ===
+// ---- Firebase (una sola istanza) ----
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
   projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com", // corretto
+  storageBucket: "agenda-carmenmauro.appspot.com",
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
 
-// Init app una sola volta
-export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// --- EXPORT funzioni di autenticazione ---
+// Re-export funzioni utili
 export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -32,29 +31,37 @@ export {
   onAuthStateChanged
 };
 
-// === AUTH GUARD globale ===
-const PUBLIC_PAGES = new Set(["/login.html"]); // pagine pubbliche
+// ---- Guard globale ----
+const HTML = document.documentElement;
+if (HTML) HTML.style.visibility = "hidden";  // evita flicker all’avvio
 
-// Nascondi la pagina finché non sappiamo se l'utente è loggato
-const htmlEl = document.documentElement;
-if (htmlEl) htmlEl.style.visibility = "hidden";
+const FILE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+
+// Solo queste pagine sono pubbliche
+const AUTH_PAGES = new Set(["login.html", "signup.html", "forgot.html"]);
+// Home di default per utenti loggati
+const HOME_PAGE  = "index.html";
+
+// failsafe: sblocca visibilità in ogni caso dopo 3s
+const failsafe = setTimeout(() => { if (HTML) HTML.style.visibility = ""; }, 3000);
+
+// evita doppi redirect
+let redirected = false;
+const go = (url) => { if (!redirected) { redirected = true; location.replace(url); } };
 
 onAuthStateChanged(auth, (user) => {
-  const path = location.pathname;
-  const isPublic = PUBLIC_PAGES.has(path) || path === "/" || path.endsWith("/index.html");
+  clearTimeout(failsafe);
 
-  if (!user && !isPublic) {
-    // Non loggato su pagina protetta → vai a login
-    location.href = "login.html";
+  if (!user) {
+    // NON loggato → consenti solo pagine di autenticazione
+    if (!AUTH_PAGES.has(FILE)) return go("login.html");
+    if (HTML) HTML.style.visibility = "";
     return;
   }
 
-  if (user && PUBLIC_PAGES.has(path)) {
-    // Già loggato ma su login.html → manda alla vera home
-    location.href = "index.html";
-    return;
-  }
+  // Loggato → se sei su login/forgot/signup, porta alla home
+  if (AUTH_PAGES.has(FILE)) return go(HOME_PAGE);
 
-  // Mostra la pagina quando lo stato è deciso
-  if (htmlEl) htmlEl.style.visibility = "";
+  // Loggato su pagina protetta → mostra normalmente
+  if (HTML) HTML.style.visibility = "";
 });
