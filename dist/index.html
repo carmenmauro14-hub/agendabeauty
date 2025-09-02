@@ -60,7 +60,27 @@
   <button id="logout-btn" class="logout-btn">
   <i class="fas fa-sign-out-alt"></i> Logout
 </button>
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './auth.js';
 
+  // (opzionale) mostra la pagina solo quando l'auth è determinata
+  onAuthStateChanged(auth, () => {
+    document.documentElement.style.visibility = '';
+  });
+
+  const btn = document.getElementById('logout-btn');
+  btn?.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      await signOut(auth);
+      // auth.js reindirizza a login.html
+    } catch (e) {
+      console.error('Errore logout:', e);
+      btn.disabled = false;
+      alert('Errore durante il logout. Riprova.');
+    }
+  });
+</script>
   </div>
 </body>
 </html>
