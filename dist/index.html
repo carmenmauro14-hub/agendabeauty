@@ -61,19 +61,13 @@
   <i class="fas fa-sign-out-alt"></i> Logout
 </button>
 <script type="module">
-  import { auth, signOut, onAuthStateChanged } from './auth.js';
-
-  // (opzionale) mostra la pagina solo quando l'auth è determinata
-  onAuthStateChanged(auth, () => {
-    document.documentElement.style.visibility = '';
-  });
+  import { auth, signOut } from './auth.js';
 
   const btn = document.getElementById('logout-btn');
   btn?.addEventListener('click', async () => {
     btn.disabled = true;
     try {
-      await signOut(auth);
-      // auth.js reindirizza a login.html
+      await signOut(auth); // il redirect lo gestisce auth.js
     } catch (e) {
       console.error('Errore logout:', e);
       btn.disabled = false;
