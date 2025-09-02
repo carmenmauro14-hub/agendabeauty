@@ -66,6 +66,12 @@ function getRange(type, fromStr, toStr){
       end: new Date(now.getFullYear()+1, 0, 1)
     };
   }
+  if(type==="lastyear"){
+    return {
+      start: new Date(now.getFullYear()-1, 0, 1),
+      end: new Date(now.getFullYear(), 0, 1)
+    };
+  }
   if(type==="week"){
     const s = startOfWeek(new Date());
     const e = new Date(s); e.setDate(e.getDate()+7);
@@ -190,16 +196,7 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-function renderMonthBars(byDay, start, end){
-  const lastMoment = new Date(end.getTime() - 1);
-  const isFullMonth =
-    start.getFullYear() === lastMoment.getFullYear() &&
-    start.getMonth()    === lastMoment.getMonth() &&
-    start.getDate()     === 1;
-
-  trendCard.classList.toggle("hidden", !isFullMonth);
-  if (!isFullMonth) return;
-
+function renderMonthBars(byDay, start){
   const daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
   const values = [];
   for (let d=1; d<=daysInMonth; d++){
@@ -208,6 +205,7 @@ function renderMonthBars(byDay, start, end){
   }
   const max = Math.max(1, ...values.map(v=>v.sum));
 
+  trendCard.classList.remove("hidden");
   trendCard.querySelector(".card-title").textContent = "Andamento mese";
   barsContainer.innerHTML = "";
   barsLegend.textContent  = `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
@@ -298,18 +296,14 @@ async function run(type=currentType){
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
   const diff = (end - start) / (1000*60*60*24);
-  if (type === "year"){
+
+  if (type === "year" || type === "lastyear") {
     renderYearBars(agg.byMonth, start.getFullYear());
-  } else if (type === "week" || type === "lastweek" || (type==="custom" && diff === 7)){
+  } else if (type === "week" || type === "lastweek" || (type==="custom" && diff === 7)) {
     renderWeekBars(agg.byDay, start);
-  } else if (type === "custom"){
-    const isFullMonth =
-      start.getDate() === 1 &&
-      end.getDate() === 1 &&
-      start.getMonth() + 1 === end.getMonth();
-    if (isFullMonth) renderMonthBars(agg.byDay, start, end);
-    else trendCard.classList.add("hidden");
+  } else if (type === "month" || type === "lastmonth" || (type==="custom" && start.getDate() === 1 && end.getDate() === 1)) {
+    renderMonthBars(agg.byDay, start);
   } else {
-    renderMonthBars(agg.byDay, start, end);
+    trendCard.classList.add("hidden");
   }
 }
