@@ -1,4 +1,4 @@
-// auth.js — versione anti-loop con index protetta
+// auth.js v4 — anti-loop + failsafe + log
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -9,7 +9,8 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ---- Firebase (una sola istanza) ----
+console.log("[AUTH] v4 loading…");
+
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -22,7 +23,6 @@ const firebaseConfig = {
 export const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Re-export funzioni utili
 export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -31,37 +31,57 @@ export {
   onAuthStateChanged
 };
 
-// ---- Guard globale ----
+// --- Guard ---
 const HTML = document.documentElement;
-if (HTML) HTML.style.visibility = "hidden";  // evita flicker all’avvio
+// nascondo per evitare flicker, ma metto due failsafe di sicurezza
+if (HTML) HTML.style.visibility = "hidden";
 
+// nome file corrente (funziona anche in sottocartelle)
 const FILE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
-
-// Solo queste pagine sono pubbliche
 const AUTH_PAGES = new Set(["login.html", "signup.html", "forgot.html"]);
-// Home di default per utenti loggati
 const HOME_PAGE  = "index.html";
 
-// failsafe: sblocca visibilità in ogni caso dopo 3s
-const failsafe = setTimeout(() => { if (HTML) HTML.style.visibility = ""; }, 3000);
+// failsafe 1: comunque mostra la pagina dopo 2.5s
+const fs1 = setTimeout(() => {
+  console.warn("[AUTH] failsafe #1: sblocco visibilità");
+  if (HTML) HTML.style.visibility = "";
+}, 2500);
 
-// evita doppi redirect
+// previeni doppi redirect
 let redirected = false;
-const go = (url) => { if (!redirected) { redirected = true; location.replace(url); } };
+const go = (url, why) => {
+  if (!redirected) {
+    redirected = true;
+    console.log("[AUTH] redirect →", url, "| motivo:", why, "| page:", FILE);
+    location.replace(url);
+  }
+};
 
 onAuthStateChanged(auth, (user) => {
-  clearTimeout(failsafe);
+  clearTimeout(fs1);
 
-  if (!user) {
-    // NON loggato → consenti solo pagine di autenticazione
-    if (!AUTH_PAGES.has(FILE)) return go("login.html");
+  const logged = !!user;
+  console.log("[AUTH] onAuthStateChanged", { page: FILE, logged });
+
+  if (!logged) {
+    // non loggato → solo pagine di auth sono consentite
+    if (!AUTH_PAGES.has(FILE)) return go("login.html", "non loggato su pagina protetta");
     if (HTML) HTML.style.visibility = "";
     return;
   }
 
-  // Loggato → se sei su login/forgot/signup, porta alla home
-  if (AUTH_PAGES.has(FILE)) return go(HOME_PAGE);
+  // loggato → se sei su una pagina di auth, vai in home
+  if (AUTH_PAGES.has(FILE)) return go(HOME_PAGE, "loggato su pagina di auth");
 
-  // Loggato su pagina protetta → mostra normalmente
+  // loggato su pagina protetta → ok
   if (HTML) HTML.style.visibility = "";
 });
+
+// failsafe 2: se per qualunque motivo onAuthStateChanged non parte,
+// sblocco comunque dopo 4s
+setTimeout(() => {
+  if (getAuth().currentUser || AUTH_PAGES.has(FILE)) {
+    console.warn("[AUTH] failsafe #2: sblocco visibilità tardivo");
+    if (HTML) HTML.style.visibility = "";
+  }
+}, 4000);
