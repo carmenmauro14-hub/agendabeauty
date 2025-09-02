@@ -6,6 +6,7 @@ import {
 
 const db = getFirestore(app);
 
+// === Riferimenti DOM
 const tabs      = document.getElementById("periodTabs");
 const customBox = document.getElementById("customRange");
 const dateFrom  = document.getElementById("dateFrom");
@@ -22,6 +23,7 @@ const trendCard         = document.getElementById("trendCard");
 const barsContainer     = document.getElementById("barsContainer");
 const barsLegend        = document.getElementById("barsLegend");
 
+// === Utils
 const euro = (n)=> Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 const toNumberSafe = (v)=>{
   if(v==null) return 0;
@@ -40,6 +42,7 @@ const safeDate = (d)=>{
   return d instanceof Date ? d : null;
 };
 
+// === Ranges
 function getRange(type, fromStr, toStr){
   const now = new Date();
   const startOfWeek = (d)=>{
@@ -74,7 +77,7 @@ function getRange(type, fromStr, toStr){
   }
   if(type==="week"){
     const s = startOfWeek(new Date());
-    const e = new Date(s); e.setDate(e.getDate()+7);
+    const e = new Date(); e.setHours(0,0,0,0); e.setDate(e.getDate()+1); // oggi +1
     return {start: s, end: e};
   }
   if(type==="lastweek"){
@@ -90,6 +93,7 @@ function getRange(type, fromStr, toStr){
   return {start:s, end:e};
 }
 
+// === Firebase
 async function fetchAppointmentsInRange(start, end){
   const qTs = query(
     collection(db,"appuntamenti"),
@@ -125,6 +129,7 @@ async function resolveClientNames(ids){
   return map;
 }
 
+// === Aggregazione
 function aggregateStats(appts){
   let revenue = 0, count = 0;
   const byTreatment = {}, byClientId = {}, byClientKey = {}, byDay = {}, byMonth = {};
@@ -169,6 +174,7 @@ function aggregateStats(appts){
   return { revenue, count, avg, byTreatment, byDay, byMonth, byClientId, byClientKey };
 }
 
+// === Render
 function renderTopTreatments(byTreatment){
   const arr = Object.entries(byTreatment)
     .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count);
@@ -197,6 +203,7 @@ async function renderTopClients(byClientId, byClientKey){
 }
 
 function renderMonthBars(byDay, start){
+  trendCard.classList.remove("hidden");
   const daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
   const values = [];
   for (let d=1; d<=daysInMonth; d++){
@@ -205,7 +212,6 @@ function renderMonthBars(byDay, start){
   }
   const max = Math.max(1, ...values.map(v=>v.sum));
 
-  trendCard.classList.remove("hidden");
   trendCard.querySelector(".card-title").textContent = "Andamento mese";
   barsContainer.innerHTML = "";
   barsLegend.textContent  = `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
@@ -220,6 +226,7 @@ function renderMonthBars(byDay, start){
 }
 
 function renderYearBars(byMonth, year){
+  trendCard.classList.remove("hidden");
   const monthNames = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
   const values = [];
   for (let m=1; m<=12; m++){
@@ -227,11 +234,11 @@ function renderYearBars(byMonth, year){
     values.push({ m, sum: byMonth[key] || 0 });
   }
   const max = Math.max(1, ...values.map(v=>v.sum));
+  const maxIdx = values.findIndex(v => v.sum === max);
 
-  trendCard.classList.remove("hidden");
   trendCard.querySelector(".card-title").textContent = "Andamento anno";
   barsContainer.innerHTML = "";
-  barsLegend.textContent  = `${year} • mese top ${monthNames[values.findIndex(v => v.sum === max)]} (${euro(max)})`;
+  barsLegend.textContent  = `${year} • mese top ${monthNames[maxIdx]} (${euro(max)})`;
 
   values.forEach(v=>{
     const bar = document.createElement("div");
@@ -243,16 +250,16 @@ function renderYearBars(byMonth, year){
 }
 
 function renderWeekBars(byDay, start){
+  trendCard.classList.remove("hidden");
   const days = ["LUN","MAR","MER","GIO","VEN","SAB","DOM"];
   const values = [];
   for (let i=0; i<7; i++){
-    const d = new Date(start); d.setDate(start.getDate()+i);
+    const d = new Date(start); d.setDate(d.getDate()+i);
     const key = d.toISOString().slice(0,10);
     values.push({ label: days[i], sum: byDay[key] || 0 });
   }
   const max = Math.max(1, ...values.map(v=>v.sum));
 
-  trendCard.classList.remove("hidden");
   trendCard.querySelector(".card-title").textContent = "Andamento settimana";
   barsContainer.innerHTML = "";
   barsLegend.textContent  = `Settimana dal ${start.toLocaleDateString("it-IT")}`;
@@ -266,7 +273,7 @@ function renderWeekBars(byDay, start){
   });
 }
 
-// Tabs
+// === Tabs
 let currentType = "month";
 tabs.querySelectorAll(".tab").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -279,7 +286,7 @@ tabs.querySelectorAll(".tab").forEach(btn=>{
 });
 applyBtn.addEventListener("click", ()=> run("custom"));
 
-// Avvio
+// === Core
 run("month");
 
 async function run(type=currentType){
@@ -296,12 +303,22 @@ async function run(type=currentType){
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
   const diff = (end - start) / (1000*60*60*24);
+  const isFullMonth =
+    start.getDate() === 1 &&
+    end.getDate() === 1 &&
+    start.getMonth() + 1 === end.getMonth();
 
-  if (type === "year" || type === "lastyear") {
+  const isWeek = diff <= 7 && start.getDay() === 1;
+  const isFullYear =
+    start.getMonth() === 0 && start.getDate() === 1 &&
+    end.getMonth() === 0 && end.getDate() === 1 &&
+    end.getFullYear() - start.getFullYear() === 1;
+
+  if (type === "year" || type === "lastyear" || isFullYear){
     renderYearBars(agg.byMonth, start.getFullYear());
-  } else if (type === "week" || type === "lastweek" || (type==="custom" && diff === 7)) {
+  } else if (type === "week" || type === "lastweek" || isWeek){
     renderWeekBars(agg.byDay, start);
-  } else if (type === "month" || type === "lastmonth" || (type==="custom" && start.getDate() === 1 && end.getDate() === 1)) {
+  } else if (isFullMonth){
     renderMonthBars(agg.byDay, start);
   } else {
     trendCard.classList.add("hidden");
