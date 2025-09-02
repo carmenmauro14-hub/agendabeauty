@@ -5,40 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Logout - BeautyBook</title>
   <link rel="stylesheet" href="home.css" />
+
+  <!-- importa auth.js per avere auth/signOut -->
+  <script type="module" src="auth.js"></script>
 </head>
 <body>
-<nav class="top-nav">
-    <a href="rubrica.html" title="Rubrica" class="">
-      <img src="icone_uniformate_colore/rubica.png" alt="Rubrica" />
-    </a>
-    <a href="calendario.html" title="Agenda" class="">
-      <img src="icone_uniformate_colore/agenda.png" alt="Agenda" />
-    </a>
-    <a href="statistiche.html" title="Statistiche" class="">
-      <img src="icone_uniformate_colore/statistiche.png" alt="Statistiche" />
-    </a>
-    <a href="settings.html" title="Impostazioni" class="">
-      <img src="icone_uniformate_colore/setting.png" alt="Impostazioni" />
-    </a>
-    <a href="logout.html" title="Logout" class="active">
-      <img src="icone_uniformate_colore/logout.png" alt="Logout" />
-    </a>
+  <nav class="top-nav">
+    <a href="rubrica.html" title="Rubrica"><img src="icone_uniformate_colore/rubica.png" alt="Rubrica" /></a>
+    <a href="calendario.html" title="Agenda"><img src="icone_uniformate_colore/agenda.png" alt="Agenda" /></a>
+    <a href="statistiche.html" title="Statistiche"><img src="icone_uniformate_colore/statistiche.png" alt="Statistiche" /></a>
+    <a href="settings.html" title="Impostazioni"><img src="icone_uniformate_colore/setting.png" alt="Impostazioni" /></a>
+    <a href="logout.html" title="Logout" class="active"><img src="icone_uniformate_colore/logout.png" alt="Logout" /></a>
   </nav>
 
-  
-
-
-  
-
-
-  
-
   <div class="home-container">
-    
     <h1>Logout</h1>
-    <p>Hai effettuato il logout. Torna al login per accedere di nuovo.</p>
+    <p id="logoutMessage">Uscita in corso…</p>
   </div>
-<script type="module" src="auth.js"></script>
 
+  <script type="module">
+    import { auth, signOut } from './auth.js';
+
+    const msg = document.getElementById('logoutMessage');
+
+    async function doLogout() {
+      try {
+        await signOut(auth);
+        msg.textContent = "Hai effettuato il logout. Verrai reindirizzato al login…";
+        setTimeout(() => {
+          location.href = "login.html";
+        }, 2000);
+      } catch (err) {
+        console.error("Errore logout:", err);
+        msg.textContent = "Errore durante il logout. Riprova.";
+      }
+    }
+
+    doLogout();
+  </script>
 </body>
 </html>
