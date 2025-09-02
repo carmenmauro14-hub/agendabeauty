@@ -1,9 +1,10 @@
-import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// trattamenti-settings.js — usa l’istanza condivisa di Firebase da auth.js
+import { app } from "./auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const db = getFirestore(getApp());
+const db = getFirestore(app);
 
 const btnNuovo = document.getElementById("btn-nuovo-trattamento");
 const form = document.getElementById("form-trattamento");
@@ -189,9 +190,7 @@ listaTrattamenti.addEventListener("keydown", async e => {
 mostraIcone(selettoreIcone, src => (inputIconaSelezionata.value = src));
 caricaTrattamenti();
 
-/* ===== feedback tap (iOS/Android/Web) =====
-   Aggiunge/rimuove la classe .is-tapped sugli elementi interattivi
-   per far vedere SUBITO l’effetto al tocco (anche su iPhone). */
+/* ===== feedback tap (iOS/Android/Web) ===== */
 (function initTapFeedback(){
   const SELECTOR_TAPPABLE = '.azioni-trattamento i, #btn-nuovo-trattamento, .bottoni-form button';
 
