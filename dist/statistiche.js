@@ -1,21 +1,12 @@
-// Statistiche – BeautyBook
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// statistiche.js — usa l'istanza Firebase di auth.js (niente doppie init)
+import { app } from "./auth.js";
 import {
   getFirestore, collection, query, where, orderBy, getDocs,
   Timestamp, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+// DB condiviso
+const db = getFirestore(app);
 
 // DOM
 const tabs      = document.getElementById("periodTabs");
@@ -72,7 +63,7 @@ function getRange(type, fromStr, toStr){
     const end   = new Date(y+1, 0, 1);
     return {start,end};
   }
-  // custom (end esclusivo -> aggiungo +1 giorno per includere la data finale selezionata)
+  // custom (end esclusivo -> +1 giorno per includere la data finale)
   const s = fromStr ? new Date(fromStr+"T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
   const e = toStr
     ? (()=>{ const d=new Date(toStr+"T00:00:00"); d.setDate(d.getDate()+1); return d; })()
@@ -82,6 +73,7 @@ function getRange(type, fromStr, toStr){
 
 // Query appuntamenti
 async function fetchAppointmentsInRange(start, end){
+  // preferisci campo Timestamp
   const qTs = query(
     collection(db,"appuntamenti"),
     where("data", ">=", Timestamp.fromDate(start)),
@@ -90,7 +82,7 @@ async function fetchAppointmentsInRange(start, end){
   const snap = await getDocs(qTs);
   if (snap.size > 0) return snap.docs.map(d=>d.data());
 
-  // fallback ISO
+  // fallback su stringa ISO
   const isoFrom = start.toISOString().slice(0,10);
   const isoTo   = end.toISOString().slice(0,10);
   const qIso = query(
@@ -200,7 +192,7 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-// Grafico giornaliero (per mese)
+// Grafico giornaliero (mese pieno)
 function renderMonthBars(byDay, start, end){
   const lastMoment = new Date(end.getTime() - 1);
   const isFullMonth =
@@ -307,10 +299,8 @@ async function run(type=currentType){
 
   // Grafici
   if (type === "year"){
-    // anno corrente
     renderYearBars(agg.byMonth, start.getFullYear());
   } else if (type === "custom") {
-    // se l'intervallo copre esattamente un anno (1 gen -> 1 gen anno dopo) mostra il grafico annuale
     const s = new Date(start);
     const e = new Date(end);
     const isFullYear =
@@ -320,7 +310,7 @@ async function run(type=currentType){
     if (isFullYear){
       renderYearBars(agg.byMonth, s.getFullYear());
     } else {
-      renderMonthBars(agg.byDay, start, end); // se è un mese pieno, appare il grafico mese; altrimenti card nascosta
+      renderMonthBars(agg.byDay, start, end);
     }
   } else {
     renderMonthBars(agg.byDay, start, end);
