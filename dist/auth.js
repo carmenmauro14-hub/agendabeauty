@@ -9,12 +9,12 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// === Firebase config (corretta) ===
+// === Firebase config ===
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
   projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com", // <-- FIX qui
+  storageBucket: "agenda-carmenmauro.appspot.com", // corretto
   messagingSenderId: "959324976221",
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
@@ -23,7 +23,7 @@ const firebaseConfig = {
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// --- EXPORT funzioni di autenticazione (come prima) ---
+// --- EXPORT funzioni di autenticazione ---
 export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -33,11 +33,9 @@ export {
 };
 
 // === AUTH GUARD globale ===
-// Pagine pubbliche (senza login obbligatorio)
-const PUBLIC_PAGES = new Set(["/login.html"]);
+const PUBLIC_PAGES = new Set(["/login.html"]); // pagine pubbliche
 
-// Nascondi il contenuto finché non sappiamo lo stato (evita flicker)
-// Se vuoi evitare di nascondere su login.html, teniamolo comunque: su login si vedrà appena arriva l'evento
+// Nascondi la pagina finché non sappiamo se l'utente è loggato
 const htmlEl = document.documentElement;
 if (htmlEl) htmlEl.style.visibility = "hidden";
 
@@ -46,17 +44,17 @@ onAuthStateChanged(auth, (user) => {
   const isPublic = PUBLIC_PAGES.has(path) || path === "/" || path.endsWith("/index.html");
 
   if (!user && !isPublic) {
-    // Non loggato su pagina protetta -> vai a login
+    // Non loggato su pagina protetta → vai a login
     location.href = "login.html";
     return;
   }
 
   if (user && PUBLIC_PAGES.has(path)) {
-    // Già loggato ma su login -> porta alla home (scegli tu la landing interna)
-    location.href = "calendario.html";
+    // Già loggato ma su login.html → manda alla vera home
+    location.href = "index.html";
     return;
   }
 
-  // Mostra la pagina quando è tutto deciso
+  // Mostra la pagina quando lo stato è deciso
   if (htmlEl) htmlEl.style.visibility = "";
 });
