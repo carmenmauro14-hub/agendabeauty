@@ -1,22 +1,16 @@
 // nuovo-appuntamento.js
 
-// ─── Firebase ──────────────────────────────────────────────────────
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
+import { app } from "./auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ─── Utility swipe (già tua) ───────────────────────────────────────
 import { abilitaSwipeVerticale } from "./swipe.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+// Istanza Firestore dall'app riusata
+const db = getFirestore(app);
 
 // ─── Parametri URL (preset cliente e data opzionali) ───────────────
 const urlParams        = new URLSearchParams(location.search);
