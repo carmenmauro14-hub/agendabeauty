@@ -43,12 +43,16 @@
 
   <!-- Handler di pagina -->
   <script type="module">
-    import { auth, signInWithEmailAndPassword } from './auth.js';
+    import {
+      auth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from './auth.js';
 
     // Se già loggato → vai in home
-    if (auth.currentUser) {
-      location.href = "index.html";
-    }
+    onAuthStateChanged(auth, (user) => {
+      if (user) location.href = "index.html";
+    });
 
     const form = document.getElementById('login-form');
     const email = document.getElementById('email');
