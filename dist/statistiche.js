@@ -289,37 +289,38 @@ applyBtn.addEventListener("click", ()=> run("custom"));
 // === Core
 run("month");
 
-async function run(type=currentType){
+async function run(type = currentType) {
   currentType = type;
-  const {start,end} = getRange(type, dateFrom.value, dateTo.value);
-  const appts = await fetchAppointmentsInRange(start,end);
-  const agg   = aggregateStats(appts);
+
+  const { start, end } = getRange(type, dateFrom.value, dateTo.value);
+  const appts = await fetchAppointmentsInRange(start, end);
+  const agg = aggregateStats(appts);
 
   elRevenue.textContent = euro(agg.revenue);
-  elCount.textContent   = String(agg.count);
-  elAvg.textContent     = euro(agg.avg);
+  elCount.textContent = String(agg.count);
+  elAvg.textContent = euro(agg.avg);
 
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
-  const diff = (end - start) / (1000*60*60*24);
+  const diff = (end - start) / (1000 * 60 * 60 * 24);
+  const isFullWeek = diff === 7 && start.getDay() === 1;
   const isFullMonth =
     start.getDate() === 1 &&
     end.getDate() === 1 &&
-    start.getMonth() + 1 === end.getMonth();
-
-  const isWeek = diff <= 7 && start.getDay() === 1;
+    end.getMonth() - start.getMonth() === 1 &&
+    end.getFullYear() === start.getFullYear();
   const isFullYear =
-    start.getMonth() === 0 && start.getDate() === 1 &&
-    end.getMonth() === 0 && end.getDate() === 1 &&
+    start.getDate() === 1 && start.getMonth() === 0 &&
+    end.getDate() === 1 && end.getMonth() === 0 &&
     end.getFullYear() - start.getFullYear() === 1;
 
-  if (type === "year" || type === "lastyear" || isFullYear){
+  if (type === "year" || type === "lastyear" || isFullYear) {
     renderYearBars(agg.byMonth, start.getFullYear());
-  } else if (type === "week" || type === "lastweek" || isWeek){
+  } else if (type === "week" || type === "lastweek" || isFullWeek) {
     renderWeekBars(agg.byDay, start);
-  } else if (isFullMonth){
-    renderMonthBars(agg.byDay, start);
+  } else if (type === "month" || type === "lastmonth" || isFullMonth) {
+    renderMonthBars(agg.byDay, start, end);
   } else {
     trendCard.classList.add("hidden");
   }
