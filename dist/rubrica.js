@@ -1,51 +1,65 @@
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// rubrica.js — usa l'istanza Firebase di auth.js, no doppie init
+
+// Reuse app inizializzata in auth.js
+import { app } from "./auth.js";
 import {
   getFirestore, collection, addDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ─── Firebase ────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db  = getFirestore(app);
+const db = getFirestore(app);
 
 // ─── Elementi DOM ────────────────────────────────────
-const clientList   = document.getElementById("clientList");
-const letterNav    = document.getElementById("letterNav");
-const searchInput  = document.getElementById("searchInput");
-const openAddModal = document.getElementById("openAddModal");
-const addModal     = document.getElementById("addModal");
-const closeAddModal= document.getElementById("closeAddModal");
-const addForm      = document.getElementById("addForm");
-const addNome      = document.getElementById("addNome");
-const addTelefono  = document.getElementById("addTelefono");
+const clientList    = document.getElementById("clientList");
+const letterNav     = document.getElementById("letterNav");
+const searchInput   = document.getElementById("searchInput");
+const openAddModal  = document.getElementById("openAddModal");
+const addModal      = document.getElementById("addModal");
+const closeAddModal = document.getElementById("closeAddModal");
+const addForm       = document.getElementById("addForm");
+const addNome       = document.getElementById("addNome");
+const addTelefono   = document.getElementById("addTelefono");
+
+// se la pagina non ha questi elementi, esci (evita errori se importato altrove)
+if (!clientList) {
+  console.warn("[rubrica] elementi non presenti: esco senza eseguire.");
+}
 
 // ─── Helper: modal ───────────────────────────────────
-function showModal(m) { m.style.display = "flex"; }
-function closeModal(m){ m.style.display = "none"; }
+function showModal(m){ if(m) m.style.display = "flex"; }
+function closeModal(m){ if(m) m.style.display = "none"; }
 
 // ─── Carica & render rubrica ─────────────────────────
 async function caricaClienti() {
-  const snapshot = await getDocs(collection(db, "clienti"));
-  const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-  renderList(data);
+  if (!clientList) return;
+  clientList.innerHTML = `<li class="section" style="opacity:.6">Caricamento…</li>`;
+  try {
+    const snapshot = await getDocs(collection(db, "clienti"));
+    const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // normalizza: assicurati che nome/telefono siano stringhe
+    data.forEach(c => {
+      c.nome = (c.nome ?? "").toString().trim();
+      c.telefono = (c.telefono ?? "").toString().trim();
+    });
+
+    renderList(data);
+  } catch (err) {
+    console.error("[rubrica] errore fetch clienti:", err);
+    clientList.innerHTML = `<li class="section" style="color:#b00020">Errore nel caricamento</li>`;
+  }
 }
 
 function renderList(clienti) {
   const groups = {};
   clienti.forEach(c => {
-    const L = (c.nome || "").charAt(0).toUpperCase() || "#";
-    (groups[L] = groups[L] || []).push(c);
+    const first = (c.nome || "#").charAt(0).toUpperCase();
+    (groups[first] = groups[first] || []).push(c);
   });
 
+  const letters = Object.keys(groups).sort((a,b)=> a.localeCompare(b, "it"));
+
   clientList.innerHTML = "";
-  Object.keys(groups).sort().forEach(L => {
+  letters.forEach(L => {
     const sec = document.createElement("li");
     sec.textContent = L;
     sec.className = "section";
@@ -53,68 +67,74 @@ function renderList(clienti) {
     clientList.appendChild(sec);
 
     groups[L]
-      .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""))
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "it"))
       .forEach(c => {
         const li = document.createElement("li");
-        li.textContent = `${c.nome}`;
         li.className = "item";
-        li.onclick = () => {
-          // ➜ Apri la pagina stile rubrica iPhone
-          location.href = `cliente.html?id=${c.id}`;
-        };
+        li.textContent = c.nome || "(senza nome)";
+        li.onclick = () => { location.href = `cliente.html?id=${encodeURIComponent(c.id)}`; };
         clientList.appendChild(li);
       });
   });
 
-  renderLetterNav(Object.keys(groups).sort());
+  renderLetterNav(letters);
 }
 
 function renderLetterNav(letters) {
+  if (!letterNav) return;
   letterNav.innerHTML = "";
   letters.forEach(L => {
     const el = document.createElement("span");
     el.textContent = L;
     el.onclick = () => {
       const target = document.getElementById("letter-" + L);
-      target && target.scrollIntoView({ behavior: "smooth" });
+      target && target.scrollIntoView({ behavior: "smooth", block: "start" });
     };
     letterNav.appendChild(el);
   });
 }
 
 // ─── Ricerca live ────────────────────────────────────
-searchInput.oninput = () => {
-  const f = searchInput.value.toLowerCase();
-  letterNav.style.display = f ? "none" : "flex";
+if (searchInput) {
+  searchInput.oninput = () => {
+    const f = searchInput.value.toLowerCase();
+    if (letterNav) letterNav.style.display = f ? "none" : "flex";
 
-  document.querySelectorAll("#clientList li.item").forEach(li => {
-    li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
-  });
+    document.querySelectorAll("#clientList li.item").forEach(li => {
+      li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
+    });
 
-  document.querySelectorAll("#clientList li.section").forEach(sec => {
-    const nextItems = [];
-    let el = sec.nextElementSibling;
-    while (el && !el.classList.contains("section")) {
-      if (el.style.display !== "none") nextItems.push(el);
-      el = el.nextElementSibling;
-    }
-    sec.style.display = nextItems.length > 0 ? "" : "none";
-  });
-};
+    // mostra/nascondi intestazioni di sezione in base agli item visibili
+    document.querySelectorAll("#clientList li.section").forEach(sec => {
+      let el = sec.nextElementSibling, visible = false;
+      while (el && !el.classList.contains("section")) {
+        if (el.style.display !== "none") { visible = true; break; }
+        el = el.nextElementSibling;
+      }
+      sec.style.display = visible ? "" : "none";
+    });
+  };
+}
 
 // ─── Aggiungi cliente ────────────────────────────────
-openAddModal.onclick = () => { addForm.reset(); showModal(addModal); };
-closeAddModal.onclick = () => closeModal(addModal);
+openAddModal?.addEventListener("click", () => { addForm?.reset(); showModal(addModal); });
+closeAddModal?.addEventListener("click", () => closeModal(addModal));
 
-addForm.onsubmit = async e => {
+addForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  await addDoc(collection(db, "clienti"), {
-    nome: addNome.value.trim(),
-    telefono: addTelefono.value.trim()
-  });
-  closeModal(addModal);
-  caricaClienti();
-};
+  const nome = (addNome?.value || "").trim();
+  const telefono = (addTelefono?.value || "").trim();
+  if (!nome) { alert("Inserisci un nome."); return; }
+
+  try {
+    await addDoc(collection(db, "clienti"), { nome, telefono });
+    closeModal(addModal);
+    await caricaClienti();
+  } catch (err) {
+    console.error("[rubrica] errore add cliente:", err);
+    alert("Errore durante il salvataggio del cliente.");
+  }
+});
 
 // ─── Avvio ───────────────────────────────────────────
 caricaClienti();
