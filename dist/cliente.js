@@ -1,24 +1,16 @@
-// ===== Firebase =====
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// ===== Firebase (riusa l’istanza creata in auth.js) =========================
+import { app } from "./auth.js";
 import {
   getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// === Import modulo promemoria condiviso ===
+// === Modulo promemoria condiviso ============================================
 import { openWhatsAppReminder } from "./reminder-core.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+// Inizializza Firestore dalla stessa app/istanza usata da auth.js
+const db = getFirestore(app);
 
-// ===== Utils =====
+// ===== Utils ================================================================
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 function toNumberSafe(v){
   if(v==null) return 0;
@@ -50,7 +42,7 @@ function getApptNames(a){
 }
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
 
-// ===== DOM =====
+// ===== DOM ==================================================================
 const backBtn        = document.getElementById("backBtn");
 const editBtnTop     = document.getElementById("editBtnTop");
 
@@ -95,19 +87,19 @@ const sheetHeader    = document.querySelector("#historySheet .sheet-header");
 const sheetHandle    = document.querySelector("#historySheet .sheet-handle");
 const sheetContent   = document.querySelector("#historySheet .sheet-content");
 
-// ===== Stato =====
+// ===== Stato =================================================================
 let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
 let allYears = [];
 let allAppointmentsRaw = []; // per promemoria
 
-// ===== Helpers =====
+// ===== Helpers ===============================================================
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 function autosize(el){ if(!el) return; el.style.height='auto'; el.style.height = Math.max(el.scrollHeight, 92) + 'px'; }
 function getClienteId(){ const url = new URLSearchParams(location.search); return url.get("id") || sessionStorage.getItem("clienteId") || null; }
 
-// ===== Caricamento Cliente =====
+// ===== Caricamento Cliente ===================================================
 async function caricaCliente(){
   clienteId = getClienteId();
   if(!clienteId) return;
@@ -156,7 +148,7 @@ async function caricaCliente(){
   }
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
 
-  // ===== Promemoria WhatsApp (usa il modulo condiviso) =====
+  // ===== Promemoria WhatsApp (usa il modulo condiviso) ======================
   btnRem.onclick = async (e)=>{
     e.preventDefault();
     await openWhatsAppReminder(clienteData, allAppointmentsRaw);
@@ -166,7 +158,7 @@ async function caricaCliente(){
   await popolaAnniERender();
 }
 
-// ===== Note =====
+// ===== Note ==================================================================
 const saveNote = debounce(async ()=>{
   if(!clienteId) return;
   const newNote = noteInput.value.trim();
@@ -183,7 +175,7 @@ const saveNote = debounce(async ()=>{
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// ===== Storico & Totale (pagina) =====
+// ===== Storico & Totale (pagina) ============================================
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
@@ -233,7 +225,7 @@ function renderHistoryList(container, items){
   });
 }
 
-// ===== Statistiche per anno =====
+// ===== Statistiche per anno ==================================================
 async function popolaAnniERender(){
   const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
   const qs = await getDocs(q);
@@ -299,7 +291,7 @@ async function aggiornaStatistiche(anno){
     : "<li>—</li>";
 }
 
-// ===== Bottom-sheet =====
+// ===== Bottom-sheet ==========================================================
 function preventBackgroundScroll(e){
   // Blocca lo scroll del body solo se tocchi/clicki FUORI dal pannello
   if (!sheet.hidden && !sheetPanel.contains(e.target)) {
@@ -348,7 +340,7 @@ function renderSheetForYear(anno){
   renderHistoryList(sheetHistory, items);
 }
 
-// ===== Drag-to-close =====
+// ===== Drag-to-close =========================================================
 (function enableSheetDrag(){
   if(!sheetPanel) return;
 
@@ -445,7 +437,7 @@ sheetBackdrop?.addEventListener("click", doClose);
 sheetClose?.addEventListener("click", doClose, {capture:true});
 sheetClose?.addEventListener("touchend", doClose, {capture:true, passive:false});
 
-// ===== Edit inline =====
+// ===== Edit inline ===========================================================
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
   infoView.style.display = on ? "none" : "";
@@ -474,8 +466,8 @@ infoEdit.addEventListener("submit", async (e)=>{
   caricaCliente();
 });
 
-// ===== Back =====
+// ===== Back ==================================================================
 backBtn.addEventListener("click", ()=>history.back());
 
-// ===== Avvio =====
+// ===== Avvio =================================================================
 caricaCliente();
