@@ -307,7 +307,7 @@ async function run(type = currentType) {
 
   const isWeekLike =
     (type === "week" || type === "lastweek") ||
-    (diff <= 7 && start.getDay() === 1);
+    (diff === 7 && start.getDay() % 7 === 1);
 
   const isFullMonth =
     start.getDate() === 1 &&
