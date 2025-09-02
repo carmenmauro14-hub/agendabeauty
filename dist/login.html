@@ -7,10 +7,7 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Auth guard/redirect (usa index come home se già loggato) -->
-  <script type="module" src="auth.js"></script>
-
-  <!-- utilità accessibilità (facoltativa se già definita altrove) -->
+  <!-- utilità accessibilità -->
   <style>
     .sr-only {
       position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
@@ -48,6 +45,11 @@
   <script type="module">
     import { auth, signInWithEmailAndPassword } from './auth.js';
 
+    // Se già loggato → vai in home
+    if (auth.currentUser) {
+      location.href = "index.html";
+    }
+
     const form = document.getElementById('login-form');
     const email = document.getElementById('email');
     const password = document.getElementById('password');
@@ -71,7 +73,7 @@
 
       try {
         await signInWithEmailAndPassword(auth, email.value.trim(), password.value);
-        // Il redirect avviene in auth.js (login -> index.html)
+        location.href = "index.html"; // redirect dopo login riuscito
       } catch (err) {
         errorBox.textContent = msg(err.code);
       } finally {
