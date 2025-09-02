@@ -303,12 +303,12 @@ async function run(type = currentType) {
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
-  const diff = (end - start) / (1000 * 60 * 60 * 24);
+  const diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
 
-  const isWeekLike =
-    (type === "week" || type === "lastweek") ||
-    (diff <= 7 && start.getDay() === 1);
-
+const isWeekLike =
+  (type === "week" || type === "lastweek") ||
+  (diff <= 7 && start.getDay() === 1);
+  
   const isFullMonth =
     start.getDate() === 1 &&
     end.getDate() === 1 &&
