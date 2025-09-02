@@ -1,4 +1,4 @@
-=import { app } from "./auth.js";
+import { app } from "./auth.js";
 import {
   getFirestore, collection, query, where, orderBy, getDocs,
   Timestamp, doc, getDoc
