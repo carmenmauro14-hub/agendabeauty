@@ -1,14 +1,11 @@
-// statistiche.js — usa l'istanza Firebase di auth.js (niente doppie init)
 import { app } from "./auth.js";
 import {
   getFirestore, collection, query, where, orderBy, getDocs,
   Timestamp, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// DB condiviso
 const db = getFirestore(app);
 
-// DOM
 const tabs      = document.getElementById("periodTabs");
 const customBox = document.getElementById("customRange");
 const dateFrom  = document.getElementById("dateFrom");
@@ -25,7 +22,6 @@ const trendCard         = document.getElementById("trendCard");
 const barsContainer     = document.getElementById("barsContainer");
 const barsLegend        = document.getElementById("barsLegend");
 
-// Utils
 const euro = (n)=> Number(n||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 const toNumberSafe = (v)=>{
   if(v==null) return 0;
@@ -44,26 +40,53 @@ const safeDate = (d)=>{
   return d instanceof Date ? d : null;
 };
 
-// Range
+// NUOVI RANGE
 function getRange(type, fromStr, toStr){
   const now = new Date();
+
   if(type==="month"){
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end   = new Date(now.getFullYear(), now.getMonth()+1, 1);
     return {start,end};
   }
+
   if(type==="lastmonth"){
     const start = new Date(now.getFullYear(), now.getMonth()-1, 1);
     const end   = new Date(now.getFullYear(), now.getMonth(), 1);
     return {start,end};
   }
+
   if(type==="year"){
-    const y = new Date().getFullYear();
-    const start = new Date(y, 0, 1);
-    const end   = new Date(y+1, 0, 1);
-    return {start,end};
+    const y = now.getFullYear();
+    return {start: new Date(y,0,1), end: new Date(y+1,0,1)};
   }
-  // custom (end esclusivo -> +1 giorno per includere la data finale)
+
+  if(type==="lastyear"){
+    const y = now.getFullYear() - 1;
+    return {start: new Date(y,0,1), end: new Date(y+1,0,1)};
+  }
+
+  if(type==="thisweek"){
+    const day = now.getDay() || 7;
+    const start = new Date(now);
+    start.setDate(now.getDate() - day + 1);
+    start.setHours(0,0,0,0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    return {start, end};
+  }
+
+  if(type==="lastweek"){
+    const day = now.getDay() || 7;
+    const end = new Date(now);
+    end.setDate(now.getDate() - day + 1);
+    end.setHours(0,0,0,0);
+    const start = new Date(end);
+    start.setDate(start.getDate() - 7);
+    return {start, end};
+  }
+
+  // INTERVALLO PERSONALIZZATO
   const s = fromStr ? new Date(fromStr+"T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
   const e = toStr
     ? (()=>{ const d=new Date(toStr+"T00:00:00"); d.setDate(d.getDate()+1); return d; })()
@@ -71,9 +94,7 @@ function getRange(type, fromStr, toStr){
   return {start:s, end:e};
 }
 
-// Query appuntamenti
 async function fetchAppointmentsInRange(start, end){
-  // preferisci campo Timestamp
   const qTs = query(
     collection(db,"appuntamenti"),
     where("data", ">=", Timestamp.fromDate(start)),
@@ -82,7 +103,6 @@ async function fetchAppointmentsInRange(start, end){
   const snap = await getDocs(qTs);
   if (snap.size > 0) return snap.docs.map(d=>d.data());
 
-  // fallback su stringa ISO
   const isoFrom = start.toISOString().slice(0,10);
   const isoTo   = end.toISOString().slice(0,10);
   const qIso = query(
@@ -95,7 +115,6 @@ async function fetchAppointmentsInRange(start, end){
   return snapIso.docs.map(d=>d.data());
 }
 
-// Risolvi nomi clienti da ID
 async function resolveClientNames(ids){
   const map = new Map();
   await Promise.all([...ids].map(async (id)=>{
@@ -112,15 +131,15 @@ async function resolveClientNames(ids){
 
 function aggregateStats(appts){
   let revenue = 0, count = 0;
-  const byTreatment = {}; // nome -> {count,sum}
-  const byClientId  = {}; // id -> {sum}
-  const byClientKey = {}; // nome -> {sum}
-  const byDay       = {}; // YYYY-MM-DD -> sum
-  const byMonth     = {}; // YYYY-MM -> sum
+  const byTreatment = {};
+  const byClientId  = {};
+  const byClientKey = {};
+  const byDay       = {};
+  const byMonth     = {};
 
   for (const a of appts){
     let tot = 0;
-    if(Array.isArray(a.trattamenti) && a.trattamenti.length){
+    if(Array.isArray(a.trattamenti)){
       for (const t of a.trattamenti){
         const n = (t?.nome || t?.titolo || "Trattamento").trim();
         const p = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
@@ -133,7 +152,8 @@ function aggregateStats(appts){
       tot = toNumberSafe(a.prezzo ?? a.totale ?? a.price ?? a.costo);
     }
 
-    revenue += tot; count += 1;
+    revenue += tot;
+    count += 1;
 
     const dt = safeDate(a.data || a.date || a.dateTime);
     if (dt){
@@ -158,7 +178,6 @@ function aggregateStats(appts){
   return { revenue, count, avg, byTreatment, byDay, byMonth, byClientId, byClientKey };
 }
 
-// Top trattamenti: TUTTI
 function renderTopTreatments(byTreatment){
   const arr = Object.entries(byTreatment)
     .sort((a,b)=> b[1].sum - a[1].sum || b[1].count - a[1].count);
@@ -170,7 +189,6 @@ function renderTopTreatments(byTreatment){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-// Top clienti: TOP 10
 async function renderTopClients(byClientId, byClientKey){
   if (!listTopClients) return;
 
@@ -192,7 +210,6 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
-// Grafico giornaliero (mese pieno)
 function renderMonthBars(byDay, start, end){
   const lastMoment = new Date(end.getTime() - 1);
   const isFullMonth =
@@ -230,7 +247,6 @@ function renderMonthBars(byDay, start, end){
     `${start.toLocaleString('it-IT',{month:'long'})} ${start.getFullYear()} • max giorno ${euro(max)}`;
 }
 
-// Grafico annuale (12 mesi)
 function renderYearBars(byMonth, year){
   trendCard.classList.remove("hidden");
   trendCard.querySelector(".card-title").textContent = "Andamento anno";
@@ -261,7 +277,7 @@ function renderYearBars(byMonth, year){
     `${year} • mese top ${monthNames[maxMonthIdx]} (${euro(values[maxMonthIdx].sum)})`;
 }
 
-// Tabs
+// TABS
 let currentType = "month";
 tabs.querySelectorAll(".tab").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -269,18 +285,17 @@ tabs.querySelectorAll(".tab").forEach(btn=>{
     btn.classList.add("active");
     const t = btn.dataset.range;
 
-    customBox.hidden = (t !== "custom"); // mostra date solo per Intervallo
+    customBox.hidden = (t !== "custom");
     run(t);
   });
 });
 
-// Intervallo personalizzato
 applyBtn.addEventListener("click", ()=> run("custom"));
 
-// Avvio
+// AVVIO
 run("month");
 
-// Core
+// CORE
 async function run(type=currentType){
   currentType = type;
   const {start,end} = getRange(type, dateFrom.value, dateTo.value);
@@ -288,17 +303,14 @@ async function run(type=currentType){
   const appts = await fetchAppointmentsInRange(start,end);
   const agg   = aggregateStats(appts);
 
-  // KPI
   elRevenue.textContent = euro(agg.revenue);
   elCount.textContent   = String(agg.count);
   elAvg.textContent     = euro(agg.avg);
 
-  // Liste
   renderTopTreatments(agg.byTreatment);
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
-  // Grafici
-  if (type === "year"){
+  if (type === "year" || type === "lastyear"){
     renderYearBars(agg.byMonth, start.getFullYear());
   } else if (type === "custom") {
     const s = new Date(start);
