@@ -1,30 +1,42 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - BeautyBook</title>
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Auth guard/redirect (usa index come home se già loggato) -->
+  <script type="module" src="auth.js"></script>
+
+  <!-- utilità accessibilità (facoltativa se già definita altrove) -->
+  <style>
+    .sr-only {
+      position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+    .error-msg { color:#b00020; font-size:14px; margin-top:10px; min-height:1.2em; }
+  </style>
 </head>
 <body>
-
-  
-
-
-  
-
-
-  
-
   <div class="login-container">
     <div class="login-box">
       <h1 class="title">BeautyBook</h1>
-      <form id="login-form">
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Password" required />
-        <button type="submit">Accedi</button>
+
+      <form id="login-form" novalidate>
+        <label class="sr-only" for="email">Email</label>
+        <input type="email" id="email" placeholder="Email" required
+               autocomplete="email" inputmode="email" />
+
+        <label class="sr-only" for="password">Password</label>
+        <input type="password" id="password" placeholder="Password" required
+               autocomplete="current-password" />
+
+        <button id="loginBtn" type="submit">Accedi</button>
+        <p id="loginError" class="error-msg" aria-live="polite"></p>
       </form>
+
       <div class="links">
         <a href="signup.html">Registrati</a>
         <a href="forgot.html">Password dimenticata?</a>
@@ -32,7 +44,40 @@
     </div>
   </div>
 
-<script type="module" src="auth.js"></script>
+  <!-- Handler di pagina -->
+  <script type="module">
+    import { auth, signInWithEmailAndPassword } from './auth.js';
 
+    const form = document.getElementById('login-form');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const errorBox = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+
+    const msg = (code) => {
+      switch (code) {
+        case 'auth/invalid-email': return 'Email non valida.';
+        case 'auth/user-not-found':
+        case 'auth/wrong-password': return 'Credenziali errate.';
+        case 'auth/too-many-requests': return 'Troppi tentativi. Riprova tra poco.';
+        default: return 'Errore di accesso. Riprova.';
+      }
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.textContent = '';
+      btn.disabled = true;
+
+      try {
+        await signInWithEmailAndPassword(auth, email.value.trim(), password.value);
+        // Il redirect avviene in auth.js (login -> index.html)
+      } catch (err) {
+        errorBox.textContent = msg(err.code);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
