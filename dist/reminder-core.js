@@ -1,26 +1,17 @@
 // reminder-core.js
-// Modulo unico per: caricamento template (Firestore), selezione appuntamento, costruzione messaggio, apertura WhatsApp
+// Modulo unico per: caricamento template (Firestore),
+// selezione appuntamento, costruzione messaggio, apertura WhatsApp
 
-// ===== Firebase (ESM) =====
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// ===== Firebase: riuso app inizializzata in auth.js =====
+import { app } from "./auth.js";
+import { getFirestore, doc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Config condivisa (stessa della tua app)
-const firebaseConfig = {
-  apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
-  authDomain: "agenda-carmenmauro.firebaseapp.com",
-  projectId: "agenda-carmenmauro",
-  storageBucket: "agenda-carmenmauro.appspot.com",
-  messagingSenderId: "959324976221",
-  appId: "1:959324976221:web:780c8e9195965cea0749b4"
-};
-
-// Evita doppie inizializzazioni
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+// Unica istanza Firestore
+const db = getFirestore(app);
 
 // ===== Utils locali =====
-const FMT_DATA = new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"2-digit"});
+const FMT_DATA = new Intl.DateTimeFormat("it-IT",{ day:"2-digit", month:"2-digit", year:"2-digit" });
 
 // Normalizza stringhe per preservare emoji (NFC)
 const normalizeText = (s) => (s ?? "").toString().normalize("NFC");
@@ -63,8 +54,9 @@ function getApptNames(a){
 // Sceglie: prossimo futuro, altrimenti il più recente passato
 function findBestAppointmentForReminder(list){
   const now = new Date();
-  const withDT = (list||[]).map(a => ({ a, when: apptToDateTime(a) || safeDate(a?.data) || null }))
-                           .filter(x => x.when instanceof Date);
+  const withDT = (list||[])
+    .map(a => ({ a, when: apptToDateTime(a) || safeDate(a?.data) || null }))
+    .filter(x => x.when instanceof Date);
   const future = withDT.filter(x => x.when >= now).sort((x,y)=> x.when - y.when);
   if(future.length) return future[0].a;
   const past = withDT.filter(x => x.when < now).sort((x,y)=> y.when - x.when);
@@ -134,12 +126,12 @@ export async function openWhatsAppReminder(clienteData, appointmentsList){
   const template = await loadReminderTemplate();
   const msg = normalizeText(buildReminderMessage(template, clienteData, appt));
 
-  // ✅ Deeplink nativo
+  // Deeplink nativo
   const deepLink = new URL("whatsapp://send");
   deepLink.searchParams.set("phone", telNorm);
   deepLink.searchParams.set("text", msg);
 
-  // ✅ Fallback web
+  // Fallback web
   const webLink = new URL("https://api.whatsapp.com/send");
   webLink.searchParams.set("phone", telNorm);
   webLink.searchParams.set("text", msg);
