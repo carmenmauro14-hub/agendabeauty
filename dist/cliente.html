@@ -4,9 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scheda Cliente</title>
+
+  <!-- CSS -->
   <link rel="stylesheet" href="navbar.css">
   <link rel="stylesheet" href="cliente.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"> <!-- <- chiuso -->
+
+  <!-- Auth guard: prima di qualsiasi altro script -->
+  <script type="module" src="auth.js"></script>
+
+  <!-- opzionale ma utile se non l'hai già da qualche parte -->
+  <style>
+    .sr-only {
+      position:absolute !important;
+      width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+  </style>
 </head>
 <body>
   <!-- navbar bottom -->
@@ -95,7 +110,6 @@
     <section class="card stats-card hide-on-edit">
       <div class="card-title">
         <h2 class="stats-title">Statistiche</h2>
-        <!-- select nativo (frecce iOS) -->
         <label for="yearSelect" class="sr-only">Anno</label>
         <select id="yearSelect" class="inline-year"></select>
       </div>
@@ -130,7 +144,6 @@
     <div class="sheet-backdrop" id="sheetBackdrop"></div>
 
     <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-      <!-- header con maniglia + X -->
       <div class="sheet-header">
         <div class="sheet-handle" aria-hidden="true"></div>
         <button class="sheet-close" id="sheetClose" aria-label="Chiudi">
@@ -138,7 +151,6 @@
         </button>
       </div>
 
-      <!-- titolo e selettore anno -->
       <div class="sheet-titlebar">
         <h3 id="sheetTitle">Storico appuntamenti</h3>
         <label for="sheetYear" class="sr-only">Anno storico</label>
@@ -151,11 +163,14 @@
     </div>
   </div>
 
+  <!-- navbar injection -->
   <script>
     fetch("navbar.html")
       .then(r => r.text())
       .then(html => document.getElementById("navbar-placeholder").innerHTML = html);
   </script>
+
+  <!-- script della pagina -->
   <script type="module" src="cliente.js"></script>
 </body>
 </html>
