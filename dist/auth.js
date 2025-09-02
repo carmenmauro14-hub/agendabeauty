@@ -1,15 +1,8 @@
-// auth.js semplice
+// auth.js — semplice: init + redirect se non loggato
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Inizializzazione Firebase
+// Inizializza Firebase solo una volta
 const firebaseConfig = {
   apiKey: "AIzaSyD0tDQQepdvj_oZPcQuUrEKpoNOd4zF0nE",
   authDomain: "agenda-carmenmauro.firebaseapp.com",
@@ -22,11 +15,13 @@ const firebaseConfig = {
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Re-esportiamo le funzioni utili
-export {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
-  onAuthStateChanged
-};
+// Controlla se è loggato
+const FILE = location.pathname.split("/").pop().toLowerCase();
+const PAGINE_LIBERE = new Set(["login.html", "signup.html", "forgot.html"]);
+
+onAuthStateChanged(auth, user => {
+  if (!user && !PAGINE_LIBERE.has(FILE)) {
+    // Non loggato e sta su pagina protetta → torna al login
+    location.href = "login.html";
+  }
+});
