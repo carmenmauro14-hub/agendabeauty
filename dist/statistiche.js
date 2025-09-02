@@ -304,12 +304,17 @@ async function run(type = currentType) {
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
   const diff = (end - start) / (1000 * 60 * 60 * 24);
-  const isFullWeek = diff === 7 && start.getDay() === 1;
+
+  const isWeekLike =
+    (type === "week" || type === "lastweek") ||
+    (diff <= 7 && start.getDay() === 1);
+
   const isFullMonth =
     start.getDate() === 1 &&
     end.getDate() === 1 &&
     end.getMonth() - start.getMonth() === 1 &&
     end.getFullYear() === start.getFullYear();
+
   const isFullYear =
     start.getDate() === 1 && start.getMonth() === 0 &&
     end.getDate() === 1 && end.getMonth() === 0 &&
@@ -317,10 +322,10 @@ async function run(type = currentType) {
 
   if (type === "year" || type === "lastyear" || isFullYear) {
     renderYearBars(agg.byMonth, start.getFullYear());
-  } else if (type === "week" || type === "lastweek" || isFullWeek) {
+  } else if (isWeekLike) {
     renderWeekBars(agg.byDay, start);
   } else if (type === "month" || type === "lastmonth" || isFullMonth) {
-    renderMonthBars(agg.byDay, start, end);
+    renderMonthBars(agg.byDay, start);
   } else {
     trendCard.classList.add("hidden");
   }
