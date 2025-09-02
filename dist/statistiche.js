@@ -305,9 +305,8 @@ async function run(type = currentType) {
 
   const diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
 
-  const isWeekLike =
-    (type === "week" || type === "lastweek") ||
-    (diff === 7 && start.getDay() % 7 === 1);
+  // ✅ Corretto: settimana corrente e scorsa mostrano SEMPRE grafico settimanale
+  const isWeekLike = (type === "week" || type === "lastweek");
 
   const isFullMonth =
     start.getDate() === 1 &&
