@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -6,30 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Password dimenticata - BeautyBook</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Auth guard -->
+  <script type="module" src="auth.js"></script>
+
+  <style>
+    .msg { font-size:14px; margin-top:10px; min-height:1.2em; }
+    .msg.error { color:#b00020; }
+    .msg.success { color:#00796b; }
+  </style>
 </head>
-<script type="module" src="auth.js"></script>
-
 <body>
-
-  
-
-
-  
-
-
-  
-
   <div class="forgot-container">
     <div class="forgot-box">
       <h1 class="title">Recupera Password</h1>
-      <form id="forgot-form">
-        <input type="email" id="email" placeholder="Inserisci la tua email" required />
-        <button type="submit">Invia link di recupero</button>
+      <form id="forgot-form" novalidate>
+        <input type="email" id="email" placeholder="Inserisci la tua email" required
+               autocomplete="email" inputmode="email" />
+        <button id="forgotBtn" type="submit">Invia link di recupero</button>
+        <p id="forgotMsg" class="msg" aria-live="polite"></p>
       </form>
       <div class="links">
         <a href="login.html">Torna al login</a>
       </div>
     </div>
   </div>
+
+  <script type="module">
+    import { auth, sendPasswordResetEmail } from './auth.js';
+
+    const form = document.getElementById('forgot-form');
+    const email = document.getElementById('email');
+    const msgBox = document.getElementById('forgotMsg');
+    const btn = document.getElementById('forgotBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msgBox.textContent = "";
+      msgBox.className = "msg";
+      btn.disabled = true;
+
+      try {
+        await sendPasswordResetEmail(auth, email.value.trim());
+        msgBox.textContent = "Ti abbiamo inviato un'email per reimpostare la password.";
+        msgBox.classList.add("success");
+      } catch (err) {
+        console.error("Errore reset:", err);
+        msgBox.textContent = "Errore: verifica l'email e riprova.";
+        msgBox.classList.add("error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
