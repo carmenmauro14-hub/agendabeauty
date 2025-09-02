@@ -1,46 +1,67 @@
-
-document.addEventListener('DOMContentLoaded', function () {
-  // Inserisce manifest e icone nel <head>
+// navbar.js — inject + active + fade interno, sicuro
+document.addEventListener('DOMContentLoaded', () => {
   const head = document.head;
 
-  const manifest = document.createElement("link");
-  manifest.rel = "manifest";
-  manifest.href = "manifest.json";
-  head.appendChild(manifest);
+  // manifest & icone (idempotente)
+  const ensureLink = (rel, href, attrs = {}) => {
+    if ([...document.querySelectorAll(`link[rel="${rel}"]`)]
+        .some(l => l.getAttribute('href') === href)) return;
+    const el = document.createElement('link');
+    el.rel = rel; el.href = href;
+    Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+    head.appendChild(el);
+  };
 
-  const icon192 = document.createElement("link");
-  icon192.rel = "icon";
-  icon192.href = "icons/icon-192.png";
-  icon192.type = "image/png";
-  head.appendChild(icon192);
+  // NON caricare navbar nelle pagine di auth
+  const file = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const AUTH_PAGES = new Set(['login.html', 'signup.html', 'forgot.html']);
+  if (AUTH_PAGES.has(file)) return;
 
-  const appleIcon = document.createElement("link");
-  appleIcon.rel = "apple-touch-icon";
-  appleIcon.href = "icons/icon-192.png";
-  head.appendChild(appleIcon);
+  // Manifest + icone (se ti serve farlo qui)
+  ensureLink('manifest', 'manifest.json');
+  ensureLink('icon', 'icons/icon-192.png', { type: 'image/png', sizes: '192x192' });
+  ensureLink('apple-touch-icon', 'icons/icon-192.png', { sizes: '192x192' });
 
-  // Carica la navbar dinamicamente
-  fetch("navbar.html")
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById("navbar-placeholder").innerHTML = data;
+  const placeholder = document.getElementById('navbar-placeholder');
+  if (!placeholder) return; // pagina senza navbar
 
-      // Attiva la voce attuale nella navbar
-      const currentPage = window.location.pathname.split("/").pop();
-      document.querySelectorAll('.top-nav a').forEach(link => {
-        if (link.getAttribute("href") === currentPage) {
-          link.classList.add("active");
-        }
+  fetch('navbar.html')
+    .then(r => r.text())
+    .then(html => {
+      placeholder.innerHTML = html;
+
+      const topNav = placeholder.querySelector('.top-nav');
+      if (!topNav) return;
+
+      // Attiva la voce corrente (ignora query/hash)
+      const current = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      topNav.querySelectorAll('a[href]').forEach(a => {
+        try {
+          const url = new URL(a.getAttribute('href'), location.origin);
+          const hrefFile = (url.pathname.split('/').pop() || 'index.html').toLowerCase();
+          if (hrefFile === current) a.classList.add('active');
+        } catch { /* href non valido → ignora */ }
       });
 
-      // Effetto fade-out al cambio pagina
-      document.querySelectorAll('.top-nav a').forEach(link => {
-        link.addEventListener('click', function (e) {
+      // Fade-out su link interni dell’app
+      topNav.querySelectorAll('a[href]').forEach(a => {
+        a.addEventListener('click', e => {
+          const href = a.getAttribute('href');
+          // esterni o anchor: lascia stare
+          if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+            return;
+          }
+          // se già sulla stessa pagina, niente fade
+          const targetFile = (href.split('?')[0].split('#')[0].split('/').pop() || 'index.html').toLowerCase();
+          if (targetFile === current) return;
+
           e.preventDefault();
           document.body.classList.add('fade-out');
-          const href = this.getAttribute('href');
-          setTimeout(() => window.location.href = href, 200);
+          setTimeout(() => { window.location.href = href; }, 200);
         });
       });
+    })
+    .catch(err => {
+      console.error('[navbar] errore fetch navbar.html:', err);
     });
 });
