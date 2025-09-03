@@ -46,10 +46,11 @@ const safeDate = (d)=>{
 function getRange(type, fromStr, toStr){
   const now = new Date();
   const startOfWeek = (d)=>{
-    const day = d.getDay() || 7;
-    d.setHours(0,0,0,0);
-    d.setDate(d.getDate() - day + 1);
-    return d;
+    const copy = new Date(d);
+    const day = copy.getDay() || 7;
+    copy.setHours(0,0,0,0);
+    copy.setDate(copy.getDate() - day + 1);
+    return copy;
   };
   if(type==="month"){
     return {
@@ -75,15 +76,15 @@ function getRange(type, fromStr, toStr){
       end: new Date(now.getFullYear(), 0, 1)
     };
   }
-  if(type==="week"){
-    const s = startOfWeek(new Date());
-    const e = new Date(); e.setHours(0,0,0,0); e.setDate(e.getDate()+1); // oggi +1
+  if(type==="thisweek"){
+    const s = startOfWeek(now);
+    const e = new Date(s); e.setDate(s.getDate()+7);
     return {start: s, end: e};
   }
   if(type==="lastweek"){
-    const s = startOfWeek(new Date());
+    const s = startOfWeek(now);
     s.setDate(s.getDate() - 7);
-    const e = new Date(s); e.setDate(e.getDate()+7);
+    const e = new Date(s); e.setDate(s.getDate()+7);
     return {start: s, end: e};
   }
 
@@ -202,6 +203,30 @@ async function renderTopClients(byClientId, byClientKey){
     : `<li><span class="name">—</span><span class="meta">Nessun dato</span></li>`;
 }
 
+function renderWeekBars(byDay, start){
+  trendCard.classList.remove("hidden");
+  const days = ["LUN","MAR","MER","GIO","VEN","SAB","DOM"];
+  const values = [];
+  for (let i=0; i<7; i++){
+    const d = new Date(start); d.setDate(d.getDate()+i);
+    const key = d.toISOString().slice(0,10);
+    values.push({ label: days[i], sum: byDay[key] || 0 });
+  }
+  const max = Math.max(1, ...values.map(v=>v.sum));
+
+  trendCard.querySelector(".card-title").textContent = "Andamento settimana";
+  barsContainer.innerHTML = "";
+  barsLegend.textContent = `Settimana: ${start.getDate()}–${start.getDate()+6} ${start.toLocaleString("it-IT",{month:"long",year:"numeric"})}`;
+
+  values.forEach(v=>{
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.height = Math.round((v.sum / max) * 100) + "%";
+    bar.innerHTML = `<div class="tip">${v.label}: ${euro(v.sum)}</div><div class="day-label">${v.label}</div>`;
+    barsContainer.appendChild(bar);
+  });
+}
+
 function renderMonthBars(byDay, start){
   trendCard.classList.remove("hidden");
   const daysInMonth = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
@@ -249,30 +274,6 @@ function renderYearBars(byMonth, year){
   });
 }
 
-function renderWeekBars(byDay, start){
-  trendCard.classList.remove("hidden");
-  const days = ["LUN","MAR","MER","GIO","VEN","SAB","DOM"];
-  const values = [];
-  for (let i=0; i<7; i++){
-    const d = new Date(start); d.setDate(d.getDate()+i);
-    const key = d.toISOString().slice(0,10);
-    values.push({ label: days[i], sum: byDay[key] || 0 });
-  }
-  const max = Math.max(1, ...values.map(v=>v.sum));
-
-  trendCard.querySelector(".card-title").textContent = "Andamento settimana";
-  barsContainer.innerHTML = "";
-  barsLegend.textContent  = `Settimana dal ${start.toLocaleDateString("it-IT")}`;
-
-  values.forEach(v=>{
-    const bar = document.createElement("div");
-    bar.className = "bar";
-    bar.style.height = Math.round((v.sum / max) * 100) + "%";
-    bar.innerHTML = `<div class="tip">${v.label}: ${euro(v.sum)}</div><div class="day-label">${v.label}</div>`;
-    barsContainer.appendChild(bar);
-  });
-}
-
 // === Tabs
 let currentType = "month";
 tabs.querySelectorAll(".tab").forEach(btn=>{
@@ -304,9 +305,7 @@ async function run(type = currentType) {
   await renderTopClients(agg.byClientId, agg.byClientKey);
 
   const diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
-
-  // ✅ Corretto: settimana corrente e scorsa mostrano SEMPRE grafico settimanale
-  const isWeekLike = (type === "week" || type === "lastweek");
+  const isWeekLike = (type === "thisweek" || type === "lastweek");
 
   const isFullMonth =
     start.getDate() === 1 &&
