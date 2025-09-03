@@ -24,7 +24,7 @@ let idModifica = null;
 
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
-  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia"
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia", "laser_gambe"
 ];
 
 /* € helpers */
