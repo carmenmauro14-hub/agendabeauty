@@ -1,8 +1,6 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont,
-               "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-               "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   background-color: #ffffff;
   color: #333;
 }
@@ -82,66 +80,6 @@ body {
   pointer-events: none;
 }
 
-.giorni-settimana {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 12px;
-  padding: 10px 0;
-  background: #fff;
-  color: #d2b8a3;
-  border-bottom: 1px solid #eee;
-}
-
-.griglia {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 100px;
-  gap: 1px;
-  background-color: #eee;
-}
-
-.cella {
-  background: #fff;
-  padding: 4px;
-  font-size: 12px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.cella .giorno {
-  font-weight: bold;
-  font-size: 11px;
-  color: #d2b8a3;
-  padding-left: 1px;
-  padding-top: 1px;
-}
-.cella.oggi .giorno {
-  background-color: #d2b8a3;
-  color: white;
-  width: 16px;
-  height: 16px;
-  font-size: 10px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.cella .evento {
-  background-color: #d2b8a3;
-  color: white;
-  font-size: 10px;
-  padding: 2px 4px;
-  border-radius: 4px;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cella.fuori-mese { background-color: #f3f3f3; }
-
 .floating-btn {
   position: fixed;
   bottom: 80px;
@@ -158,7 +96,7 @@ body {
   z-index: 9999;
 }
 
-/* ─── VISTA GIORNO ─────────────────── */
+/* VISTA GIORNO */
 #contenutoGiorno { padding: 16px; }
 #contenutoGiorno p {
   color: #999;
@@ -223,16 +161,40 @@ body {
   position:relative; transform:translateY(0); transition:transform .2s ease;
   padding-top:52px;
 }
-.det-topbar{
-  position:absolute; top:0; left:0; right:0; height:44px;
-  display:flex; align-items:center; justify-content:center;
-  -webkit-user-select:none; user-select:none; touch-action:none;
+.det-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  /* pointer-events: none; <-- RIMOSSO per far funzionare la X */
 }
-.det-grabber{ width:48px; height:5px; border-radius:3px; background:#e6d9d0; }
-.det-close{
-  position:absolute; top:6px; right:8px; width:32px; height:32px;
-  border:0; background:transparent; font-size:22px; line-height:32px;
-  color:#a07863; opacity:.85; cursor:pointer;
+.det-grabber {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6d9d0;
+}
+.det-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 32px;
+  color: #a07863;
+  opacity: 0.85;
+  cursor: pointer;
+  z-index: 10;
 }
 .det-body{ padding:12px 16px 24px; }
 .det-title{ margin:6px 0 12px; color:#222; font-size:28px; font-weight:900; }
@@ -278,37 +240,25 @@ body {
 .btn-pill:active{ transform:scale(.96); }
 .btn-pill:hover{ box-shadow:0 0 0 3px rgba(210,184,163,.16); }
 
-/* ── Icona promemoria accanto ad ogni appuntamento (stile Clienti) ───────────── */
+/* Icona promemoria accanto ad ogni appuntamento */
 .promem-ico {
-  margin-left: auto;            
-  display: flex; 
-  align-items: center; 
+  margin-left: auto;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  min-width: 34px; 
+  min-width: 34px;
   height: 28px;
   padding: 0 8px;
-  border-radius: 8px;             /* angoli arrotondati, non cerchio */
-  background: #f4ece7;            /* tinta card */
-  border: 1px solid #d2b8a3;      /* bordo palette */
+  border-radius: 8px;
+  background: #f4ece7;
+  border: 1px solid #d2b8a3;
   color: #a07863;
   font-size: 18px;
   cursor: pointer;
   transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
 }
-
 .promem-ico:hover {
-  background: #e8d7cb;            /* hover più scuro */
+  background: #e8d7cb;
   box-shadow: 0 0 0 3px rgba(210,184,163,.16);
 }
-
-.promem-ico:active { 
-  transform: scale(.95); 
-}
-
-.det-topbar {
-  pointer-events: none;
-}
-.det-close {
-  pointer-events: auto;
-  z-index: 10;
-}
+.promem-ico:active { transform: scale(.95); }
