@@ -286,6 +286,23 @@ btnSalva?.addEventListener("click", async () => {
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
+  // 🔍 Controlla se esiste già un appuntamento con stessa data e ora
+  const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
+  const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const esiste = appuntamenti.some(app => {
+    return (
+      app.dataISO === dataISO &&
+      app.ora === ora &&
+      (!editId || app.id !== editId) // in modifica esclude se stesso
+    );
+  });
+
+  if (esiste) {
+    alert(`Hai già un appuntamento alle ${ora} del ${dataISO}`);
+    return; // blocca salvataggio
+  }
+  
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
