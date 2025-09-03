@@ -443,4 +443,5 @@ btnSalva?.addEventListener("click", async () => {
       location.href = "calendario.html";
     }
   });
+  btnRubricaClose?.addEventListener("click", chiudiRubricaConAnimazione);
 })();
