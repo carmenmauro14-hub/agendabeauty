@@ -182,19 +182,20 @@ body {
   background: #e6d9d0;
 }
 .det-close {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
+  position: fixed;
+  top: 28px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
   border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 32px;
+  background: white;
+  border-radius: 50%;
+  font-size: 20px;
+  line-height: 36px;
   color: #a07863;
-  opacity: 0.85;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   cursor: pointer;
-  z-index: 10;
+  z-index: 9999;
 }
 .det-body{ padding:12px 16px 24px; }
 .det-title{ margin:6px 0 12px; color:#222; font-size:28px; font-weight:900; }
