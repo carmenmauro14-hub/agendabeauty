@@ -304,3 +304,11 @@ body {
 .promem-ico:active { 
   transform: scale(.95); 
 }
+
+.det-topbar {
+  pointer-events: none;
+}
+.det-close {
+  pointer-events: auto;
+  z-index: 10;
+}
