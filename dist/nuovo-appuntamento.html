@@ -74,20 +74,20 @@
     <button id="salvaAppuntamento" class="btn">Salva Appuntamento</button>
   </div>
 </div>
-<!-- Modale rubrica -->
-<div id="rubricaModal" class="modal" style="align-items:flex-end;">
-  <div class="rubrica-sheet">
+<!-- Modale rubrica (ripristinata corretta) -->
+<div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
+  <div class="rubrica-container"
+       style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
+              overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
     <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
     <div class="rubrica-header">
       <div class="rubrica-grabber" id="rubricaGrabber"></div>
     </div>
-    <div class="rubrica-content">
-      <div class="top-bar">
-        <input id="searchCliente" type="text" placeholder="Cerca cliente…">
-      </div>
-      <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
-      <div id="letterNavPicker" class="letter-nav"></div>
+    <div class="top-bar">
+      <input id="searchCliente" type="text" placeholder="Cerca cliente…">
     </div>
+    <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
+    <div id="letterNavPicker" class="letter-nav"></div>
   </div>
 </div>
 
