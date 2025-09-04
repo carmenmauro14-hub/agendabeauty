@@ -1,14 +1,11 @@
-// rubrica.js — usa l'istanza Firebase di auth.js, no doppie init
-
-// Reuse app inizializzata in auth.js
-import { app } from "./auth.js";
+// rubrica.js — usa la stessa istanza Firestore (offline cache) da auth.js
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, addDoc, getDocs
+  collection, addDoc, getDocs, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const db = getFirestore(app);
-
-// ─── Elementi DOM ────────────────────────────────────
+(async () => {
+  // ─── Elementi DOM ────────────────────────────────────
 const clientList    = document.getElementById("clientList");
 const letterNav     = document.getElementById("letterNav");
 const searchInput   = document.getElementById("searchInput");
