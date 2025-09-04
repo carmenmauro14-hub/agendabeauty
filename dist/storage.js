@@ -179,4 +179,3 @@ export async function nukeAll() {
 export async function initStorage() {
   await openDB();
   return true;
-}del file dist/settings.js deve essere qui.
