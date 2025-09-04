@@ -1,5 +1,4 @@
 // ===== Firebase =====
-// ===== Firestore riusata dall'app =====
 import { db } from "./auth.js";
 import { doc, getDoc, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
