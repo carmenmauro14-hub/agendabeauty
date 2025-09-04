@@ -3,14 +3,12 @@
 // selezione appuntamento, costruzione messaggio, apertura WhatsApp
 
 // ===== Firebase: riuso app inizializzata in auth.js =====
-import { app } from "./auth.js";
-import { getFirestore, doc, getDoc, setDoc }
+import { db } from "./auth.js";
+import { doc, getDoc, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Unica istanza Firestore
-const db = getFirestore(app);
-
 // ===== Utils locali =====
+
 const FMT_DATA = new Intl.DateTimeFormat("it-IT",{ day:"2-digit", month:"2-digit", year:"2-digit" });
 
 // Normalizza stringhe per preservare emoji (NFC)
