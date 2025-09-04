@@ -1,20 +1,32 @@
-/* ───────────────────────────────────────────────
-   Base
-─────────────────────────────────────────────── */
+/* ===== Palette & base ===== */
+:root {
+  --prim: #d2b8a3;
+  --text: #a07863;
+  --line: #e6d9d0;
+  --bg: #fff;
+  --tile: #efe2d8;
+  --tile-hover: #e8d7cb;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
                "Helvetica Neue", sans-serif;
   margin: 0;
   padding: 0;
-  background: #fff;
+  background: var(--bg);
+  color: var(--text);
 }
 
+/* ===== WIZARD ===== */
 .wizard-container {
   max-width: 600px;
   margin: 20px auto;
   padding: 20px;
-  margin-top: 20px;
 }
 
 .step {
@@ -25,17 +37,14 @@ body {
   margin-top: 20px;
 }
 
-/* Titoli step */
 .step h2 {
   font-size: 18px;
   font-weight: bold;
-  color: #a07863;
+  color: var(--text);
   margin-bottom: 20px;
 }
 
-/* ───────────────────────────────────────────────
-   Navigazione step / Pulsanti
-─────────────────────────────────────────────── */
+/* ===== PULSANTI ===== */
 .wizard-nav {
   margin-top: 20px;
   display: flex;
@@ -43,10 +52,9 @@ body {
   justify-content: space-between;
 }
 
-/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
 .btn,
-.btn-primary,        /* retro-compatibilità */
-.btn-secondary {     /* retro-compatibilità */
+.btn-primary,
+.btn-secondary {
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -55,7 +63,7 @@ body {
   padding: 0 18px;
   border: none;
   border-radius: 14px;
-  background: #d2b8a3;
+  background: var(--prim);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
@@ -64,23 +72,15 @@ body {
   text-decoration: none;
   user-select: none;
 }
-.btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover { opacity: .95; }
-.btn:active,
-.btn-primary:active,
-.btn-secondary:active { transform: scale(.98); }
-.btn:disabled,
-.btn-primary:disabled,
-.btn-secondary:disabled {
+.btn:hover { opacity: .95; }
+.btn:active { transform: scale(.98); }
+.btn:disabled {
   opacity: .55;
   cursor: not-allowed;
   filter: grayscale(10%);
 }
 
-/* ───────────────────────────────────────────────
-   Campi input date/ora
-─────────────────────────────────────────────── */
+/* ===== INPUT ===== */
 select,
 input[type="date"],
 input[type="time"] {
@@ -89,20 +89,18 @@ input[type="time"] {
   padding: 12px 14px;
   margin-top: 12px;
   margin-bottom: 12px;
-  border: 1px solid #e6d9d0;
+  border: 1px solid var(--line);
   border-radius: 12px;
   background: #fff;
-  color: #a07863;
+  color: var(--text);
   font-size: 16px;
 }
 
-/* ───────────────────────────────────────────────
-   Trattamenti
-─────────────────────────────────────────────── */
+/* ===== TRATTAMENTI ===== */
 #trattamentiWrapper {
   max-height: none;
   overflow-y: auto;
-  border: 1px solid #e6d9d0;
+  border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px;
   background: #fff;
@@ -121,7 +119,7 @@ input[type="time"] {
   align-items: center;
   gap: 10px;
   flex-grow: 1;
-  color: #a07863;
+  color: var(--text);
 }
 
 .trattamento-row .icona-trattamento {
@@ -133,10 +131,10 @@ input[type="time"] {
   width: 80px;
   height: 32px;
   padding: 2px 8px;
-  border: 1px solid #d2b8a3;
+  border: 1px solid var(--prim);
   border-radius: 10px;
   background: #fff;
-  color: #a07863;
+  color: var(--text);
   box-sizing: border-box;
   font-size: 16px;
   transform-origin: left center;
@@ -144,113 +142,49 @@ input[type="time"] {
 
 .prezzo-input:focus {
   outline: none;
-  border-color: #a07863; /* bordo un po’ più scuro in focus */
-  box-shadow: 0 0 0 3px rgba(210,184,163,.28);
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px rgba(210, 184, 163, .28);
 }
 
 input[type="checkbox"] {
-  accent-color: #d2b8a3;
-}
-/* ───────────────────────────────────────────────
-   “Input finto” che apre la rubrica (step 1)
-─────────────────────────────────────────────── */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-  padding:12px 16px;
-  border:1px solid #e6d9d0;
-  border-radius:14px;
-  background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
-}
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
-}
-.picker-input .value{
-  font-weight:600;
-  color:#a07863;
-}
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
-
-/* ───────────────────────────────────────────────
-   Modale Rubrica
-─────────────────────────────────────────────── */
-#rubricaModal .rubrica-container {
-  position: relative;
-  padding-top: 56px;
-  will-change: transform;
-  transform: translateY(0);
-  transition: transform 200ms ease;
-}
-#rubricaModal .rubrica-container.swipe-out-down {
-  transform: translateY(100%);
+  accent-color: var(--prim);
 }
 
-#rubricaModal .rubrica-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
+/* ===== INPUT FALSO (CLIENTE) ===== */
+.picker-input {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 3;
-  background: transparent;
-  padding: 0;
-  touch-action: none;
-  -webkit-user-select: none;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text);
+  cursor: text;
   user-select: none;
 }
-
-#rubricaModal .rubrica-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: #e6d9d0;
-  margin: 0;
-  cursor: grab;
+.picker-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(210, 184, 163, .25);
+}
+.picker-input .value {
+  font-weight: 600;
+  color: var(--text);
+}
+.picker-input.empty .value {
+  display: none;
+}
+.picker-input.empty #pickerPlaceholder {
+  opacity: .6;
 }
 
-#rubricaModal .rubrica-close {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 32px;
-  color: #a07863;
-  opacity: .85;
-  cursor: pointer;
-  z-index: 4;
-}
-
-.wizard-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #a07863;
-  margin-bottom: 10px;
-}
-
-/* ───────────────────────────────────────────────
-   Pagina-modale
-─────────────────────────────────────────────── */
+/* ===== WIZARD MODALE (IN BASSO) ===== */
 .page-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -286,20 +220,17 @@ input[type="checkbox"] {
   background: transparent;
   padding: 0;
   touch-action: none;
-  -webkit-user-select: none;
   user-select: none;
 }
-
 .sheet-grabber {
   width: 48px;
   height: 5px;
   border-radius: 3px;
-  background: #e6d9d0;
+  background: var(--line);
   margin: 0;
   cursor: grab;
 }
-
-#sheetClose {
+.sheet-close {
   position: absolute;
   top: 6px;
   right: 8px;
@@ -309,26 +240,76 @@ input[type="checkbox"] {
   background: transparent;
   font-size: 22px;
   line-height: 32px;
-  color: #a07863;
+  color: var(--text);
   opacity: .85;
   cursor: pointer;
   z-index: 4;
 }
 
-/* Scroll limitato solo all'elenco dei trattamenti */
+/* ===== RUBRICA MODALE (ALTA) ===== */
+#rubricaModal .rubrica-container {
+  position: relative;
+  padding-top: 56px;
+  will-change: transform;
+  transform: translateY(0);
+  transition: transform 200ms ease;
+}
+
+#rubricaModal .rubrica-container.swipe-out-down {
+  transform: translateY(100%);
+}
+
+#rubricaModal .rubrica-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  background: transparent;
+  padding: 0;
+  user-select: none;
+}
+#rubricaModal .rubrica-grabber {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  margin: 0;
+  cursor: grab;
+}
+#rubricaModal .rubrica-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 32px;
+  color: var(--text);
+  opacity: .85;
+  cursor: pointer;
+  z-index: 4;
+}
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
+
+/* ===== SCROLL SOLO SUI TRATTAMENTI ===== */
 .trattamenti-scroll-container {
-  max-height: calc(95vh - 280px); /* regola se serve più o meno spazio visibile */
+  max-height: calc(95vh - 280px);
   overflow-y: auto;
   margin-top: 12px;
   padding-right: 6px;
 }
-
-/* Scrollbar estetica */
 .trattamenti-scroll-container {
   scrollbar-width: thin;
-  scrollbar-color: #d2b8a3 #f5f5f5;
+  scrollbar-color: var(--prim) #f5f5f5;
 }
-
 .trattamenti-scroll-container::-webkit-scrollbar {
   width: 6px;
 }
@@ -336,11 +317,14 @@ input[type="checkbox"] {
   background: #f5f5f5;
 }
 .trattamenti-scroll-container::-webkit-scrollbar-thumb {
-  background-color: #d2b8a3;
+  background-color: var(--prim);
   border-radius: 6px;
 }
 
-html { -webkit-text-size-adjust: 100%; }
-
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
+/* ===== Titolo dinamico in alto ===== */
+.wizard-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 10px;
+}
