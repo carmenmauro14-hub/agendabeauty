@@ -1,10 +1,9 @@
 // trattamenti-settings.js — usa l’istanza condivisa di Firebase da auth.js
-import { app } from "./auth.js";
+// trattamenti-settings.js — usa l’istanza condivisa (db) da auth.js
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc
+  collection, getDocs, addDoc, deleteDoc, doc, updateDoc, orderBy, query
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const db = getFirestore(app);
 
 const btnNuovo = document.getElementById("btn-nuovo-trattamento");
 const form = document.getElementById("form-trattamento");
