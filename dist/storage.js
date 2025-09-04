@@ -1,0 +1,1 @@
+// Il contenuto originale del file dist/settings.js deve essere qui.
