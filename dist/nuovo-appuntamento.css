@@ -331,3 +331,25 @@ input[type="checkbox"] {
   color: #a07863;
   margin-bottom: 10px;
 }
+
+/* Scroll limitato solo all'elenco trattamenti nello step 3 */
+.step-scrollable {
+  display: flex;
+  flex-direction: column;
+  height: calc(95vh - 120px); /* Adatta in base al tuo layout */
+}
+
+#trattamentiWrapperScrollable {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 4px;
+}
+
+/* Migliora la separazione visiva dei pulsanti */
+.step-scrollable .wizard-nav {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e6d9d0;
+  background: #f9f9f9;
+}
