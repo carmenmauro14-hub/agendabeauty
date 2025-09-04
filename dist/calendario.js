@@ -1,12 +1,10 @@
 // calendario.js — versione corretta: riusa app da auth.js (no doppia init), 10.12.2
-import { app } from "./auth.js";
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, query, where, getDocs, doc, getDoc,
+  collection, query, where, getDocs, doc, getDoc,
   orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { abilitaSwipe } from "./swipe.js";
-
-const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
   // ---- DOM ----
