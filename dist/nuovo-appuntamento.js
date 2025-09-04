@@ -204,7 +204,7 @@ searchCliente?.addEventListener("input", () => {
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
-  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia", "laser_gambe"
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia", "laser"
 ];
 function trovaIcona(nome) {
   const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
