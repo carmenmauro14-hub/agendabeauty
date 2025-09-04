@@ -1,16 +1,14 @@
 // nuovo-appuntamento.js
 
 // ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
-import { app } from "./auth.js";
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
+  collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp,
+  query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── Utility swipe (già tua) ───────────────────────────────────────
 import { abilitaSwipeVerticale } from "./swipe.js";
-
-// Istanza Firestore dall'app riusata
-const db = getFirestore(app);
 
 // ─── Parametri URL (preset cliente e data opzionali) ───────────────
 const urlParams        = new URLSearchParams(location.search);
