@@ -1,5 +1,10 @@
-// auth.js — semplice, con fix per loop da iPhone/Safari
+// auth.js — con cache offline persistente per Firestore + fix Safari
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeFirestore,
+  persistentLocalCache
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -19,8 +24,15 @@ const firebaseConfig = {
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
 
-// Inizializza Firebase una sola volta
+// Inizializza Firebase app una sola volta
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+// Inizializza Firestore con cache offline persistente
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache()
+});
+
+// Inizializza Auth
 export const auth = getAuth(app);
 
 // Esportazioni comuni
