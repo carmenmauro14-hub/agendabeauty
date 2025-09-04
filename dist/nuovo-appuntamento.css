@@ -52,6 +52,44 @@ body::-webkit-scrollbar-thumb {
   margin-bottom: 20px;
 }
 
+/* Scroll limitato solo all'elenco trattamenti nello step 3 */
+.step-scrollable {
+  display: flex;
+  flex-direction: column;
+  height: calc(95vh - 120px); /* Adatta se necessario */
+}
+
+#trattamentiWrapperScrollable {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 4px;
+}
+
+/* Scrollbar elegante solo sui trattamenti */
+#trattamentiWrapperScrollable {
+  scrollbar-width: thin;
+  scrollbar-color: #d2b8a3 #f5f5f5;
+}
+#trattamentiWrapperScrollable::-webkit-scrollbar {
+  width: 6px;
+}
+#trattamentiWrapperScrollable::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+#trattamentiWrapperScrollable::-webkit-scrollbar-thumb {
+  background-color: #d2b8a3;
+  border-radius: 6px;
+}
+
+/* Migliora separazione visiva dei pulsanti */
+.step-scrollable .wizard-nav {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e6d9d0;
+  background: #f9f9f9;
+}
+
 /* ───────────────────────────────────────────────
    Bottoni
 ─────────────────────────────────────────────── */
@@ -111,15 +149,6 @@ input[type="time"] {
 /* ───────────────────────────────────────────────
    Trattamenti
 ─────────────────────────────────────────────── */
-#trattamentiWrapper {
-  max-height: none;
-  overflow-y: auto;
-  border: 1px solid #e6d9d0;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
-}
-
 .trattamento-row {
   display: flex;
   align-items: center;
@@ -256,7 +285,7 @@ input[type="checkbox"] {
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
 
 /* ───────────────────────────────────────────────
-   Modale Wizard (pagina)
+   Modale Wizard
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -330,26 +359,4 @@ input[type="checkbox"] {
   font-weight: bold;
   color: #a07863;
   margin-bottom: 10px;
-}
-
-/* Scroll limitato solo all'elenco trattamenti nello step 3 */
-.step-scrollable {
-  display: flex;
-  flex-direction: column;
-  height: calc(95vh - 120px); /* Adatta in base al tuo layout */
-}
-
-#trattamentiWrapperScrollable {
-  flex: 1;
-  overflow-y: auto;
-  margin-top: 12px;
-  padding-right: 4px;
-}
-
-/* Migliora la separazione visiva dei pulsanti */
-.step-scrollable .wizard-nav {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e6d9d0;
-  background: #f9f9f9;
 }
