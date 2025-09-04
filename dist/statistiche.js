@@ -1,10 +1,9 @@
-import { app } from "./auth.js";
+// statistiche.js — usa db da auth.js con cache offline
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, query, where, orderBy, getDocs,
+  collection, query, where, orderBy, getDocs,
   Timestamp, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const db = getFirestore(app);
 
 // === Riferimenti DOM
 const tabs      = document.getElementById("periodTabs");
