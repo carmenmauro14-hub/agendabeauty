@@ -135,3 +135,4 @@ addForm?.addEventListener("submit", async (e) => {
 
 // ─── Avvio ───────────────────────────────────────────
 caricaClienti();
+}
