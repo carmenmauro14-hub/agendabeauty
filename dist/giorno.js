@@ -1,14 +1,11 @@
 // giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA + mini-calendario on-demand)
 
 // 🔁 Usa l'istanza già creata in auth.js (niente initializeApp qui!)
-import { app } from "./auth.js";
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, query, where, orderBy,
+  collection, query, where, orderBy,
   getDocs, doc, getDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { openWhatsAppReminder } from "./reminder-core.js";
-
-const db  = getFirestore(app);
 
 // ── Stato
 let dataCorrente;
