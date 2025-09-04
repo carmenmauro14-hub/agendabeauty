@@ -1,93 +1,89 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Home - BeautyBook</title>
+
   <!-- Manifest per Android -->
-<link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
 
-<!-- Forzare fullscreen su iOS -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
+  <!-- Forzare fullscreen su iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
 
-<!-- Icone per Apple (iOS, iPadOS) -->
-<link rel="apple-touch-icon" sizes="120x120" href="icons/iphone_icon_120.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icons/ipad_icon_152.png">
-<link rel="apple-touch-icon" sizes="167x167" href="icons/ipad_icon_167.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/iphone_icon_180.png">
+  <!-- Icone per Apple (iOS, iPadOS) -->
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/iphone_icon_120.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/ipad_icon_152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/ipad_icon_167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/iphone_icon_180.png">
 
-<!-- Icone per Android e Web -->
-<link rel="icon" type="image/png" sizes="192x192" href="icons/iphone_icon_192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icons/iphone_icon_512.png">
+  <!-- Icone per Android e Web -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/iphone_icon_192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/iphone_icon_512.png">
 
-<!-- Colore della barra superiore su Android -->
-<meta name="theme-color" content="#ffffff">
+  <!-- Colore della barra superiore su Android -->
+  <meta name="theme-color" content="#ffffff">
+
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <script type="module" src="auth.js"></script>
 </head>
 <body>
-
-  
-
-
-  
   <div class="home-container">
     <img src="logo-carmen-mauro.PNG" alt="Logo Carmen Mauro" class="logo"/>
     
-<div class="grid-nav">
-  <a href="rubrica.html" class="home-button">
-    <img src="icone_uniformate_colore/rubica.png" alt="Rubrica" />
-    <span>Rubrica</span>
-  </a>
-  <a href="calendario.html" class="home-button">
-    <img src="icone_uniformate_colore/agenda.png" alt="Agenda" />
-    <span>Agenda</span>
-  </a>
-  <a href="statistiche.html" class="home-button">
-    <img src="icone_uniformate_colore/statistiche.png" alt="Statistiche" />
-    <span>Statistiche</span>
-  </a>
-  <a href="settings.html" class="home-button">
-    <img src="icone_uniformate_colore/setting.png" alt="Impostazioni" />
-    <span>Impostazioni</span>
-  </a>
-  
-</div>
+    <div class="grid-nav">
+      <a href="rubrica.html" class="home-button">
+        <img src="icone_uniformate_colore/rubica.png" alt="Rubrica" />
+        <span>Rubrica</span>
+      </a>
+      <a href="calendario.html" class="home-button">
+        <img src="icone_uniformate_colore/agenda.png" alt="Agenda" />
+        <span>Agenda</span>
+      </a>
+      <a href="statistiche.html" class="home-button">
+        <img src="icone_uniformate_colore/statistiche.png" alt="Statistiche" />
+        <span>Statistiche</span>
+      </a>
+      <a href="settings.html" class="home-button">
+        <img src="icone_uniformate_colore/setting.png" alt="Impostazioni" />
+        <span>Impostazioni</span>
+      </a>
+    </div>
 
-  <button id="logout-btn" class="logout-btn">
-  <i class="fas fa-sign-out-alt"></i> Logout
-</button>
+    <!-- Logout -->
+    <button id="logout-btn" class="logout-btn">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
 
-<!-- Barra di caricamento -->
-<div id="preloadBar">
-  <div class="progress"></div>
-</div>
-
-<script type="module">
-  import { auth, signOut } from './auth.js';
-
-  const btn = document.getElementById('logout-btn');
-  btn?.addEventListener('click', async () => {
-    btn.disabled = true;
-    try {
-      await signOut(auth); // il redirect lo gestisce auth.js
-    } catch (e) {
-      console.error('Errore logout:', e);
-      btn.disabled = false;
-      alert('Errore durante il logout. Riprova.');
-    }
-  });
-</script>
-<script type="module">
-  import { preloadReady } from "./auth.js";
-
-  preloadReady.finally(() => {
-    document.getElementById("preloadBar").style.display = "none";
-  });
-</script>
+    <!-- Barra di caricamento -->
+    <div id="preloadBar" style="display:block;">
+      <div class="progress"></div>
+    </div>
   </div>
+
+  <script type="module">
+    import { auth, signOut, preloadReady } from './auth.js';
+
+    // Logout
+    const btn = document.getElementById('logout-btn');
+    btn?.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.error('Errore logout:', e);
+        btn.disabled = false;
+        alert('Errore durante il logout. Riprova.');
+      }
+    });
+
+    // Barra preload: visibile subito, sparisce al termine del preload
+    const preloadBar = document.getElementById("preloadBar");
+    preloadReady.finally(() => {
+      preloadBar.style.display = "none";
+    });
+  </script>
 </body>
 </html>
