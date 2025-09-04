@@ -315,6 +315,31 @@ input[type="checkbox"] {
   z-index: 4;
 }
 
+/* Scroll limitato solo all'elenco dei trattamenti */
+.trattamenti-scroll-container {
+  max-height: calc(95vh - 280px); /* regola se serve più o meno spazio visibile */
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 6px;
+}
+
+/* Scrollbar estetica */
+.trattamenti-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #d2b8a3 #f5f5f5;
+}
+
+.trattamenti-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+.trattamenti-scroll-container::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.trattamenti-scroll-container::-webkit-scrollbar-thumb {
+  background-color: #d2b8a3;
+  border-radius: 6px;
+}
+
 html { -webkit-text-size-adjust: 100%; }
 
 #rubricaModal .rubrica-close:hover { opacity: 1; }
