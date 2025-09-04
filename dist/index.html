@@ -81,6 +81,13 @@
     }
   });
 </script>
+<script type="module">
+  import { preloadReady } from "./auth.js";
+
+  preloadReady.finally(() => {
+    document.getElementById("preloadBar").style.display = "none";
+  });
+</script>
   </div>
 </body>
 </html>
