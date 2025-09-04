@@ -1,15 +1,12 @@
 // ===== Firebase (riusa l’istanza creata in auth.js) =========================
-import { app } from "./auth.js";
+import { db } from "./auth.js";
+
 import {
-  getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
+  doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // === Modulo promemoria condiviso ============================================
 import { openWhatsAppReminder } from "./reminder-core.js";
-
-// Inizializza Firestore dalla stessa app/istanza usata da auth.js
-const db = getFirestore(app);
-
 // ===== Utils ================================================================
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 function toNumberSafe(v){
