@@ -53,24 +53,6 @@ body {
   margin-bottom: 8px;
 }
 
-/* ===== Logout ===== */
-.logout-btn {
-  margin-top: 16px;
-  padding: 12px 24px;
-  background: transparent;
-  color: #a07863;
-  border: 2px solid #d2b8a3;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.logout-btn:hover {
-  background: #d2b8a3;
-  color: #fff;
-}
 
 /* ===== Barra di caricamento ===== */
 #preloadBar {
@@ -88,6 +70,24 @@ body {
   background: #d2b8a3;
   animation: indeterminate 1.5s infinite;
   border-radius: 4px;
+}
+/* ===== Logout ===== */
+.logout-btn {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: transparent;
+  color: #a07863;
+  border: 2px solid #d2b8a3;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #d2b8a3;
+  color: #fff;
 }
 
 @keyframes indeterminate {
