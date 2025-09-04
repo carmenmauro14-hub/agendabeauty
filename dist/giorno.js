@@ -69,7 +69,7 @@ function trovaIcona(nome) {
   const icone = [
     "makeup_sposa","makeup","microblading","extension_ciglia",
     "laminazione_ciglia","filo_arabo","architettura_sopracciglia",
-    "airbrush_sopracciglia","microblinding","laser_gambe"
+    "airbrush_sopracciglia","laser"
   ];
   const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
   for (const base of icone) if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
