@@ -10,6 +10,26 @@ body {
   background: #fff;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #d2b8a3 #f5f5f5;
+}
+
+body::-webkit-scrollbar {
+  width: 6px;
+}
+body::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+body::-webkit-scrollbar-thumb {
+  background-color: #d2b8a3;
+  border-radius: 6px;
+}
+
+/* ───────────────────────────────────────────────
+   Wizard Container + Steps
+─────────────────────────────────────────────── */
 .wizard-container {
   max-width: 600px;
   margin: 20px auto;
@@ -25,7 +45,6 @@ body {
   margin-top: 20px;
 }
 
-/* Titoli step */
 .step h2 {
   font-size: 18px;
   font-weight: bold;
@@ -34,7 +53,7 @@ body {
 }
 
 /* ───────────────────────────────────────────────
-   Navigazione step / Pulsanti
+   Bottoni
 ─────────────────────────────────────────────── */
 .wizard-nav {
   margin-top: 20px;
@@ -43,10 +62,9 @@ body {
   justify-content: space-between;
 }
 
-/* Pulsante unico (Annulla/Indietro/Avanti/Salva) */
 .btn,
-.btn-primary,        /* retro-compatibilità */
-.btn-secondary {     /* retro-compatibilità */
+.btn-primary,
+.btn-secondary {
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -64,22 +82,17 @@ body {
   text-decoration: none;
   user-select: none;
 }
-.btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover { opacity: .95; }
-.btn:active,
-.btn-primary:active,
-.btn-secondary:active { transform: scale(.98); }
-.btn:disabled,
-.btn-primary:disabled,
-.btn-secondary:disabled {
+
+.btn:hover { opacity: .95; }
+.btn:active { transform: scale(.98); }
+.btn:disabled {
   opacity: .55;
   cursor: not-allowed;
   filter: grayscale(10%);
 }
 
 /* ───────────────────────────────────────────────
-   Campi input date/ora
+   Input
 ─────────────────────────────────────────────── */
 select,
 input[type="date"],
@@ -87,8 +100,7 @@ input[type="time"] {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  margin-top: 12px;
-  margin-bottom: 12px;
+  margin: 12px 0;
   border: 1px solid #e6d9d0;
   border-radius: 12px;
   background: #fff;
@@ -144,42 +156,45 @@ input[type="time"] {
 
 .prezzo-input:focus {
   outline: none;
-  border-color: #a07863; /* bordo un po’ più scuro in focus */
+  border-color: #a07863;
   box-shadow: 0 0 0 3px rgba(210,184,163,.28);
 }
 
 input[type="checkbox"] {
   accent-color: #d2b8a3;
 }
+
 /* ───────────────────────────────────────────────
-   “Input finto” che apre la rubrica (step 1)
+   Rubrica Picker
 ─────────────────────────────────────────────── */
-.picker-input{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-  padding:12px 16px;
-  border:1px solid #e6d9d0;
-  border-radius:14px;
-  background:#fff;
-  color:#a07863;
-  cursor:text;
-  user-select:none;
+.picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid #e6d9d0;
+  border-radius: 14px;
+  background: #fff;
+  color: #a07863;
+  cursor: text;
+  user-select: none;
 }
-.picker-input:focus{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(210,184,163,.25);
+
+.picker-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
 }
-.picker-input .value{
-  font-weight:600;
-  color:#a07863;
+
+.picker-input .value {
+  font-weight: 600;
+  color: #a07863;
 }
-.picker-input.empty .value{ display:none; }
-.picker-input.empty #pickerPlaceholder{ opacity:.6; }
+
+.picker-input.empty .value { display: none; }
+.picker-input.empty #pickerPlaceholder { opacity: .6; }
 
 /* ───────────────────────────────────────────────
    Modale Rubrica
@@ -191,6 +206,7 @@ input[type="checkbox"] {
   transform: translateY(0);
   transition: transform 200ms ease;
 }
+
 #rubricaModal .rubrica-container.swipe-out-down {
   transform: translateY(100%);
 }
@@ -208,7 +224,6 @@ input[type="checkbox"] {
   background: transparent;
   padding: 0;
   touch-action: none;
-  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -237,15 +252,11 @@ input[type="checkbox"] {
   z-index: 4;
 }
 
-.wizard-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #a07863;
-  margin-bottom: 10px;
-}
+#rubricaModal .rubrica-close:hover { opacity: 1; }
+#rubricaModal .rubrica-close:active { transform: scale(.96); }
 
 /* ───────────────────────────────────────────────
-   Pagina-modale
+   Modale Wizard (pagina)
 ─────────────────────────────────────────────── */
 .page-modal {
   position: fixed;
@@ -286,7 +297,6 @@ input[type="checkbox"] {
   background: transparent;
   padding: 0;
   touch-action: none;
-  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -315,7 +325,9 @@ input[type="checkbox"] {
   z-index: 4;
 }
 
-html { -webkit-text-size-adjust: 100%; }
-
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
+.wizard-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #a07863;
+  margin-bottom: 10px;
+}
