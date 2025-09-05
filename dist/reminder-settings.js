@@ -82,3 +82,4 @@ btnPrev?.addEventListener("click", showPreview);
 
 // ===== Avvio =====
 await loadTemplate();
+})();
