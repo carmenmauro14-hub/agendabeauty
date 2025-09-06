@@ -1,4 +1,4 @@
-// auth.js — Firebase + cache offline + preload
+// auth.js — Firebase + cache offline + preload + auto-refresh cache
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -102,6 +102,21 @@ async function preloadDataOnce(){
 export let preloadReady = Promise.resolve();
 
 // ───────────────────────────────────────────────
+// Auto-refresh cache periodico
+function setupAutoRefresh() {
+  if (!navigator.serviceWorker?.controller) return;
+
+  // Subito al login
+  navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
+
+  // Poi ogni 6 ore
+  setInterval(() => {
+    console.log("[auth] Auto refresh cache");
+    navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
+  }, 3 * 60 * 60 * 1000); // 3h in ms
+}
+
+// ───────────────────────────────────────────────
 // Protezione route + preload
 onAuthStateChanged(auth, user => {
   const isFree = PAGINE_LIBERE.has(FILE);
@@ -116,6 +131,7 @@ onAuthStateChanged(auth, user => {
     return;
   }
 
-  // Loggato → avvia preload
+  // Loggato → avvia preload + auto-refresh
   preloadReady = preloadDataOnce().catch(console.warn);
+  setupAutoRefresh();
 });
