@@ -54,7 +54,9 @@ const ASSETS = [
 // Install → precache base
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE)
+      .then(c => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -72,7 +74,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
 
-  // ignora chiamate firebase/gstatic
+  // Ignora chiamate a Firebase/gstatic
   if (url.origin.includes('firebaseio') || url.host.includes('gstatic.com')) return;
 
   // HTML → network-first
@@ -99,7 +101,7 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// 🔄 Ascolta messaggi da auth.js → precache pagine complete
+// 🔄 Messaggi da auth.js → precache extra
 self.addEventListener("message", (event) => {
   if (event.data?.type === "PRECACHE_PAGES") {
     caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS));
