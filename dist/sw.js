@@ -1,22 +1,14 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.1.0';
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
-// Asset statici principali della tua app
+// Asset statici (solo quelli reali!)
 const ASSETS = [
   // Pagine HTML
-  '/index.html',
-  '/login.html',
-  '/signup.html',
-  '/forgot.html',
-  '/logout.html',
-  '/calendario.html',
-  '/giorno.html',
-  '/nuovo-appuntamento.html',
-  '/rubrica.html',
-  '/cliente.html',
-  '/statistiche.html',
-  '/navbar.html',
+  '/index.html','/login.html','/signup.html','/forgot.html','/logout.html',
+  '/calendario.html','/giorno.html','/nuovo-appuntamento.html',
+  '/rubrica.html','/cliente.html','/statistiche.html','/settings.html',
+  '/navbar.html','/reminder-settings.html','/trattamenti-settings.html',
 
   // Manifest & icone
   '/manifest.json',
@@ -24,33 +16,16 @@ const ASSETS = [
   '/icons/iphone_icon_512.png',
 
   // CSS
-  '/calendario.css',
-  '/giorno.css',
-  '/nuovo-appuntamento.css',
-  '/rubrica.css',
-  '/cliente.css',
-  '/statistiche.css',
-  '/reminder-settings.css',
-  '/navbar.css',
+  '/calendario.css','/giorno.css','/nuovo-appuntamento.css','/rubrica.css',
+  '/cliente.css','/statistiche.css','/reminder-settings.css',
+  '/navbar.css','/home.css','/settings.css','/trattamenti-settings.css','/style.css',
 
   // JS
-  '/auth.js',
-  '/navbar.js',
-  '/swipe.js',
-  '/calendario.js',
-  '/giorno.js',
-  '/nuovo-appuntamento.js',
-  '/rubrica.js',
-  '/cliente.js',
-  '/statistiche.js',
-  '/reminder-core.js',
-  '/trattamenti-settings.js',
+  '/auth.js','/navbar.js','/swipe.js','/calendario.js','/giorno.js',
+  '/nuovo-appuntamento.js','/rubrica.js','/cliente.js','/statistiche.js',
+  '/reminder-core.js','/reminder-settings.js','/trattamenti-settings.js',
 
-  // Font Awesome (se usi kit locale, altrimenti viene da CDN)
-  // '/fontawesome/css/all.min.css',
-  // '/fontawesome/webfonts/fa-solid-900.woff2',
-
-  // Cartella icone trattamenti (aggiungi quelle realmente usate)
+  // Icone trattamenti
   '/icones_trattamenti/makeup.png',
   '/icones_trattamenti/makeup_sposa.png',
   '/icones_trattamenti/microblading.png',
@@ -65,14 +40,14 @@ const ASSETS = [
   '/icone_uniformate_colore/setting.png'
 ];
 
-// install: precache statici
+// Install → precache base
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
   );
 });
 
-// activate: pulizia cache vecchie
+// Activate → pulizia vecchie cache
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -81,15 +56,15 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// fetch: network-first per HTML, cache-first per statici
+// Fetch handler
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
 
-  // lascia passare Firestore/Auth
+  // ignora chiamate firebase/gstatic
   if (url.origin.includes('firebaseio') || url.host.includes('gstatic.com')) return;
 
-  // HTML → network-first con fallback
+  // HTML → network-first
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
       fetch(req).then(res => {
@@ -103,15 +78,19 @@ self.addEventListener('fetch', (e) => {
 
   // Statici → cache-first
   e.respondWith(
-    caches.match(req).then(cached => {
-      if (cached) return cached;
-      return fetch(req).then(res => {
-        const copy = res.clone();
-        if (req.method === 'GET' && res.ok && url.origin === location.origin) {
-          caches.open(STATIC_CACHE).then(c => c.put(req, copy));
-        }
-        return res;
-      });
-    })
+    caches.match(req).then(cached => cached || fetch(req).then(res => {
+      const copy = res.clone();
+      if (req.method === 'GET' && res.ok && url.origin === location.origin) {
+        caches.open(STATIC_CACHE).then(c => c.put(req, copy));
+      }
+      return res;
+    }))
   );
+});
+
+// 🔄 Ascolta messaggi da auth.js → precache pagine complete
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "PRECACHE_PAGES") {
+    caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS));
+  }
 });
