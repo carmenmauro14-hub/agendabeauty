@@ -1,4 +1,4 @@
-
+/* ─── NAVBAR INFERIORE ────────────────────────────── */
 .top-nav {
   position: fixed;
   bottom: env(safe-area-inset-bottom);
@@ -19,17 +19,22 @@
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
+/* Pagina attiva → icona più grande e colorata */
 .top-nav a.active img {
   transform: scale(1.25);
-  filter: brightness(0) saturate(100%) invert(27%) sepia(15%) saturate(850%) hue-rotate(337deg) brightness(80%) contrast(100%);
+  filter: brightness(0) saturate(100%)
+          invert(27%) sepia(15%)
+          saturate(850%) hue-rotate(337deg)
+          brightness(80%) contrast(100%);
 }
 
+/* Effetto dissolvenza su cambio pagina */
 .fade-out {
   opacity: 0;
   transition: opacity 0.2s ease-out;
 }
 
-/* Effetto click su icona */
+/* Feedback al tap su icona */
 .top-nav a:active img {
   transform: scale(0.9);
   opacity: 0.6;
