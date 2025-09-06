@@ -1,10 +1,9 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.1.1';
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
-// Asset statici (solo quelli reali!)
 const ASSETS = [
-  // Pagine HTML
+  // HTML
   '/index.html','/login.html','/signup.html','/forgot.html','/logout.html',
   '/calendario.html','/giorno.html','/nuovo-appuntamento.html',
   '/rubrica.html','/cliente.html','/statistiche.html','/settings.html',
@@ -12,6 +11,11 @@ const ASSETS = [
 
   // Manifest & icone
   '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/iphone_icon_120.png',
+  '/icons/ipad_icon_152.png',
+  '/icons/ipad_icon_167.png',
+  '/icons/iphone_icon_180.png',
   '/icons/iphone_icon_192.png',
   '/icons/iphone_icon_512.png',
 
@@ -25,19 +29,26 @@ const ASSETS = [
   '/nuovo-appuntamento.js','/rubrica.js','/cliente.js','/statistiche.js',
   '/reminder-core.js','/reminder-settings.js','/trattamenti-settings.js',
 
+  // Icone uniformate
+  '/icone_uniformate_colore/agenda.png',
+  '/icone_uniformate_colore/home.png',
+  '/icone_uniformate_colore/logo-carmen-mauro.PNG',
+  '/icone_uniformate_colore/logout.png',
+  '/icone_uniformate_colore/rubica.png',
+  '/icone_uniformate_colore/setting.png',
+  '/icone_uniformate_colore/statistiche.png',
+
   // Icone trattamenti
+  '/icones_trattamenti/airbrush_sopracciglia.png',
+  '/icones_trattamenti/architettura_sopracciglia.png',
+  '/icones_trattamenti/extension_ciglia.png',
+  '/icones_trattamenti/filo_arabo.png',
+  '/icones_trattamenti/laminazione_ciglia.png',
+  '/icones_trattamenti/laser.png',
+  '/icones_trattamenti/laser_gambe.png',
   '/icones_trattamenti/makeup.png',
   '/icones_trattamenti/makeup_sposa.png',
-  '/icones_trattamenti/microblading.png',
-  '/icones_trattamenti/extension_ciglia.png',
-  '/icones_trattamenti/laminazione_ciglia.png',
-  '/icones_trattamenti/filo_arabo.png',
-  '/icones_trattamenti/architettura_sopracciglia.png',
-  '/icones_trattamenti/airbrush_sopracciglia.png',
-  '/icones_trattamenti/laser.png',
-
-  // Fallback icona
-  '/icone_uniformate_colore/setting.png'
+  '/icones_trattamenti/microblading.png'
 ];
 
 // Install → precache base
