@@ -4,8 +4,7 @@ const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 const ASSETS = [
   // HTML
-  '/index.html','/login.html','/signup.html','/forgot.html','/logout.html',
-  '/calendario.html','/giorno.html','/nuovo-appuntamento.html',
+  '/index.html','/login.html','/signup.html','/forgot.html','/calendario.html','/giorno.html','/nuovo-appuntamento.html',
   '/rubrica.html','/cliente.html','/statistiche.html','/settings.html',
   '/navbar.html','/reminder-settings.html','/trattamenti-settings.html',
 
