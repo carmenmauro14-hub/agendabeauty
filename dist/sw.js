@@ -1,20 +1,17 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = 'v1.1.1';
+const CACHE_VERSION = 'v1.2.0';
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
+// Asset statici principali
 const ASSETS = [
   // HTML
-  '/index.html','/login.html','/signup.html','/forgot.html','/calendario.html','/giorno.html','/nuovo-appuntamento.html',
+  '/index.html','/login.html','/signup.html','/forgot.html','/logout.html',
+  '/calendario.html','/giorno.html','/nuovo-appuntamento.html',
   '/rubrica.html','/cliente.html','/statistiche.html','/settings.html',
   '/navbar.html','/reminder-settings.html','/trattamenti-settings.html',
 
   // Manifest & icone
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/iphone_icon_120.png',
-  '/icons/ipad_icon_152.png',
-  '/icons/ipad_icon_167.png',
-  '/icons/iphone_icon_180.png',
   '/icons/iphone_icon_192.png',
   '/icons/iphone_icon_512.png',
 
@@ -28,34 +25,25 @@ const ASSETS = [
   '/nuovo-appuntamento.js','/rubrica.js','/cliente.js','/statistiche.js',
   '/reminder-core.js','/reminder-settings.js','/trattamenti-settings.js',
 
-  // Icone uniformate
-  '/icone_uniformate_colore/agenda.png',
-  '/icone_uniformate_colore/home.png',
-  '/icone_uniformate_colore/logo-carmen-mauro.PNG',
-  '/icone_uniformate_colore/logout.png',
-  '/icone_uniformate_colore/rubica.png',
-  '/icone_uniformate_colore/setting.png',
-  '/icone_uniformate_colore/statistiche.png',
-
   // Icone trattamenti
-  '/icones_trattamenti/airbrush_sopracciglia.png',
-  '/icones_trattamenti/architettura_sopracciglia.png',
-  '/icones_trattamenti/extension_ciglia.png',
-  '/icones_trattamenti/filo_arabo.png',
-  '/icones_trattamenti/laminazione_ciglia.png',
-  '/icones_trattamenti/laser.png',
-  '/icones_trattamenti/laser_gambe.png',
   '/icones_trattamenti/makeup.png',
   '/icones_trattamenti/makeup_sposa.png',
-  '/icones_trattamenti/microblading.png'
+  '/icones_trattamenti/microblading.png',
+  '/icones_trattamenti/extension_ciglia.png',
+  '/icones_trattamenti/laminazione_ciglia.png',
+  '/icones_trattamenti/filo_arabo.png',
+  '/icones_trattamenti/architettura_sopracciglia.png',
+  '/icones_trattamenti/airbrush_sopracciglia.png',
+  '/icones_trattamenti/laser.png',
+
+  // Fallback
+  '/icone_uniformate_colore/setting.png'
 ];
 
 // Install → precache base
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(c => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
   );
 });
 
@@ -73,7 +61,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
 
-  // Ignora chiamate a Firebase/gstatic
+  // Ignora Firebase/gstatic
   if (url.origin.includes('firebaseio') || url.host.includes('gstatic.com')) return;
 
   // HTML → network-first
@@ -88,21 +76,27 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Statici → cache-first
+  // Asset statici → cache-first + update in background
   e.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
-      const copy = res.clone();
-      if (req.method === 'GET' && res.ok && url.origin === location.origin) {
-        caches.open(STATIC_CACHE).then(c => c.put(req, copy));
-      }
-      return res;
-    }))
+    caches.match(req).then(cached => {
+      const fetchPromise = fetch(req).then(res => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(STATIC_CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => cached);
+      return cached || fetchPromise;
+    })
   );
 });
 
-// 🔄 Messaggi da auth.js → precache extra
+// 🔄 Messaggi da auth.js
 self.addEventListener("message", (event) => {
   if (event.data?.type === "PRECACHE_PAGES") {
-    caches.open(STATIC_CACHE).then(c => c.addAll(ASSETS));
+    caches.open(STATIC_CACHE).then(c => {
+      console.log("[SW] Refresh assets richiesto");
+      return c.addAll(ASSETS);
+    });
   }
 });
