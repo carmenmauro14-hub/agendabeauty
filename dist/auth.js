@@ -1,9 +1,9 @@
-// auth.js — Firebase + cache offline + preload + fullSync ottimizzato
+// auth.js — Firebase + offline cache + pending sync
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
   persistentLocalCache,
-  collection, getDocs, query, where, orderBy, Timestamp
+  collection, getDocs, addDoc, query, where, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -15,7 +15,7 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { bulkUpsert, getLastSync, setLastSync } from "./storage.js";
+import { bulkUpsert, getAll, putOne, getLastSync, setLastSync } from "./storage.js";
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
 
 // ───────────────────────────────────────────────
@@ -67,18 +67,18 @@ function monthRange(centerDate = new Date(), offsetMonths = 0){
 }
 
 // ───────────────────────────────────────────────
-// Full Sync → salva in IndexedDB
+// Full Sync
 async function fullSyncAll() {
   try {
-    // Clienti → tutti
+    // Clienti
     const snapClienti = await getDocs(collection(db, "clienti"));
     await bulkUpsert("clienti", snapClienti.docs.map(d => ({ id: d.id, ...d.data() })));
 
-    // Trattamenti → tutti
+    // Trattamenti
     const snapTratt = await getDocs(collection(db, "trattamenti"));
     await bulkUpsert("trattamenti", snapTratt.docs.map(d => ({ id: d.id, ...d.data() })));
 
-    // Promemoria → tutti
+    // Promemoria
     const snapProm = await getDocs(collection(db, "promemoria"));
     await bulkUpsert("promemoria", snapProm.docs.map(d => ({ id: d.id, ...d.data() })));
 
@@ -103,7 +103,6 @@ async function fullSyncAll() {
 
     await setLastSync("all", Date.now());
     showSyncOK();
-
   } catch (err) {
     console.error("[fullSyncAll] errore sync:", err);
     showSyncFail();
@@ -111,22 +110,47 @@ async function fullSyncAll() {
 }
 
 // ───────────────────────────────────────────────
-// Auto-refresh giornaliero (non ogni pagina)
-async function maybeDailySync() {
-  const last = await getLastSync("all");
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  if (now - last > oneDay) {
-    fullSyncAll();
+// Sync pending (clienti, appuntamenti)
+async function syncPending() {
+  try {
+    // Clienti
+    const clienti = await getAll("clienti");
+    const pendingClienti = clienti.filter(c => c.__pending);
+    for (const c of pendingClienti) {
+      const ref = await addDoc(collection(db, "clienti"), { nome: c.nome, telefono: c.telefono });
+      await putOne("clienti", { id: ref.id, nome: c.nome, telefono: c.telefono });
+    }
+
+    // Appuntamenti
+    const appts = await getAll("appuntamenti");
+    const pendingAppts = appts.filter(a => a.__pending);
+    for (const a of pendingAppts) {
+      const ref = await addDoc(collection(db, "appuntamenti"), {
+        clienteId: a.clienteId,
+        dataISO: a.dataISO,
+        ora: a.ora,
+        trattamenti: a.trattamenti
+      });
+      await putOne("appuntamenti", { ...a, id: ref.id, __pending: false });
+    }
+
+    if (pendingClienti.length || pendingAppts.length) {
+      showSyncOK();
+    }
+  } catch (err) {
+    console.error("[syncPending] errore:", err);
+    showSyncFail();
   }
 }
 
-// ───────────────────────────────────────────────
-// Gestione stato connessione
-window.addEventListener("online",  () => showOnline());
+// Sync quando torni online
+window.addEventListener("online", () => {
+  showOnline();
+  syncPending();
+});
 window.addEventListener("offline", () => showOffline());
 
-// 🔹 Mostra subito lo stato iniziale (utile se apri offline)
+// Mostra stato iniziale
 if (!navigator.onLine) {
   showOffline();
 }
@@ -137,14 +161,7 @@ onAuthStateChanged(auth, user => {
   const isFree = PAGINE_LIBERE.has(FILE);
 
   if (!user) {
-    if (!isFree) {
-      // se siamo online e non c’è user → vai a login
-      if (navigator.onLine) {
-        location.href = "login.html";
-      } else {
-        console.warn("[auth] Offline e nessun utente visibile, resto su questa pagina");
-      }
-    }
+    if (!isFree) location.href = "login.html";
     return;
   }
 
@@ -153,6 +170,7 @@ onAuthStateChanged(auth, user => {
     return;
   }
 
-  // 🔹 Loggato
-  maybeDailySync();  // una volta al giorno
+  // Loggato
+  maybeDailySync();  
+  syncPending();     // controlla subito pending all’avvio
 });
