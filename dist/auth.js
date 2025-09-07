@@ -137,7 +137,14 @@ onAuthStateChanged(auth, user => {
   const isFree = PAGINE_LIBERE.has(FILE);
 
   if (!user) {
-    if (!isFree) location.href = "login.html";
+    if (!isFree) {
+      // se siamo online e non c’è user → vai a login
+      if (navigator.onLine) {
+        location.href = "login.html";
+      } else {
+        console.warn("[auth] Offline e nessun utente visibile, resto su questa pagina");
+      }
+    }
     return;
   }
 
