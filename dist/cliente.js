@@ -1,12 +1,12 @@
-// ===== Firebase (riusa l’istanza creata in auth.js) =========================
+// cliente.js — dettaglio cliente con supporto offline-first
 import { db } from "./auth.js";
-
 import {
   doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// === Modulo promemoria condiviso ============================================
 import { openWhatsAppReminder } from "./reminder-core.js";
+import { getAll, getById, putOne, putMany } from "./storage.js";
+
 // ===== Utils ================================================================
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 function toNumberSafe(v){
@@ -49,11 +49,9 @@ const infoPhone      = document.getElementById("infoPhone");
 const infoEmail      = document.getElementById("infoEmail");
 const rowEmail       = document.getElementById("rowEmail");
 
-// NOTE
 const noteInput      = document.getElementById("noteInput");
 const noteStatus     = document.getElementById("noteStatus");
 
-// inline edit
 const infoView       = document.getElementById("infoView");
 const infoEdit       = document.getElementById("infoEdit");
 const editNome       = document.getElementById("editNome");
@@ -61,7 +59,6 @@ const editTelefono   = document.getElementById("editTelefono");
 const editEmail      = document.getElementById("editEmail");
 const cancelInline   = document.getElementById("cancelInline");
 
-// stats
 const yearSelect     = document.getElementById("yearSelect");
 const valAnno        = document.getElementById("valAnno");
 const valTotale      = document.getElementById("valTotale");
@@ -69,11 +66,9 @@ const barAnno        = document.getElementById("barAnno");
 const barTotale      = document.getElementById("barTotale");
 const yearByTreatment= document.getElementById("yearByTreatment");
 
-// storico (in pagina)
 const historyList    = document.getElementById("historyList");
 const showAllBtn     = document.getElementById("showAllHistory");
 
-// bottom-sheet
 const sheet          = document.getElementById("historySheet");
 const sheetBackdrop  = document.getElementById("sheetBackdrop");
 const sheetClose     = document.getElementById("sheetClose");
@@ -89,7 +84,7 @@ let clienteId   = null;
 let clienteData = null;
 let allHistoryItems = [];
 let allYears = [];
-let allAppointmentsRaw = []; // per promemoria
+let allAppointmentsRaw = [];
 
 // ===== Helpers ===============================================================
 const debounce = (fn, ms=600) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
@@ -101,12 +96,26 @@ async function caricaCliente(){
   clienteId = getClienteId();
   if(!clienteId) return;
 
-  const ref  = doc(db,"clienti",clienteId);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return;
+  try {
+    // 🔹 Online → Firestore
+    const ref  = doc(db,"clienti",clienteId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
 
-  clienteData = snap.data();
+    clienteData = { id: clienteId, ...snap.data() };
+    await putOne("clienti", clienteData); // aggiorna cache
+  } catch (err) {
+    console.warn("[cliente] offline, uso cache", err);
+    clienteData = await getById("clienti", clienteId);
+    if (!clienteData) return;
+  }
 
+  renderCliente();
+  await caricaStoricoETotale();
+  await popolaAnniERender();
+}
+
+function renderCliente(){
   const nome = clienteData.nome || "—";
   const tel  = (clienteData.telefono || "").toString().trim();
   const mail = (clienteData.email || "").toString().trim();
@@ -145,14 +154,10 @@ async function caricaCliente(){
   }
   btnApp.href = `nuovo-appuntamento.html?cliente=${encodeURIComponent(clienteId)}`;
 
-  // ===== Promemoria WhatsApp (usa il modulo condiviso) ======================
   btnRem.onclick = async (e)=>{
     e.preventDefault();
     await openWhatsAppReminder(clienteData, allAppointmentsRaw);
   };
-
-  await caricaStoricoETotale();
-  await popolaAnniERender();
 }
 
 // ===== Note ==================================================================
@@ -164,40 +169,53 @@ const saveNote = debounce(async ()=>{
   try{
     await updateDoc(doc(db,"clienti",clienteId), { note: newNote });
     clienteData.note = newNote;
+    await putOne("clienti", clienteData); // aggiorna cache
     noteStatus.textContent = "Salvato";
     setTimeout(()=>{ noteStatus.textContent=""; }, 1200);
-  }catch{ noteStatus.textContent = "Errore salvataggio"; }
+  }catch{
+    noteStatus.textContent = "Errore salvataggio (offline)";
+    await putOne("clienti", { ...clienteData, note: newNote }); // aggiorna almeno cache
+  }
 }, 700);
 
 noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
-// ===== Storico & Totale (pagina) ============================================
+// ===== Storico & Totale ======================================================
 async function caricaStoricoETotale(){
   historyList.innerHTML = "";
   allHistoryItems = [];
   allAppointmentsRaw = [];
 
-  const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
-  const qs = await getDocs(q);
+  try {
+    const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
+    const qs = await getDocs(q);
+    const docs = qs.docs.map(s=>({ id:s.id, ...s.data() }));
+    await putMany("appuntamenti", docs); // aggiorna cache
 
+    processStorico(docs);
+  } catch (err) {
+    console.warn("[cliente] offline storico:", err);
+    const cached = await getAll("appuntamenti");
+    processStorico(cached.filter(a => a.clienteId === clienteId));
+  }
+}
+
+function processStorico(arr){
   let totaleSempre = 0;
+  allHistoryItems = [];
+  allAppointmentsRaw = arr;
 
-  qs.forEach(s=>{
-    const a = s.data();
+  arr.forEach(a=>{
     const dt = safeDate(a.data || a.date || a.dateTime);
     const tot = getApptTotal(a);
     totaleSempre += tot;
-
     allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
-    allAppointmentsRaw.push(a);
   });
 
   allHistoryItems.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
 
-  const short = allHistoryItems.slice(0,3);
-  renderHistoryList(historyList, short);
-
+  renderHistoryList(historyList, allHistoryItems.slice(0,3));
   showAllBtn.style.display = allHistoryItems.length > 3 ? "" : "none";
 
   valTotale.textContent = formatEuro(totaleSempre);
@@ -222,217 +240,72 @@ function renderHistoryList(container, items){
   });
 }
 
-// ===== Statistiche per anno ==================================================
+// ===== Statistiche ===========================================================
 async function popolaAnniERender(){
-  const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
-  const qs = await getDocs(q);
-  const anni = new Set();
+  try {
+    const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
+    const qs = await getDocs(q);
+    const docs = qs.docs.map(s=>({ id:s.id, ...s.data() }));
+    await putMany("appuntamenti", docs);
 
-  qs.forEach(s=>{
-    const dt = safeDate(s.data().data || s.data().date || s.data().dateTime);
-    if(dt) anni.add(dt.getFullYear());
-  });
-
-  const arr = [...anni].sort((a,b)=>b-a);
-  const current = new Date().getFullYear();
-  yearSelect.innerHTML = (arr.length?arr:[current]).map(y=>`<option value="${y}">${y}</option>`).join("");
-  yearSelect.value = arr.includes(current) ? current : (arr[0] || current);
-
-  await aggiornaStatistiche(Number(yearSelect.value));
-  yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
+    renderStats(docs);
+  } catch (err) {
+    console.warn("[cliente] offline stats:", err);
+    const cached = await getAll("appuntamenti");
+    renderStats(cached.filter(a => a.clienteId === clienteId));
+  }
 }
 
 async function aggiornaStatistiche(anno){
-  const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
-  const qs = await getDocs(q);
+  const items = allAppointmentsRaw.filter(a=>{
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    return dt && dt.getFullYear() === anno;
+  });
+  renderStats(items, anno);
+}
 
+function renderStats(arr, anno){
   let totAnno = 0;
   const perTratt = {};
 
-  qs.forEach(s=>{
-    const a  = s.data();
+  arr.forEach(a=>{
     const dt = safeDate(a.data || a.date || a.dateTime);
-    if(!dt || dt.getFullYear()!==anno) return;
+    if (anno && (!dt || dt.getFullYear()!==anno)) return;
 
     const apptTotal = getApptTotal(a);
     totAnno += apptTotal;
 
     if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
       a.trattamenti.forEach(t=>{
-        const nome = t?.nome || t?.titolo || "Trattamento";
+        const nome = t?.nome || "Trattamento";
         const p    = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
         if(!perTratt[nome]) perTratt[nome] = {count:0,sum:0};
         perTratt[nome].count += 1;
         perTratt[nome].sum   += p;
       });
-    } else if (a.trattamento || a.titolo){
-      const nome = a.trattamento || a.titolo;
-      if(!perTratt[nome]) perTratt[nome] = {count:0,sum:0};
-      perTratt[nome].count += 1;
-      perTratt[nome].sum   += apptTotal;
     }
   });
 
-  valAnno.textContent = formatEuro(totAnno);
-  const totalSempreNum = Number(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
-  const perc = totalSempreNum>0 ? Math.max(0,Math.min(100,(totAnno/totalSempreNum)*100)) : 0;
-  barAnno.style.width = `${perc.toFixed(0)}%`;
+  if (anno) {
+    valAnno.textContent = formatEuro(totAnno);
+    const totalSempreNum = Number(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
+    const perc = totalSempreNum>0 ? Math.max(0,Math.min(100,(totAnno/totalSempreNum)*100)) : 0;
+    barAnno.style.width = `${perc.toFixed(0)}%`;
 
-  const entries = Object.entries(perTratt)
-    .sort((a,b)=> b[1].count - a[1].count || b[1].sum - a[1].sum);
-
-  yearByTreatment.innerHTML = entries.length
-    ? entries.map(([nome,v]) =>
-        `<li><div class="qta-nome">${v.count} ${nome}</div><div class="totale">${formatEuro(v.sum)}</div></li>`
-      ).join("")
-    : "<li>—</li>";
-}
-
-// ===== Bottom-sheet ==========================================================
-function preventBackgroundScroll(e){
-  // Blocca lo scroll del body solo se tocchi/clicki FUORI dal pannello
-  if (!sheet.hidden && !sheetPanel.contains(e.target)) {
-    e.preventDefault();
+    const entries = Object.entries(perTratt).sort((a,b)=> b[1].count - a[1].count);
+    yearByTreatment.innerHTML = entries.length
+      ? entries.map(([nome,v]) =>
+          `<li><div class="qta-nome">${v.count} ${nome}</div><div class="totale">${formatEuro(v.sum)}</div></li>`
+        ).join("")
+      : "<li>—</li>";
+  } else {
+    const anni = [...new Set(arr.map(a=>safeDate(a.data)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+    yearSelect.innerHTML = anni.map(y=>`<option value="${y}">${y}</option>`).join("");
+    yearSelect.value = anni[0] || new Date().getFullYear();
+    yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
+    aggiornaStatistiche(Number(yearSelect.value));
   }
 }
-
-function openSheet(){
-  const current = new Date().getFullYear();
-  const anni = allYears.length ? allYears : [current];
-  sheetYear.innerHTML = anni.map(y=>`<option value="${y}">${y}</option>`).join("");
-  sheetYear.value = anni.includes(current) ? current : anni[0];
-  renderSheetForYear(Number(sheetYear.value));
-
-  sheetPanel.classList.remove("swipe-out-down");
-  sheetPanel.style.transform = "";
-
-  sheet.hidden = false;
-  sheet.setAttribute("aria-hidden","false");
-  document.body.classList.add("sheet-open");
-  if (sheetContent) sheetContent.scrollTop = 0;
-
-  // Previeni scroll sotto al foglio
-  window.addEventListener("touchmove", preventBackgroundScroll, {passive:false});
-  window.addEventListener("wheel",     preventBackgroundScroll, {passive:false});
-}
-
-function closeSheet(){
-  sheetPanel.classList.add("swipe-out-down");
-  const finish = () => {
-    sheetPanel.removeEventListener("transitionend", finish);
-    sheet.hidden = true;
-    sheet.setAttribute("aria-hidden","true");
-    document.body.classList.remove("sheet-open");
-    sheetPanel.classList.remove("swipe-out-down");
-    sheetPanel.style.transform = "";
-    window.removeEventListener("touchmove", preventBackgroundScroll);
-    window.removeEventListener("wheel",     preventBackgroundScroll);
-  };
-  setTimeout(finish, 260);
-  sheetPanel.addEventListener("transitionend", finish);
-}
-
-function renderSheetForYear(anno){
-  const items = allHistoryItems.filter(it => it.dt && it.dt.getFullYear() === anno);
-  renderHistoryList(sheetHistory, items);
-}
-
-// ===== Drag-to-close =========================================================
-(function enableSheetDrag(){
-  if(!sheetPanel) return;
-
-  const CLOSE_DISTANCE  = 120;
-  const FLICK_DISTANCE  = 60;
-  const FLICK_VELOCITY  = 0.35;
-  const LINEAR_LIMIT    = 80;
-  const RESISTANCE_GAIN = 0.3;
-
-  let startY = 0, lastY = 0, dragging = false, lastT = 0, velocity = 0;
-
-  const getY = (e) => e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
-  const mapWithResistance = (dy) => {
-    if (dy <= 0) return 0;
-    if (dy <= LINEAR_LIMIT) return dy;
-    return LINEAR_LIMIT + (dy - LINEAR_LIMIT) * RESISTANCE_GAIN;
-  };
-
-  const beginDrag = (e) => {
-    startY = lastY = getY(e);
-    lastT  = performance.now();
-    velocity = 0;
-    dragging = true;
-    sheetPanel.classList.add("dragging");
-    sheetPanel.style.transition = "none";
-    e.preventDefault();
-  };
-
-  const onMove = (e)=>{
-    if(!dragging) return;
-    const y = getY(e);
-    const now = performance.now();
-    const dy  = Math.max(0, y - startY);
-    const eased = mapWithResistance(dy);
-
-    const dt  = Math.max(1, now - lastT);
-    velocity  = (y - lastY) / dt;
-    lastY = y; lastT = now;
-
-    sheetPanel.style.transform = `translateY(${eased}px)`;
-    e.preventDefault();
-  };
-
-  const springBack = () => {
-    sheetPanel.classList.remove("dragging");
-    sheetPanel.style.transition = "transform .18s ease-out";
-    sheetPanel.style.transform  = "";
-    const clear = () => {
-      sheetPanel.style.transition = "";
-      sheetPanel.removeEventListener("transitionend", clear);
-    };
-    sheetPanel.addEventListener("transitionend", clear);
-  };
-
-  const onEnd = ()=>{
-    if(!dragging) return;
-    dragging = false;
-
-    const dy = Math.max(0, lastY - startY);
-    const shouldClose = dy > CLOSE_DISTANCE || (dy > FLICK_DISTANCE && velocity > FLICK_VELOCITY);
-
-    sheetPanel.classList.remove("dragging");
-    sheetPanel.style.transition = "";
-    sheetPanel.style.transform  = "";
-
-    if (shouldClose) {
-      closeSheet();
-    } else {
-      springBack();
-    }
-  };
-
-  const opts = { passive:false };
-  sheetHandle?.addEventListener("touchstart", beginDrag, opts);
-  sheetHandle?.addEventListener("mousedown",  beginDrag, opts);
-  sheetHeader?.addEventListener("touchstart", beginDrag, opts);
-  sheetHeader?.addEventListener("mousedown",  beginDrag, opts);
-
-  window.addEventListener("touchmove",  onMove,  opts);
-  window.addEventListener("mousemove",  onMove,  opts);
-  window.addEventListener("touchend",   onEnd);
-  window.addEventListener("mouseup",    onEnd);
-  window.addEventListener("touchcancel",onEnd);
-})();
-
-// Eventi UI sheet
-showAllBtn?.addEventListener("click", openSheet);
-sheetYear?.addEventListener("change", ()=>renderSheetForYear(Number(sheetYear.value)));
-document.addEventListener("keydown", (e)=>{ if(!sheet.hidden && e.key==="Escape") closeSheet(); });
-
-// Chiudi da backdrop + X (click + touch)
-const doClose = (e)=>{ e.preventDefault?.(); e.stopPropagation?.(); closeSheet(); };
-sheetBackdrop?.addEventListener("click", doClose);
-sheetClose?.addEventListener("click", doClose, {capture:true});
-sheetClose?.addEventListener("touchend", doClose, {capture:true, passive:false});
 
 // ===== Edit inline ===========================================================
 function setEditMode(on){
@@ -453,14 +326,20 @@ infoEdit.addEventListener("submit", async (e)=>{
   e.preventDefault();
   if(!clienteId) return;
 
-  const ref = doc(db,"clienti",clienteId);
-  await updateDoc(ref,{
-    nome: editNome.value.trim(),
-    telefono: editTelefono.value.trim(),
-    email: editEmail.value.trim()
-  });
+  try {
+    await updateDoc(doc(db,"clienti",clienteId), {
+      nome: editNome.value.trim(),
+      telefono: editTelefono.value.trim(),
+      email: editEmail.value.trim()
+    });
+    clienteData = { ...clienteData, nome: editNome.value.trim(), telefono: editTelefono.value.trim(), email: editEmail.value.trim() };
+    await putOne("clienti", clienteData);
+  } catch {
+    clienteData = { ...clienteData, nome: editNome.value.trim(), telefono: editTelefono.value.trim(), email: editEmail.value.trim() };
+    await putOne("clienti", clienteData);
+  }
   setEditMode(false);
-  caricaCliente();
+  renderCliente();
 });
 
 // ===== Back ==================================================================
