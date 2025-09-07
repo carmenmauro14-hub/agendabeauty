@@ -1,9 +1,10 @@
-// auth.js — Firebase + offline cache + sync_queue + daily sync
+  // auth.js — Firebase + offline cache + sync_queue + daily sync
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
   persistentLocalCache,
-  collection, getDocs, addDoc, query, where, orderBy, Timestamp
+  collection, getDocs, addDoc, setDoc, updateDoc, deleteDoc, doc,
+  query, where, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -81,9 +82,9 @@ async function fullSyncAll() {
     const snapTratt = await getDocs(collection(db, "trattamenti"));
     await bulkUpsert("trattamenti", snapTratt.docs.map(d => ({ id: d.id, ...d.data() })));
 
-    // Promemoria
-    const snapProm = await getDocs(collection(db, "promemoria"));
-    await bulkUpsert("promemoria", snapProm.docs.map(d => ({ id: d.id, ...d.data() })));
+    // Settings
+    const snapSettings = await getDocs(collection(db, "settings"));
+    await bulkUpsert("settings", snapSettings.docs.map(d => ({ id: d.id, ...d.data() })));
 
     // Appuntamenti (da -6 a +6 mesi)
     const tasks = [];
@@ -113,7 +114,7 @@ async function fullSyncAll() {
 }
 
 // ───────────────────────────────────────────────
-// Auto-refresh giornaliero (una volta al giorno)
+// Auto-refresh giornaliero
 async function maybeDailySync() {
   const last = await getLastSync("all");
   const now = Date.now();
@@ -124,7 +125,7 @@ async function maybeDailySync() {
 }
 
 // ───────────────────────────────────────────────
-// Sync pending (usa sync_queue salvata in storage.js)
+// Sync pending (gestisce add / update / delete)
 async function syncPending() {
   try {
     const queue = await getQueuedChanges();
@@ -132,13 +133,23 @@ async function syncPending() {
 
     for (const q of queue) {
       try {
-        if (q.collezione === "clienti" && q.op === "add") {
-          const ref = await addDoc(collection(db, "clienti"), q.payload);
-          await putOne("clienti", { ...q.payload, id: ref.id });
+        const collRef = collection(db, q.collezione);
+
+        if (q.op === "add") {
+          const ref = await addDoc(collRef, q.payload);
+          await putOne(q.collezione, { ...q.payload, id: ref.id });
         }
-        if (q.collezione === "appuntamenti" && q.op === "add") {
-          const ref = await addDoc(collection(db, "appuntamenti"), q.payload);
-          await putOne("appuntamenti", { ...q.payload, id: ref.id });
+
+        if (q.op === "update") {
+          if (!q.payload.id) throw new Error("update senza id");
+          await updateDoc(doc(db, q.collezione, q.payload.id), q.payload);
+          await putOne(q.collezione, q.payload);
+        }
+
+        if (q.op === "delete") {
+          if (!q.payload.id) throw new Error("delete senza id");
+          await deleteDoc(doc(db, q.collezione, q.payload.id));
+          // Rimuoverlo dalla cache → lo gestirai in storage.js (es. con deleteOne)
         }
       } catch (e) {
         console.error("Errore sync queue item:", e, q);
@@ -182,6 +193,6 @@ onAuthStateChanged(auth, user => {
   }
 
   // Loggato
-  maybeDailySync();  // full sync una volta al giorno
-  syncPending();     // controlla subito la coda
+  maybeDailySync();  
+  syncPending();
 });
