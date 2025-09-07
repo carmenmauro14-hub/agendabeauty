@@ -1,10 +1,10 @@
-// trattamenti-settings.js — offline-first con pending sync
+// trattamenti-settings.js — offline-first con sync_queue
 import { db } from "./auth.js";
 import {
   collection, getDocs, addDoc, deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { getAll, putOne } from "./storage.js";
+import { getAll, putOne, queueChange } from "./storage.js";
 
 const btnNuovo = document.getElementById("btn-nuovo-trattamento");
 const form = document.getElementById("form-trattamento");
@@ -24,7 +24,8 @@ let idModifica = null;
 
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
-  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia", "laser"
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia",
+  "airbrush_sopracciglia", "laser"
 ];
 
 /* ===== Helpers ===== */
@@ -90,11 +91,13 @@ btnSalvaModifiche.addEventListener("click", async () => {
   }
 
   try {
+    const payload = { id: idModifica, nome, prezzo, icona };
     if (navigator.onLine) {
-      await updateDoc(doc(db, "trattamenti", idModifica), { nome, prezzo, icona });
-      await putOne("trattamenti", { id: idModifica, nome, prezzo, icona });
+      await updateDoc(doc(db, "trattamenti", idModifica), payload);
+      await putOne("trattamenti", payload);
     } else {
-      await putOne("trattamenti", { id: idModifica, nome, prezzo, icona, __pending: true, __action: "update" });
+      await putOne("trattamenti", payload);
+      await queueChange({ collezione:"trattamenti", op:"update", id: idModifica, payload });
       alert("Modifica salvata offline (sarà sincronizzata)");
     }
   } catch (err) { console.error(err); }
@@ -117,12 +120,14 @@ form.addEventListener("submit", async e => {
   }
 
   try {
+    const payload = { nome, prezzo, icona };
     if (navigator.onLine) {
-      const ref = await addDoc(collection(db, "trattamenti"), { nome, prezzo, icona });
-      await putOne("trattamenti", { id: ref.id, nome, prezzo, icona });
+      const ref = await addDoc(collection(db, "trattamenti"), payload);
+      await putOne("trattamenti", { id: ref.id, ...payload });
     } else {
       const tempId = "temp-" + Date.now();
-      await putOne("trattamenti", { id: tempId, nome, prezzo, icona, __pending: true, __action: "add" });
+      await putOne("trattamenti", { id: tempId, ...payload });
+      await queueChange({ collezione:"trattamenti", op:"add", id: tempId, payload });
       alert("Trattamento salvato offline (sarà sincronizzato)");
     }
   } catch (err) { console.error(err); }
@@ -178,7 +183,7 @@ listaTrattamenti.addEventListener("click", async e => {
       if (navigator.onLine) {
         await deleteDoc(doc(db, "trattamenti", id));
       } else {
-        await putOne("trattamenti", { id, __pending: true, __action: "delete" });
+        await queueChange({ collezione:"trattamenti", op:"delete", id });
         alert("Eliminazione salvata offline (sarà sincronizzata)");
       }
       await caricaTrattamenti();
