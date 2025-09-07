@@ -18,7 +18,7 @@ const ASSETS = [
   // CSS
   '/calendario.css','/giorno.css','/nuovo-appuntamento.css','/rubrica.css',
   '/cliente.css','/statistiche.css','/reminder-settings.css',
-  '/navbar.css','/home.css','/settings.css','/trattamenti-settings.css','/style.css',
+  '/navbar.css','/index.css','/settings.css','/trattamenti-settings.css','/style.css',
 
   // JS
   '/auth.js','/navbar.js','/swipe.js','/calendario.js','/giorno.js',
