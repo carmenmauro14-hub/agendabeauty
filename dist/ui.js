@@ -1,6 +1,5 @@
 // ui.js — gestione notifiche e stato connessione
 
-// Barra di stato (sotto la navbar)
 let statusBar = null;
 function ensureStatusBar() {
   if (!statusBar) {
@@ -24,7 +23,6 @@ function ensureStatusBar() {
   return statusBar;
 }
 
-// Mostra barra con colore e testo
 function showStatusBar(text, bg, autoHide = false) {
   const bar = ensureStatusBar();
   bar.textContent = text;
@@ -42,9 +40,11 @@ function showStatusBar(text, bg, autoHide = false) {
 
 // API pubbliche
 export function showOffline() {
+  // 🚫 resta visibile finché non torna online
   showStatusBar("Sei offline 🚫", "#e57373", false);
 }
 export function showOnline() {
+  // ✅ appare solo per pochi secondi
   showStatusBar("Connessione ripristinata ✅", "#81c784", true);
 }
 export function showSyncOK() {
