@@ -1,8 +1,8 @@
-// reminder-settings.js — offline-first con pending sync
+// reminder-settings.js — offline-first con sync_queue
 import { db } from "./auth.js";
 import { doc, getDoc, setDoc } 
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { putOne, getById } from "./storage.js";
+import { putOne, getById, queueChange } from "./storage.js";
 
 // ===== DOM =====
 const textarea = document.getElementById("reminder-template");
@@ -57,8 +57,8 @@ async function saveTemplate() {
       await putOne("settings", { id: SETTINGS_DOC_ID, template: value });
       alert("Template salvato.");
     } else {
-      // Offline → salva in cache con __pending
-      await putOne("settings", { id: SETTINGS_DOC_ID, template: value, __pending: true, __action: "update" });
+      await putOne("settings", { id: SETTINGS_DOC_ID, template: value });
+      await queueChange({ collezione:"settings", op:"update", id: SETTINGS_DOC_ID, payload: { template: value } });
       alert("Template salvato offline (sarà sincronizzato)");
     }
   } catch (err) {
