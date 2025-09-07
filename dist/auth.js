@@ -1,4 +1,4 @@
-// auth.js — Firebase + cache offline + preload + fullSync + auto-refresh
+// auth.js — Firebase + cache offline + preload + fullSync + auto-refresh + banner sync
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -106,6 +106,42 @@ async function preloadDataOnce(){
 export let preloadReady = Promise.resolve();
 
 // ───────────────────────────────────────────────
+// UI Banner
+function showBanner(message, success = true) {
+  let banner = document.createElement("div");
+  banner.textContent = message;
+  banner.style.position = "fixed";
+  banner.style.bottom = "20px";
+  banner.style.left = "50%";
+  banner.style.transform = "translateX(-50%)";
+  banner.style.background = "#d2b8a3"; // beige primario
+  banner.style.color = "#fff";
+  banner.style.padding = "10px 20px";
+  banner.style.borderRadius = "10px";
+  banner.style.fontWeight = "600";
+  banner.style.fontSize = "15px";
+  banner.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
+  banner.style.opacity = "0";
+  banner.style.transition = "opacity .3s ease, transform .3s ease";
+  banner.style.zIndex = "9999";
+
+  document.body.appendChild(banner);
+
+  // fade-in
+  requestAnimationFrame(() => {
+    banner.style.opacity = "1";
+    banner.style.transform = "translateX(-50%) translateY(0)";
+  });
+
+  // fade-out dopo 3s
+  setTimeout(() => {
+    banner.style.opacity = "0";
+    banner.style.transform = "translateX(-50%) translateY(20px)";
+    banner.addEventListener("transitionend", () => banner.remove());
+  }, 3000);
+}
+
+// ───────────────────────────────────────────────
 // Full Sync → salva in IndexedDB
 async function fullSyncAll() {
   try {
@@ -141,8 +177,10 @@ async function fullSyncAll() {
     await Promise.all(tasks);
 
     console.log("[fullSyncAll] Dati sincronizzati in IndexedDB");
+    showBanner("Dati sincronizzati ✅", true);
   } catch (err) {
     console.error("[fullSyncAll] errore sync:", err);
+    showBanner("Sincronizzazione fallita 🚫", false);
   }
 }
 
