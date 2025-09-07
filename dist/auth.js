@@ -1,4 +1,4 @@
-// auth.js — Firebase + offline cache + pending sync
+// auth.js — Firebase + offline cache + sync_queue + daily sync
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -15,7 +15,10 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { bulkUpsert, getAll, putOne, getLastSync, setLastSync } from "./storage.js";
+import {
+  bulkUpsert, getAll, putOne, getLastSync, setLastSync,
+  getQueuedChanges, clearQueue
+} from "./storage.js";
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
 
 // ───────────────────────────────────────────────
@@ -67,7 +70,7 @@ function monthRange(centerDate = new Date(), offsetMonths = 0){
 }
 
 // ───────────────────────────────────────────────
-// Full Sync
+// Full Sync (cloud → cache)
 async function fullSyncAll() {
   try {
     // Clienti
@@ -82,7 +85,7 @@ async function fullSyncAll() {
     const snapProm = await getDocs(collection(db, "promemoria"));
     await bulkUpsert("promemoria", snapProm.docs.map(d => ({ id: d.id, ...d.data() })));
 
-    // Appuntamenti → da -6 a +6 mesi
+    // Appuntamenti (da -6 a +6 mesi)
     const tasks = [];
     for (let off = -6; off <= 6; off++) {
       const { start, end } = monthRange(new Date(), off);
@@ -110,40 +113,48 @@ async function fullSyncAll() {
 }
 
 // ───────────────────────────────────────────────
-// Sync pending (clienti, appuntamenti)
+// Auto-refresh giornaliero (una volta al giorno)
+async function maybeDailySync() {
+  const last = await getLastSync("all");
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  if (now - last > oneDay) {
+    fullSyncAll();
+  }
+}
+
+// ───────────────────────────────────────────────
+// Sync pending (usa sync_queue salvata in storage.js)
 async function syncPending() {
   try {
-    // Clienti
-    const clienti = await getAll("clienti");
-    const pendingClienti = clienti.filter(c => c.__pending);
-    for (const c of pendingClienti) {
-      const ref = await addDoc(collection(db, "clienti"), { nome: c.nome, telefono: c.telefono });
-      await putOne("clienti", { id: ref.id, nome: c.nome, telefono: c.telefono });
+    const queue = await getQueuedChanges();
+    if (!queue.length) return;
+
+    for (const q of queue) {
+      try {
+        if (q.collezione === "clienti" && q.op === "add") {
+          const ref = await addDoc(collection(db, "clienti"), q.payload);
+          await putOne("clienti", { ...q.payload, id: ref.id });
+        }
+        if (q.collezione === "appuntamenti" && q.op === "add") {
+          const ref = await addDoc(collection(db, "appuntamenti"), q.payload);
+          await putOne("appuntamenti", { ...q.payload, id: ref.id });
+        }
+      } catch (e) {
+        console.error("Errore sync queue item:", e, q);
+      }
     }
 
-    // Appuntamenti
-    const appts = await getAll("appuntamenti");
-    const pendingAppts = appts.filter(a => a.__pending);
-    for (const a of pendingAppts) {
-      const ref = await addDoc(collection(db, "appuntamenti"), {
-        clienteId: a.clienteId,
-        dataISO: a.dataISO,
-        ora: a.ora,
-        trattamenti: a.trattamenti
-      });
-      await putOne("appuntamenti", { ...a, id: ref.id, __pending: false });
-    }
-
-    if (pendingClienti.length || pendingAppts.length) {
-      showSyncOK();
-    }
+    await clearQueue(queue.map(q => q.qid));
+    showSyncOK();
   } catch (err) {
     console.error("[syncPending] errore:", err);
     showSyncFail();
   }
 }
 
-// Sync quando torni online
+// ───────────────────────────────────────────────
+// Stato connessione
 window.addEventListener("online", () => {
   showOnline();
   syncPending();
@@ -171,6 +182,6 @@ onAuthStateChanged(auth, user => {
   }
 
   // Loggato
-  maybeDailySync();  
-  syncPending();     // controlla subito pending all’avvio
+  maybeDailySync();  // full sync una volta al giorno
+  syncPending();     // controlla subito la coda
 });
