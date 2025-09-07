@@ -1,12 +1,10 @@
-// nuovo-appuntamento.js — offline-first con pending sync
+// nuovo-appuntamento.js — offline-first con sync_queue
 import { db } from "./auth.js";
 import {
   collection, getDocs, addDoc, updateDoc, doc, Timestamp,
-  query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { putOne, getAll } from "./storage.js";
-import { abilitaSwipeVerticale } from "./swipe.js";
+import { putOne, getAll, queueChange } from "./storage.js";
 
 // ─── Parametri URL ───────────────
 const urlParams        = new URLSearchParams(location.search);
@@ -15,7 +13,6 @@ const presetClienteId  = urlParams.get("cliente");
 const presetDataISO    = urlParams.get("data");
 
 // ─── DOM ───────────────
-const wizardTitle        = document.getElementById("wizardTitle");
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
 const step3              = document.getElementById("step3");
@@ -25,7 +22,6 @@ const btnBackToStep1     = document.getElementById("backToStep1");
 const btnToStep3         = document.getElementById("toStep3");
 const btnBackToStep2     = document.getElementById("backToStep2");
 const btnSalva           = document.getElementById("salvaAppuntamento");
-const btnCancel          = document.getElementById("cancelWizard");
 
 const inpData            = document.getElementById("dataAppuntamento");
 const inpOra             = document.getElementById("oraAppuntamento");
@@ -33,14 +29,6 @@ const wrapperTratt       = document.getElementById("trattamentiWrapper");
 
 // Picker cliente (step 1)
 const clienteIdHidden    = document.getElementById("clienteId");
-const clienteSelezionato = document.getElementById("clienteSelezionato");
-const openRubrica        = document.getElementById("openRubrica");
-const rubricaModal       = document.getElementById("rubricaModal");
-const searchCliente      = document.getElementById("searchCliente");
-const clientListPicker   = document.getElementById("clientListPicker");
-const letterNavPicker    = document.getElementById("letterNavPicker");
-const btnRubricaClose    = document.getElementById("rubricaClose");
-const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
 const pickerPlaceholder  = document.getElementById("pickerPlaceholder");
 
@@ -59,76 +47,10 @@ function setCliente(c) {
   pickerValue.textContent = c.nome;
   pickerPlaceholder.style.display = "none";
   updateNavState();
-  rubricaModal.style.display = "none";
+  document.getElementById("rubricaModal").style.display = "none";
 }
 
-// ─── Rubrica ───────────────
-async function apriRubrica() {
-  if (!clientiCache) {
-    try {
-      const snap = await getDocs(collection(db, "clienti"));
-      clientiCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch {
-      clientiCache = await getAll("clienti");
-    }
-    clientiCache.sort((a,b) => (a.nome || "").localeCompare(b.nome || ""));
-  }
-
-  renderRubrica(clientiCache);
-  searchCliente.value = "";
-  letterNavPicker.style.display = "flex";
-  rubricaModal.style.display = "flex";
-}
-
-function renderRubrica(clienti) {
-  clientListPicker.innerHTML = "";
-  const groups = {};
-  clienti.forEach(c => {
-    const first = (c.nome || "#").charAt(0).toUpperCase();
-    (groups[first] = groups[first] || []).push(c);
-  });
-  const letters = Object.keys(groups).sort();
-
-  letters.forEach(L => {
-    const sec = document.createElement("li");
-    sec.textContent = L;
-    sec.className = "section";
-    clientListPicker.appendChild(sec);
-
-    groups[L].forEach(c => {
-      const li = document.createElement("li");
-      li.className = "item";
-      li.textContent = c.nome;
-      li.onclick = () => setCliente(c);
-      clientListPicker.appendChild(li);
-    });
-  });
-
-  // letter nav
-  letterNavPicker.innerHTML = "";
-  letters.forEach(L => {
-    const span = document.createElement("span");
-    span.textContent = L;
-    span.onclick = () => {
-      const target = [...clientListPicker.querySelectorAll(".section")].find(s=>s.textContent===L);
-      target && target.scrollIntoView({behavior:"smooth"});
-    };
-    letterNavPicker.appendChild(span);
-  });
-}
-
-searchCliente?.addEventListener("input", () => {
-  const f = searchCliente.value.toLowerCase();
-  document.querySelectorAll("#clientListPicker li.item").forEach(li => {
-    li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
-  });
-});
-
-openRubrica?.addEventListener("click", apriRubrica);
-openRubricaField?.addEventListener("click", apriRubrica);
-btnRubricaClose?.addEventListener("click", () => rubricaModal.style.display = "none");
-
-// ─── Trattamenti (mock — aggiungi tu i tuoi trattamenti) ──────────
+// ─── Trattamenti ──────────
 async function caricaTrattamenti() {
   wrapperTratt.innerHTML = "";
   let trattamenti = [];
@@ -200,12 +122,11 @@ btnSalva?.addEventListener("click", async () => {
         alert("Appuntamento salvato con successo!");
       }
     } else {
+      // 🔹 Offline → salva in cache e accoda sync
       const tempId = "temp-"+Date.now();
-      await putOne("appuntamenti",{
-        id: tempId,
-        clienteId, data:dataTs, dataISO, ora, dateTime, trattamenti,
-        __pending:true
-      });
+      const payload = { clienteId, data:dataTs, dataISO, ora, dateTime, trattamenti };
+      await putOne("appuntamenti",{ id: tempId, ...payload });
+      await queueChange({ collezione:"appuntamenti", op:"add", id: tempId, payload });
       alert("Appuntamento salvato offline (sarà sincronizzato)");
     }
     location.href="calendario.html";
