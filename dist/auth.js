@@ -16,7 +16,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import { bulkUpsert, getLastSync, setLastSync } from "./storage.js";
-import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";  // ✅ funzioni esplicite
+import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
 
 // ───────────────────────────────────────────────
 // Config Firebase
@@ -102,11 +102,11 @@ async function fullSyncAll() {
     await Promise.all(tasks);
 
     await setLastSync("all", Date.now());
-    showSyncOK();   // ✅ notifica sincronizzazione riuscita
+    showSyncOK();
 
   } catch (err) {
     console.error("[fullSyncAll] errore sync:", err);
-    showSyncFail(); // ✅ notifica sincronizzazione fallita
+    showSyncFail();
   }
 }
 
@@ -122,9 +122,9 @@ async function maybeDailySync() {
 }
 
 // ───────────────────────────────────────────────
-// Monitor connessione
-window.addEventListener("offline", showOffline);
-window.addEventListener("online", showOnline);
+// Gestione stato connessione
+window.addEventListener("online",  () => showOnline());
+window.addEventListener("offline", () => showOffline());
 
 // ───────────────────────────────────────────────
 // Protezione route + sync
