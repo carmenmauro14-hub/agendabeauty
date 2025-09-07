@@ -1,9 +1,9 @@
-// rubrica.js — offline-first con pending sync
+// rubrica.js — offline-first con sync_queue
 import { db } from "./auth.js";
 import {
   collection, addDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAll, putOne } from "./storage.js";
+import { getAll, putOne, queueChange } from "./storage.js";
 
 (async () => {
   // ─── Elementi DOM ────────────────────────────────────
@@ -135,9 +135,15 @@ import { getAll, putOne } from "./storage.js";
         alert("Errore durante il salvataggio del cliente.");
       }
     } else {
-      // 🔹 Offline → salva con id temporaneo e __pending
+      // 🔹 Offline → salva con id temporaneo e metti in coda sync
       const tempId = "temp-" + Date.now();
-      await putOne("clienti", { id: tempId, nome, telefono, __pending: true });
+      await putOne("clienti", { id: tempId, nome, telefono });
+      await queueChange({
+        collezione: "clienti",
+        op: "add",
+        id: tempId,
+        payload: { nome, telefono }
+      });
       alert("Cliente salvato offline (sarà sincronizzato)");
     }
 
