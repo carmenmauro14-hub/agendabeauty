@@ -1,6 +1,6 @@
 // ui.js — gestione notifiche e stato connessione
 
-// Crea barra di stato sotto la top-bar
+// Barra di stato (sotto la navbar)
 let statusBar = null;
 function ensureStatusBar() {
   if (!statusBar) {
