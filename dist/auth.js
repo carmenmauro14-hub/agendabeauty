@@ -1,4 +1,4 @@
-// auth.js — Firebase + cache offline + preload + auto-refresh cache
+// auth.js — Firebase + cache offline + preload + fullSync + auto-refresh
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -14,6 +14,8 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { bulkUpsert } from "./storage.js";  // 🔥 sync su IndexedDB
 
 // ───────────────────────────────────────────────
 // Config Firebase
@@ -55,9 +57,7 @@ if ("serviceWorker" in navigator) {
 }
 
 // ───────────────────────────────────────────────
-// Preload Firestore
-let _preloadDone = false;
-
+// Helpers
 function monthRange(centerDate = new Date(), offsetMonths = 0){
   const d = new Date(centerDate.getFullYear(), centerDate.getMonth()+offsetMonths, 1);
   return {
@@ -65,6 +65,10 @@ function monthRange(centerDate = new Date(), offsetMonths = 0){
     end:   new Date(d.getFullYear(), d.getMonth()+1, 1)
   };
 }
+
+// ───────────────────────────────────────────────
+// Preload rapido Firestore (solo query)
+let _preloadDone = false;
 
 async function warmClients(){ try { await getDocs(collection(db, "clienti")); } catch {} }
 async function warmTreatments(){ try { await getDocs(collection(db, "trattamenti")); } catch {} }
@@ -102,22 +106,63 @@ async function preloadDataOnce(){
 export let preloadReady = Promise.resolve();
 
 // ───────────────────────────────────────────────
-// Auto-refresh cache periodico
+// Full Sync → salva in IndexedDB
+async function fullSyncAll() {
+  try {
+    // Clienti → tutti
+    const snapClienti = await getDocs(collection(db, "clienti"));
+    await bulkUpsert("clienti", snapClienti.docs.map(d => ({ id: d.id, ...d.data() })));
+
+    // Trattamenti → tutti
+    const snapTratt = await getDocs(collection(db, "trattamenti"));
+    await bulkUpsert("trattamenti", snapTratt.docs.map(d => ({ id: d.id, ...d.data() })));
+
+    // Promemoria → tutti
+    const snapProm = await getDocs(collection(db, "promemoria"));
+    await bulkUpsert("promemoria", snapProm.docs.map(d => ({ id: d.id, ...d.data() })));
+
+    // Appuntamenti → da -6 a +6 mesi
+    const tasks = [];
+    for (let off = -6; off <= 6; off++) {
+      const { start, end } = monthRange(new Date(), off);
+      const qy = query(
+        collection(db, "appuntamenti"),
+        where("data", ">=", Timestamp.fromDate(start)),
+        where("data", "<",  Timestamp.fromDate(end)),
+        orderBy("data", "asc")
+      );
+      tasks.push(
+        getDocs(qy).then(snap => {
+          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          return bulkUpsert("appuntamenti", docs);
+        }).catch(() => {})
+      );
+    }
+    await Promise.all(tasks);
+
+    console.log("[fullSyncAll] Dati sincronizzati in IndexedDB");
+  } catch (err) {
+    console.error("[fullSyncAll] errore sync:", err);
+  }
+}
+
+// ───────────────────────────────────────────────
+// Auto-refresh service worker cache
 function setupAutoRefresh() {
   if (!navigator.serviceWorker?.controller) return;
 
   // Subito al login
   navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
 
-  // Poi ogni 6 ore
+  // Ogni 3h
   setInterval(() => {
     console.log("[auth] Auto refresh cache");
     navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
-  }, 3 * 60 * 60 * 1000); // 3h in ms
+  }, 3 * 60 * 60 * 1000);
 }
 
 // ───────────────────────────────────────────────
-// Protezione route + preload
+// Protezione route + preload + fullSync
 onAuthStateChanged(auth, user => {
   const isFree = PAGINE_LIBERE.has(FILE);
 
@@ -131,7 +176,8 @@ onAuthStateChanged(auth, user => {
     return;
   }
 
-  // Loggato → avvia preload + auto-refresh
+  // Loggato → preload + full sync + auto-refresh
   preloadReady = preloadDataOnce().catch(console.warn);
+  fullSyncAll();  // 🔥 salva tutto in IndexedDB
   setupAutoRefresh();
 });
