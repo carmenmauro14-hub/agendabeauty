@@ -1,4 +1,4 @@
-  // auth.js — Firebase + offline cache + sync_queue + daily sync
+// auth.js — Firebase + offline cache + sync_queue + daily sync
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -17,7 +17,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  bulkUpsert, getAll, putOne, getLastSync, setLastSync,
+  bulkUpsert, getAll, putOne, deleteById,
+  getLastSync, setLastSync,
   getQueuedChanges, clearQueue
 } from "./storage.js";
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
@@ -147,9 +148,9 @@ async function syncPending() {
         }
 
         if (q.op === "delete") {
-          if (!q.payload.id) throw new Error("delete senza id");
-          await deleteDoc(doc(db, q.collezione, q.payload.id));
-          // Rimuoverlo dalla cache → lo gestirai in storage.js (es. con deleteOne)
+          if (!q.id) throw new Error("delete senza id");
+          await deleteDoc(doc(db, q.collezione, q.id));
+          await deleteById(q.collezione, q.id);
         }
       } catch (e) {
         console.error("Errore sync queue item:", e, q);
