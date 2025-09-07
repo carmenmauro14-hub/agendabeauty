@@ -1,11 +1,15 @@
 // ui.js — gestione notifiche e stato connessione
 
+// Crea barra di stato sotto la top-bar
 let statusBar = null;
 function ensureStatusBar() {
   if (!statusBar) {
     statusBar = document.createElement("div");
     statusBar.id = "connectionStatusBar";
-    statusBar.style.width = "100%";
+    statusBar.style.position = "fixed";
+    statusBar.style.top = "0";                // sempre attaccato in alto
+    statusBar.style.left = "0";
+    statusBar.style.width = "100%";           // larghezza piena
     statusBar.style.height = "28px";
     statusBar.style.display = "none";
     statusBar.style.alignItems = "center";
@@ -13,19 +17,19 @@ function ensureStatusBar() {
     statusBar.style.fontSize = "14px";
     statusBar.style.fontWeight = "500";
     statusBar.style.color = "#fff";
+    statusBar.style.zIndex = "9999";
     statusBar.style.transition = "opacity 0.3s ease";
+    document.body.appendChild(statusBar);
 
-    // Inserito SUBITO DOPO la navbar
-    const navbar = document.getElementById("navbar-placeholder");
-    if (navbar) {
-      navbar.insertAdjacentElement("afterend", statusBar);
-    } else {
-      document.body.prepend(statusBar);
+    // Spingi il contenuto in basso di 28px, così il banner non copre
+    if (!document.body.style.paddingTop) {
+      document.body.style.paddingTop = "28px";
     }
   }
   return statusBar;
 }
 
+// Mostra barra con colore e testo
 function showStatusBar(text, bg, autoHide = false) {
   const bar = ensureStatusBar();
   bar.textContent = text;
