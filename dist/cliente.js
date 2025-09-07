@@ -1,11 +1,11 @@
-// cliente.js — dettaglio cliente con supporto offline-first
+// cliente.js — dettaglio cliente con supporto offline-first + sync_queue
 import { db } from "./auth.js";
 import {
   doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import { openWhatsAppReminder } from "./reminder-core.js";
-import { getAll, getById, putOne, putMany } from "./storage.js";
+import { getAll, getById, putOne, putMany, queueChange } from "./storage.js";
 
 // ===== Utils ================================================================
 const formatEuro = (n) => Number(n || 0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
@@ -167,14 +167,20 @@ const saveNote = debounce(async ()=>{
   if(newNote === (clienteData.note || "")) { noteStatus.textContent = ""; return; }
   noteStatus.textContent = "Salvataggio…";
   try{
-    await updateDoc(doc(db,"clienti",clienteId), { note: newNote });
+    if (navigator.onLine) {
+      await updateDoc(doc(db,"clienti",clienteId), { note: newNote });
+    } else {
+      await queueChange({ collezione:"clienti", op:"update", id: clienteId, payload: { note: newNote } });
+    }
     clienteData.note = newNote;
     await putOne("clienti", clienteData); // aggiorna cache
     noteStatus.textContent = "Salvato";
     setTimeout(()=>{ noteStatus.textContent=""; }, 1200);
   }catch{
     noteStatus.textContent = "Errore salvataggio (offline)";
-    await putOne("clienti", { ...clienteData, note: newNote }); // aggiorna almeno cache
+    clienteData.note = newNote;
+    await putOne("clienti", clienteData);
+    await queueChange({ collezione:"clienti", op:"update", id: clienteId, payload: { note: newNote } });
   }
 }, 700);
 
@@ -326,17 +332,24 @@ infoEdit.addEventListener("submit", async (e)=>{
   e.preventDefault();
   if(!clienteId) return;
 
+  const payload = {
+    nome: editNome.value.trim(),
+    telefono: editTelefono.value.trim(),
+    email: editEmail.value.trim()
+  };
+
   try {
-    await updateDoc(doc(db,"clienti",clienteId), {
-      nome: editNome.value.trim(),
-      telefono: editTelefono.value.trim(),
-      email: editEmail.value.trim()
-    });
-    clienteData = { ...clienteData, nome: editNome.value.trim(), telefono: editTelefono.value.trim(), email: editEmail.value.trim() };
+    if (navigator.onLine) {
+      await updateDoc(doc(db,"clienti",clienteId), payload);
+    } else {
+      await queueChange({ collezione:"clienti", op:"update", id: clienteId, payload });
+    }
+    clienteData = { ...clienteData, ...payload };
     await putOne("clienti", clienteData);
   } catch {
-    clienteData = { ...clienteData, nome: editNome.value.trim(), telefono: editTelefono.value.trim(), email: editEmail.value.trim() };
+    clienteData = { ...clienteData, ...payload };
     await putOne("clienti", clienteData);
+    await queueChange({ collezione:"clienti", op:"update", id: clienteId, payload });
   }
   setEditMode(false);
   renderCliente();
