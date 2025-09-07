@@ -5,10 +5,7 @@ function ensureStatusBar() {
   if (!statusBar) {
     statusBar = document.createElement("div");
     statusBar.id = "connectionStatusBar";
-    statusBar.style.position = "fixed";
-    statusBar.style.top = "var(--nav-height, 84px)";
-    statusBar.style.left = 0;
-    statusBar.style.right = 0;
+    statusBar.style.width = "100%";
     statusBar.style.height = "28px";
     statusBar.style.display = "none";
     statusBar.style.alignItems = "center";
@@ -16,9 +13,15 @@ function ensureStatusBar() {
     statusBar.style.fontSize = "14px";
     statusBar.style.fontWeight = "500";
     statusBar.style.color = "#fff";
-    statusBar.style.zIndex = "9999";
     statusBar.style.transition = "opacity 0.3s ease";
-    document.body.appendChild(statusBar);
+
+    // Inserito SUBITO DOPO la navbar
+    const navbar = document.getElementById("navbar-placeholder");
+    if (navbar) {
+      navbar.insertAdjacentElement("afterend", statusBar);
+    } else {
+      document.body.prepend(statusBar);
+    }
   }
   return statusBar;
 }
@@ -40,11 +43,9 @@ function showStatusBar(text, bg, autoHide = false) {
 
 // API pubbliche
 export function showOffline() {
-  // 🚫 resta visibile finché non torna online
   showStatusBar("Sei offline 🚫", "#e57373", false);
 }
 export function showOnline() {
-  // ✅ appare solo per pochi secondi
   showStatusBar("Connessione ripristinata ✅", "#81c784", true);
 }
 export function showSyncOK() {
