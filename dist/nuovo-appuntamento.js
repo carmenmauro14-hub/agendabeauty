@@ -285,17 +285,14 @@ btnSalva?.addEventListener("click", async () => {
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
   // 🔍 Controlla se esiste già un appuntamento con stessa data e ora
-  const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
-  const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+const dupQuery = query(
+  collection(db, "appuntamenti"),
+  where("dataISO", "==", dataISO),
+  where("ora", "==", ora)
+);
+const dupSnap = await getDocs(dupQuery);
 
-  const esiste = appuntamenti.some(app => {
-    return (
-      app.dataISO === dataISO &&
-      app.ora === ora &&
-      (!editId || app.id !== editId) // in modifica esclude se stesso
-    );
-  });
-
+const esiste = dupSnap.docs.some(d => !editId || d.id !== editId);
   if (esiste) {
     alert(`Hai già un appuntamento alle ${ora} del ${dataISO}`);
     return; // blocca salvataggio
