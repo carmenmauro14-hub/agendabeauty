@@ -1,4 +1,4 @@
-// auth.js — Firebase + offline cache + sync_queue + daily sync
+// auth.js — Firebase + offline cache + sync_queue + daily sync (DEBUG)
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -17,8 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  bulkUpsert, getAll, putOne, deleteById,
-  getLastSync, setLastSync,
+  bulkUpsert, getAll, putOne, getLastSync, setLastSync,
   getQueuedChanges, clearQueue
 } from "./storage.js";
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
@@ -126,41 +125,54 @@ async function maybeDailySync() {
 }
 
 // ───────────────────────────────────────────────
-// Sync pending (gestisce add / update / delete)
+// Sync pending (gestisce add / update / delete) + DEBUG LOG
 async function syncPending() {
   try {
     const queue = await getQueuedChanges();
-    if (!queue.length) return;
+    if (!queue.length) {
+      console.info("[syncPending] Nessun item in coda.");
+      return;
+    }
+
+    console.group("[syncPending] Avvio sync");
+    console.table(queue);
 
     for (const q of queue) {
       try {
+        console.log("[syncPending] Elaboro item:", q);
+
         const collRef = collection(db, q.collezione);
 
         if (q.op === "add") {
           const ref = await addDoc(collRef, q.payload);
           await putOne(q.collezione, { ...q.payload, id: ref.id });
+          console.log("[syncPending] ADD ok:", ref.id);
         }
 
         if (q.op === "update") {
           if (!q.payload.id) throw new Error("update senza id");
           await updateDoc(doc(db, q.collezione, q.payload.id), q.payload);
           await putOne(q.collezione, q.payload);
+          console.log("[syncPending] UPDATE ok:", q.payload.id);
         }
 
         if (q.op === "delete") {
-          if (!q.id) throw new Error("delete senza id");
-          await deleteDoc(doc(db, q.collezione, q.id));
-          await deleteById(q.collezione, q.id);
+          if (!q.payload.id) throw new Error("delete senza id");
+          await deleteDoc(doc(db, q.collezione, q.payload.id));
+          console.log("[syncPending] DELETE ok:", q.payload.id);
+          // opzionale: deleteById in storage.js
         }
+
       } catch (e) {
-        console.error("Errore sync queue item:", e, q);
+        console.error("[syncPending] Errore su item:", q, e);
       }
     }
 
     await clearQueue(queue.map(q => q.qid));
+    console.groupEnd();
     showSyncOK();
   } catch (err) {
-    console.error("[syncPending] errore:", err);
+    console.error("[syncPending] errore globale:", err);
     showSyncFail();
   }
 }
