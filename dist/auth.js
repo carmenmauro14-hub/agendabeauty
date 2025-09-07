@@ -126,6 +126,11 @@ async function maybeDailySync() {
 window.addEventListener("online",  () => showOnline());
 window.addEventListener("offline", () => showOffline());
 
+// 🔹 Mostra subito lo stato iniziale (utile se apri offline)
+if (!navigator.onLine) {
+  showOffline();
+}
+
 // ───────────────────────────────────────────────
 // Protezione route + sync
 onAuthStateChanged(auth, user => {
