@@ -1,4 +1,4 @@
-// auth.js — Firebase + cache offline + preload + fullSync + auto-refresh
+// auth.js — Firebase + cache offline + preload + fullSync ottimizzato
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -15,8 +15,8 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { bulkUpsert } from "./storage.js";  // 🔥 sync su IndexedDB
-import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js"; // 🔔 notifiche UI
+import { bulkUpsert, getLastSync, setLastSync } from "./storage.js";
+import { showBanner } from "./ui.js";  // banner elegante per feedback
 
 // ───────────────────────────────────────────────
 // Config Firebase
@@ -34,7 +34,6 @@ export const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const db   = initializeFirestore(app, { localCache: persistentLocalCache() });
 export const auth = getAuth(app);
 
-// Export utili
 export {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -66,45 +65,6 @@ function monthRange(centerDate = new Date(), offsetMonths = 0){
     end:   new Date(d.getFullYear(), d.getMonth()+1, 1)
   };
 }
-
-// ───────────────────────────────────────────────
-// Preload rapido Firestore (solo query)
-let _preloadDone = false;
-
-async function warmClients(){ try { await getDocs(collection(db, "clienti")); } catch {} }
-async function warmTreatments(){ try { await getDocs(collection(db, "trattamenti")); } catch {} }
-async function warmAppointments(){
-  const tasks = [];
-  for (const off of [-1, 0, 1]) {
-    const { start, end } = monthRange(new Date(), off);
-    const qy = query(
-      collection(db, "appuntamenti"),
-      where("data", ">=", Timestamp.fromDate(start)),
-      where("data", "<",  Timestamp.fromDate(end)),
-      orderBy("data","asc")
-    );
-    tasks.push(getDocs(qy).catch(()=>{}));
-  }
-  await Promise.all(tasks);
-}
-
-async function preloadDataOnce(){
-  if (_preloadDone) return;
-  _preloadDone = true;
-
-  await Promise.all([
-    warmClients(),
-    warmTreatments(),
-    warmAppointments()
-  ]);
-
-  // 👉 Notifica il service worker di precache HTML/CSS/JS
-  if (navigator.serviceWorker?.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
-  }
-}
-
-export let preloadReady = Promise.resolve();
 
 // ───────────────────────────────────────────────
 // Full Sync → salva in IndexedDB
@@ -141,36 +101,28 @@ async function fullSyncAll() {
     }
     await Promise.all(tasks);
 
-    console.log("[fullSyncAll] Dati sincronizzati in IndexedDB");
-    showSyncOK();
+    await setLastSync("all", Date.now());
+    showBanner("✅ Dati sincronizzati");
+
   } catch (err) {
     console.error("[fullSyncAll] errore sync:", err);
-    showSyncFail();
+    showBanner("🚫 Sincronizzazione fallita");
   }
 }
 
 // ───────────────────────────────────────────────
-// Auto-refresh service worker cache
-function setupAutoRefresh() {
-  if (!navigator.serviceWorker?.controller) return;
-
-  // Subito al login
-  navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
-
-  // Ogni 3h
-  setInterval(() => {
-    console.log("[auth] Auto refresh cache");
-    navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
-  }, 3 * 60 * 60 * 1000);
+// Auto-refresh giornaliero (non ogni pagina)
+async function maybeDailySync() {
+  const last = await getLastSync("all");
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  if (now - last > oneDay) {
+    fullSyncAll();
+  }
 }
 
 // ───────────────────────────────────────────────
-// Eventi online/offline
-window.addEventListener("offline", () => showOffline());
-window.addEventListener("online", () => showOnline());
-
-// ───────────────────────────────────────────────
-// Protezione route + preload + fullSync
+// Protezione route + sync
 onAuthStateChanged(auth, user => {
   const isFree = PAGINE_LIBERE.has(FILE);
 
@@ -184,8 +136,6 @@ onAuthStateChanged(auth, user => {
     return;
   }
 
-  // Loggato → preload + full sync + auto-refresh
-  preloadReady = preloadDataOnce().catch(console.warn);
-  fullSyncAll();  // 🔥 salva tutto in IndexedDB
-  setupAutoRefresh();
+  // 🔹 Loggato
+  maybeDailySync();  // una volta al giorno
 });
