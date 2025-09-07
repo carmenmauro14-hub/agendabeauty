@@ -16,6 +16,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import { bulkUpsert } from "./storage.js";  // 🔥 sync su IndexedDB
+import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js"; // 🔔 notifiche UI
 
 // ───────────────────────────────────────────────
 // Config Firebase
@@ -141,8 +142,10 @@ async function fullSyncAll() {
     await Promise.all(tasks);
 
     console.log("[fullSyncAll] Dati sincronizzati in IndexedDB");
+    showSyncOK();
   } catch (err) {
     console.error("[fullSyncAll] errore sync:", err);
+    showSyncFail();
   }
 }
 
@@ -160,6 +163,11 @@ function setupAutoRefresh() {
     navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_PAGES" });
   }, 3 * 60 * 60 * 1000);
 }
+
+// ───────────────────────────────────────────────
+// Eventi online/offline
+window.addEventListener("offline", () => showOffline());
+window.addEventListener("online", () => showOnline());
 
 // ───────────────────────────────────────────────
 // Protezione route + preload + fullSync
