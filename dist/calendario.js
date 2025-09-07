@@ -1,10 +1,10 @@
-// calendario.js — versione corretta: riusa app da auth.js (no doppia init), 10.12.2
+// calendario.js — offline-first con Firestore + IndexedDB
 import { db } from "./auth.js";
 import {
-  collection, query, where, getDocs, doc, getDoc,
-  orderBy, Timestamp
+  collection, query, where, getDocs, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { abilitaSwipe } from "./swipe.js";
+import { getAll, putMany } from "./storage.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ---- DOM ----
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const annoCorrente  = document.getElementById("annoCorrente");
   const mesiBar       = document.getElementById("mesiBar");
 
-  // Pulsante “oggi” nella top-bar (occhio: se in HTML esiste già, evita doppio bottone)
+  // Pulsante “oggi”
   const topBar = document.querySelector(".top-bar");
   let btnOggi = topBar?.querySelector(".btn-oggi");
   if (!btnOggi) {
@@ -25,15 +25,15 @@ document.addEventListener("DOMContentLoaded", () => {
   btnOggi.textContent = oggi.getDate();
 
   // ---- Stato ----
-  let dataCorrente = new Date();         // mese visualizzato
-  let eventi = {};                       // {"YYYY-MM-DD": [{ora, nome}, ...]}
+  let dataCorrente = new Date(); // mese visualizzato
+  let eventi = {};               // {"YYYY-MM-DD": [{ora, nome}, ...]}
+  let clientiCache = {};         // cache {id: nome}
 
-  // ---- Helpers DATE (tutte in locale!) ----
-  function pad2(n){ return String(n).padStart(2, "0"); }
-  function isoFromDateLocal(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-  function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-  const tsFromDate = (d) => Timestamp.fromDate(d);
-  function parseIsoLocal(iso){ const [y,m,day] = iso.split("-").map(n => parseInt(n,10)); return new Date(y, (m-1), day); }
+  // ---- Helpers ----
+  const pad2 = n => String(n).padStart(2, "0");
+  const isoFromDateLocal = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const tsFromDate = d => Timestamp.fromDate(d);
 
   function monthGridRange(anno, mese){
     const primo = new Date(anno, mese, 1);
@@ -50,43 +50,60 @@ document.addEventListener("DOMContentLoaded", () => {
     annoCorrente.textContent = dataCorrente.getFullYear();
   }
 
+  // ---- Caricamento clienti ----
+  async function caricaClientiCache() {
+    const clienti = await getAll("clienti");
+    clienti.forEach(c => {
+      clientiCache[c.id] = c.nome || "";
+    });
+  }
+
+  // ---- Caricamento appuntamenti ----
   async function caricaEventiDaFirebase(anno, mese){
     eventi = {};
     const { start, end, inizioGriglia } = monthGridRange(anno, mese);
 
-    const appuntamentiRef = collection(db, "appuntamenti");
-    const qy = query(appuntamentiRef, where("data", ">=", start), where("data", "<",  end), orderBy("data", "asc"));
+    try {
+      // 🔹 Firestore
+      const qy = query(
+        collection(db, "appuntamenti"),
+        where("data", ">=", start),
+        where("data", "<",  end),
+        orderBy("data","asc")
+      );
+      const snapshot = await getDocs(qy);
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    const snapshot     = await getDocs(qy);
-    const clientiCache = {};
+      // aggiorna cache
+      await putMany("appuntamenti", docs);
 
-    for (const docSnap of snapshot.docs){
-      const dati = docSnap.data();
+      // prepara eventi
+      docs.forEach(dati => {
+        const dateObj = dati.data?.toDate ? dati.data.toDate() : new Date(dati.data);
+        const key = isoFromDateLocal(dateObj);
+        if (!eventi[key]) eventi[key] = [];
 
-      let dateObj;
-      if (dati.data && typeof dati.data.toDate === "function"){
-        dateObj = dati.data.toDate();
-      } else if (typeof dati.data === "string"){
-        dateObj = parseIsoLocal(dati.data);
-      } else {
-        continue;
-      }
+        const nomeCliente = clientiCache[dati.clienteId] || "";
+        eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
+      });
 
-      const key = isoFromDateLocal(dateObj);
-      if (!eventi[key]) eventi[key] = [];
+      generaGriglia(inizioGriglia);
+    } catch (err) {
+      console.warn("[calendario] offline, uso cache:", err);
 
-      const idCliente = dati.clienteId;
-      let nomeCliente = clientiCache[idCliente];
-      if (!nomeCliente){
-        const clienteDoc = await getDoc(doc(db, "clienti", idCliente));
-        nomeCliente = clienteDoc.exists() ? (clienteDoc.data().nome || "") : "";
-        clientiCache[idCliente] = nomeCliente;
-      }
+      // 🔹 Offline: prendi da IndexedDB
+      const tutti = await getAll("appuntamenti");
+      tutti.forEach(dati => {
+        const dateObj = dati.data?.toDate ? dati.data.toDate() : new Date(dati.data);
+        const key = isoFromDateLocal(dateObj);
+        if (!eventi[key]) eventi[key] = [];
 
-      eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
+        const nomeCliente = clientiCache[dati.clienteId] || "";
+        eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
+      });
+
+      generaGriglia(inizioGriglia);
     }
-
-    generaGriglia(inizioGriglia);
   }
 
   function generaBarraMesiCompleta(){
@@ -227,7 +244,10 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   // ---- Avvio ----
-  aggiornaHeader();
-  generaBarraMesiCompleta();
-  caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
+  (async () => {
+    await caricaClientiCache(); // carica clienti in cache
+    aggiornaHeader();
+    generaBarraMesiCompleta();
+    caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
+  })();
 });
