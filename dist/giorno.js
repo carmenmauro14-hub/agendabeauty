@@ -1,13 +1,14 @@
 // giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA + mini-calendario on-demand)
 
 // 🔁 Usa l'istanza già creata in auth.js
-import { db } from "./auth.js";
+import { app } from "./auth.js";
 import {
-  collection, query, where, orderBy,
+  getFirestore, collection, query, where, orderBy,
   getDocs, doc, getDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { openWhatsAppReminder } from "./reminder-core.js";
 
-import { getAll, putMany } from "./storage.js";
+const db  = getFirestore(app);
 
 // ── Stato
 let dataCorrente;
@@ -90,51 +91,59 @@ function apptForReminder(appt){
   };
 }
 
-// ── Cache clienti da IndexedDB
-async function caricaClientiCache(){
-  const clienti = await getAll("clienti");
-  clienti.forEach(c => {
-    clientiCache[c.id] = {
-      nome: c.nome || "",
-      telefono: c.telefono || "",
-      email: c.email || ""
-    };
+// ── Modal
+function openModal(appt){
+  elTitolo.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
+  elData.textContent   = appt.iso || "";
+  elOra.textContent    = appt.ora || "";
+
+  elTrattList.innerHTML = "";
+  let tot = 0;
+  (appt.trattamenti||[]).forEach(t => {
+    const r = document.createElement("div");
+    r.className = "det-tratt-item";
+    const n = document.createElement("span");
+    n.className = "det-tratt-nome";
+    n.textContent = t?.nome || "-";
+    const p = document.createElement("span");
+    p.className = "det-tratt-prezzo";
+    const val = Number(t?.prezzo ?? 0);
+    p.textContent = fmtEuro(val);
+    tot += val;
+    r.appendChild(n); r.appendChild(p);
+    elTrattList.appendChild(r);
   });
+  elTotale.textContent = fmtEuro(tot);
+
+  btnModifica.onclick = () => {
+    if (appt.id) location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
+  };
+  btnPromem.onclick = async () => {
+    if (openingWA) return;
+    openingWA = true;
+    const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
+    try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+    finally { setTimeout(()=>openingWA=false, 1800); }
+  };
+
+  detModal.setAttribute("aria-hidden","false");
+  detModal.style.display = "flex";
 }
 
-// ── Query Firestore con fallback cache
-async function caricaAppuntamentiGiornoISO(iso){
-  appuntamenti = [];
-  const { start, end } = dayRangeFromISO(iso);
-
-  try {
-    // 🔹 ONLINE → Firestore
-    const qRef = query(
-      collection(db,"appuntamenti"),
-      where("data", ">=", start),
-      where("data", "<",  end),
-      orderBy("data","asc")
-    );
-    const snap = await getDocs(qRef);
-
-    const docs = [];
-    for (const d of snap.docs) {
-      const a = d.data();
-      const { iso: isoApp } = pickDate(a.data);
-      docs.push({ id: d.id, ...a, iso: isoApp });
-    }
-    // salva in cache
-    await putMany("appuntamenti", docs);
-
-    appuntamenti = docs;
-  } catch (err) {
-    console.warn("[giorno] Offline, carico dalla cache:", err);
-    const cached = await getAll("appuntamenti");
-    appuntamenti = cached.filter(a => a.iso === iso);
-  }
-
-  renderLista(appuntamenti);
+function closeModal(){
+  detSheet.classList.add("swipe-out-down");
+  const finish = () => {
+    detSheet.removeEventListener("transitionend", finish);
+    detModal.style.display = "none";
+    detModal.setAttribute("aria-hidden","true");
+    detSheet.classList.remove("swipe-out-down");
+  };
+  setTimeout(finish, 200);
+  detSheet.addEventListener("transitionend", finish);
 }
+
+detCloseBtn.addEventListener("click", closeModal);
+detModal.addEventListener("click", (e) => { if (e.target === detModal) closeModal(); });
 
 // ── Render lista
 function renderLista(items){
@@ -175,66 +184,84 @@ function renderLista(items){
       img.alt = t.nome || "";
       iconeEl.appendChild(img);
     });
-    if ((appt.trattamenti||[]).length > 6) {
-      const more = document.createElement("span");
-      more.className = "eg-more";
-      more.textContent = `+${appt.trattamenti.length-6}`;
-      iconeEl.appendChild(more);
-    }
 
     const nomeEl = document.createElement("span");
     nomeEl.className = "eg-nome";
     nomeEl.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
 
+    // 🔔 pulsante inline
+    const promemEl = document.createElement("button");
+    promemEl.className = "btn-pill promem-ico";
+    promemEl.innerHTML = '<i class="fa-solid fa-bell"></i>';
+    promemEl.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (openingWA) return;
+      openingWA = true;
+      const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
+      try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+      finally { setTimeout(() => (openingWA = false), 1800); }
+    });
+
     row.appendChild(oraEl);
     row.appendChild(iconeEl);
     row.appendChild(nomeEl);
+    row.appendChild(promemEl);
+
+    // 🔑 questo mancava nella tua versione nuova
+    row.addEventListener("click", ()=> openModal(appt));
 
     contenuto.appendChild(row);
-    row.addEventListener("click", ()=> openModal(appt));
   });
 
   ensureMinHeight();
 }
 
-// ── Header + navigazione
-function aggiornaHeader(){
-  lblMese.textContent = dataCorrente.toLocaleDateString("it-IT",{month:"long"});
-  lblAnno.textContent = dataCorrente.getFullYear();
-  btnOggi.textContent = (new Date()).getDate();
-}
+// ── Query Firestore
+async function caricaAppuntamentiGiornoISO(iso){
+  appuntamenti = [];
+  const { start, end } = dayRangeFromISO(iso);
+  const qRef = query(
+    collection(db,"appuntamenti"),
+    where("data", ">=", start),
+    where("data", "<",  end),
+    orderBy("data","asc")
+  );
+  const snap = await getDocs(qRef);
 
-function vaiAData(dateObj, anim){
-  dataCorrente = dateObj;
-  const iso = dateObj.toISOString().slice(0,10);
-  history.replaceState(null, "", `giorno.html?data=${iso}`);
-  aggiornaHeader();
+  for (const d of snap.docs) {
+    const a = d.data();
+    const { iso: isoApp } = pickDate(a.data);
 
-  renderLista([]);
-  caricaAppuntamentiGiornoISO(iso);
+    const cid = a.clienteId || a.cliente || "";
+    if (cid && !clientiCache[cid]) {
+      const csnap = await getDoc(doc(db,"clienti",cid));
+      clientiCache[cid] = csnap.exists() ? csnap.data() : { nome:"", telefono:"", email:"" };
+    }
+
+    appuntamenti.push({
+      id: d.id,
+      clienteId: cid,
+      iso: isoApp,
+      ora: a.ora || "",
+      trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
+    });
+  }
+
+  renderLista(appuntamenti);
 }
 
 // ── Init
-(async function init(){
-  await caricaClientiCache();
-
+(function init(){
   const params = new URLSearchParams(location.search);
   const dataParam = params.get("data");
   const oggi = new Date();
   dataCorrente = dataParam ? new Date(dataParam) : oggi;
 
-  aggiornaHeader();
-  ensureMinHeight();
-
-  const iso = (dataParam ? dataParam : oggi.toISOString().slice(0,10));
-  caricaAppuntamentiGiornoISO(iso);
+  renderLista([]);
+  caricaAppuntamentiGiornoISO(dataCorrente.toISOString().slice(0,10));
 
   document.getElementById("aggiungiAppuntamentoBtn").addEventListener("click", ()=>{
     const d = dataCorrente.toISOString().slice(0,10);
     location.href = `nuovo-appuntamento.html?data=${d}`;
-  });
-  btnOggi.addEventListener("click", ()=>{
-    const isoOggi = new Date().toISOString().slice(0,10);
-    location.href = `giorno.html?data=${isoOggi}`;
   });
 })();
