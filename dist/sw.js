@@ -60,6 +60,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
+  if (req.method !== "GET") return;
 
   // Ignora Firebase/gstatic
   if (url.origin.includes('firebaseio') || url.host.includes('gstatic.com')) return;
