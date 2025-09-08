@@ -17,7 +17,7 @@ const STORES = {
   trattamenti: { keyPath: "id", indexes: [
     ["nomeLower", "nomeLower", { unique: false }],
   ]},
-  settings: { keyPath: "id", indexes: [] }, // ⬅️ AGGIUNTO
+  settings: { keyPath: "id", indexes: [] }, // ⬅️ AGGIUNTO per reminder/trattamenti
   promemoria: { keyPath: "id", indexes: [
     ["clienteId", "clienteId", { unique: false }],
     ["scheduledAt", "scheduledAt", { unique: false }],
