@@ -1,14 +1,13 @@
 // giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA + mini-calendario on-demand)
 
-// 🔁 Usa l'istanza già creata in auth.js
-import { app } from "./auth.js";
+// 🔁 Usa l'istanza condivisa inizializzata in auth.js
+import { db } from "./auth.js";
 import {
-  getFirestore, collection, query, where, orderBy,
+  collection, query, where, orderBy,
   getDocs, doc, getDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAll } from "./storage.js";
 import { openWhatsAppReminder } from "./reminder-core.js";
-
-const db  = getFirestore(app);
 
 // ── Stato
 let dataCorrente;
@@ -30,7 +29,7 @@ const btnOggi        = document.getElementById("btnTornaOggi");
 
 // Modal (già in HTML)
 const detModal     = document.getElementById("detModal");
-const detSheet     = detModal.querySelector(".det-sheet");
+const detSheet     = detModal?.querySelector?.(".det-sheet");
 const detCloseBtn  = document.getElementById("detCloseBtn");
 const detTopbar    = document.getElementById("detTopbar");
 const elTitolo     = document.getElementById("detTitolo");
@@ -79,58 +78,190 @@ function trovaIcona(nome) {
 function ensureMinHeight() {
   const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
   const extra = 220;
-  contenuto.style.minHeight = (vh - extra) + "px";
+  if (contenuto) contenuto.style.minHeight = (vh - extra) + "px";
 }
 
 // Normalizza l’oggetto appuntamento per reminder-core
 function apptForReminder(appt){
   return {
-    data: appt.iso,
+    data: appt.iso,                // "YYYY-MM-DD"
     ora: appt.ora || "",
     trattamenti: appt.trattamenti || []
   };
 }
 
-// ── Modal
-function openModal(appt){
-  elTitolo.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
-  elData.textContent   = appt.iso || "";
-  elOra.textContent    = appt.ora || "";
+/* ──────────────────────────────────────────────────────────────
+   MINI CALENDARIO
+   ────────────────────────────────────────────────────────────── */
+function generaBarraMesiCompleta() {
+  if (!mesiBar) return;
+  mesiBar.innerHTML = "";
+  let currentSpan = null;
+  for (let anno = 2020; anno <= 2050; anno++) {
+    const sep = document.createElement("span");
+    sep.textContent = anno;
+    sep.classList.add("separatore-anno");
+    mesiBar.appendChild(sep);
 
-  elTrattList.innerHTML = "";
-  let tot = 0;
-  (appt.trattamenti||[]).forEach(t => {
-    const r = document.createElement("div");
-    r.className = "det-tratt-item";
-    const n = document.createElement("span");
-    n.className = "det-tratt-nome";
-    n.textContent = t?.nome || "-";
-    const p = document.createElement("span");
-    p.className = "det-tratt-prezzo";
-    const val = Number(t?.prezzo ?? 0);
-    p.textContent = fmtEuro(val);
-    tot += val;
-    r.appendChild(n); r.appendChild(p);
-    elTrattList.appendChild(r);
+    for (let mese = 0; mese < 12; mese++) {
+      const span = document.createElement("span");
+      span.textContent = new Date(anno, mese).toLocaleDateString("it-IT", { month: "short" });
+      span.dataset.mese = mese;
+      span.dataset.anno = anno;
+
+      if (mese === dataCorrente.getMonth() && anno === dataCorrente.getFullYear()) {
+        span.classList.add("attivo");
+        currentSpan = span;
+      }
+
+      span.addEventListener("click", () => {
+        renderMiniCalendario(anno, mese);
+        mesiBar.querySelectorAll("span").forEach(s => s.classList.remove("attivo"));
+        span.classList.add("attivo");
+      });
+
+      mesiBar.appendChild(span);
+    }
+  }
+  setTimeout(() => {
+    if (currentSpan) currentSpan.scrollIntoView({ behavior: "smooth", inline: "center" });
+  }, 50);
+}
+
+function renderMiniCalendario(anno, mese) {
+  if (!miniCalendario) return;
+  miniCalendario.innerHTML = "";
+  meseMiniCorrente = mese;
+  annoMiniCorrente = anno;
+
+  const oggiStr = new Date().toISOString().slice(0,10);
+  const giornoVisualizzato = dataCorrente.toISOString().slice(0,10);
+
+  const primaGiorno = new Date(anno, mese, 1).getDay(); // 0=Dom
+  const ultimoGiorno = new Date(anno, mese+1, 0).getDate();
+
+  const giorniSettimana = ["L","M","M","G","V","S","D"];
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const trHead = document.createElement("tr");
+  giorniSettimana.forEach(g => {
+    const th = document.createElement("th");
+    th.textContent = g;
+    trHead.appendChild(th);
   });
-  elTotale.textContent = fmtEuro(tot);
+  thead.appendChild(trHead);
+  table.appendChild(thead);
 
-  btnModifica.onclick = () => {
-    if (appt.id) location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
-  };
-  btnPromem.onclick = async () => {
-    if (openingWA) return;
-    openingWA = true;
-    const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
-    try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
-    finally { setTimeout(()=>openingWA=false, 1800); }
-  };
+  const tbody = document.createElement("tbody");
+  let tr = document.createElement("tr");
+  let dayCount = 0;
 
-  detModal.setAttribute("aria-hidden","false");
-  detModal.style.display = "flex";
+  const offset = (primaGiorno + 6) % 7;
+  for (let i=0; i<offset; i++) {
+    tr.appendChild(document.createElement("td"));
+    dayCount++;
+  }
+
+  for (let giorno=1; giorno<=ultimoGiorno; giorno++) {
+    if (dayCount % 7 === 0) {
+      tbody.appendChild(tr);
+      tr = document.createElement("tr");
+    }
+    const td = document.createElement("td");
+    const dataStr = `${anno}-${String(mese+1).padStart(2,"0")}-${String(giorno).padStart(2,"0")}`;
+    td.textContent = giorno;
+
+    if (dataStr === oggiStr) td.classList.add("oggi");
+    if (dataStr === giornoVisualizzato) td.classList.add("selezionato");
+
+    td.addEventListener("click", () => {
+      const nuovaData = new Date(dataStr);
+      vaiAData(nuovaData, "");
+      if (miniCalendario.style.display === "block") {
+        renderMiniCalendario(nuovaData.getFullYear(), nuovaData.getMonth());
+      }
+    });
+
+    tr.appendChild(td);
+    dayCount++;
+  }
+  tbody.appendChild(tr);
+  table.appendChild(tbody);
+  miniCalendario.appendChild(table);
+
+  document.querySelectorAll("#mesiBar span").forEach(s => {
+    const sm = parseInt(s.dataset.mese);
+    const sa = parseInt(s.dataset.anno);
+    s.classList.toggle("attivo", sm === mese && sa === anno);
+  });
+
+  enableLocalSwipe(miniCalendario,
+    () => { const next = new Date(anno, mese+1, 1); renderMiniCalendario(next.getFullYear(), next.getMonth()); },
+    () => { const prev = new Date(anno, mese-1, 1); renderMiniCalendario(prev.getFullYear(), prev.getMonth()); }
+  );
+}
+
+function enableLocalSwipe(el, onLeft, onRight) {
+  let startX = 0, tracking = false;
+  const TH = 40;
+  el.addEventListener("touchstart", (e)=>{
+    if (e.touches.length !== 1) return;
+    tracking = true; startX = e.touches[0].clientX;
+  }, {passive:true});
+  el.addEventListener("touchend", (e)=>{
+    if (!tracking) return; tracking = false;
+    const endX = (e.changedTouches && e.changedTouches[0]?.clientX) || startX;
+    const dx = endX - startX;
+    if (dx < -TH) onLeft?.();
+    if (dx >  TH) onRight?.();
+  }, {passive:true});
+}
+
+/* ──────────────────────────────────────────────────────────────
+   MODALE DETTAGLIO
+   ────────────────────────────────────────────────────────────── */
+function openModal(appt){
+  try {
+    elTitolo.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
+    elData.textContent   = appt.iso || "";
+    elOra.textContent    = appt.ora || "";
+
+    elTrattList.innerHTML = "";
+    let tot = 0;
+    (appt.trattamenti||[]).forEach(t => {
+      const r = document.createElement("div");
+      r.className = "det-tratt-item";
+      const n = document.createElement("span");
+      n.className = "det-tratt-nome";
+      n.textContent = t?.nome || "-";
+      const p = document.createElement("span");
+      p.className = "det-tratt-prezzo";
+      const val = Number(t?.prezzo ?? 0);
+      p.textContent = fmtEuro(val);
+      tot += val;
+      r.appendChild(n); r.appendChild(p);
+      elTrattList.appendChild(r);
+    });
+    elTotale.textContent = fmtEuro(tot);
+
+    btnModifica.onclick = () => { if (appt.id) location.href = `nuovo-appuntamento.html?edit=${appt.id}`; };
+    btnPromem.onclick = async () => {
+      if (openingWA) return;
+      openingWA = true;
+      const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
+      try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
+      finally { setTimeout(()=>openingWA=false, 1800); }
+    };
+
+    detModal.setAttribute("aria-hidden","false");
+    detModal.style.display = "flex";
+  } catch (err) {
+    console.error("[openModal] errore:", err, appt);
+  }
 }
 
 function closeModal(){
+  if (!detSheet) { detModal.style.display = "none"; return; }
   detSheet.classList.add("swipe-out-down");
   const finish = () => {
     detSheet.removeEventListener("transitionend", finish);
@@ -142,11 +273,44 @@ function closeModal(){
   detSheet.addEventListener("transitionend", finish);
 }
 
-detCloseBtn.addEventListener("click", closeModal);
-detModal.addEventListener("click", (e) => { if (e.target === detModal) closeModal(); });
+detCloseBtn?.addEventListener("click", closeModal);
+detModal?.addEventListener("click", (e) => { if (e.target === detModal) closeModal(); });
 
-// ── Render lista
+// swipe-down sulla topbar del modal
+(()=> {
+  if (!detTopbar || !detSheet) return;
+  let startY=0, dragging=false, lastY=0, lastT=0, velocity=0;
+  const getY = (e)=> e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
+  const begin = (e)=>{ dragging=true; startY=lastY=getY(e); lastT=performance.now(); velocity=0; detSheet.style.transition="none"; e.preventDefault(); };
+  const move  = (e)=>{
+    if(!dragging) return;
+    const y=getY(e), now=performance.now(), dy=Math.max(0, y-startY);
+    const dt=Math.max(1, now-lastT);
+    velocity=(y-lastY)/dt; lastY=y; lastT=now;
+    detSheet.style.transform=`translateY(${dy}px)`; e.preventDefault();
+  };
+  const end   = ()=>{
+    if(!dragging) return; dragging=false; detSheet.style.transition="";
+    detSheet.style.transform="";
+    const dy = Math.max(0, lastY-startY);
+    const shouldClose = dy>120 || (dy>60 && velocity>0.35);
+    if(shouldClose) closeModal();
+  };
+  const opts={passive:false};
+  detTopbar.addEventListener("touchstart", begin, opts);
+  detTopbar.addEventListener("mousedown",  begin, opts);
+  window.addEventListener("touchmove", move, opts);
+  window.addEventListener("mousemove",  move, opts);
+  window.addEventListener("touchend",  end);
+  window.addEventListener("mouseup",   end);
+  window.addEventListener("touchcancel", end);
+})();
+
+/* ──────────────────────────────────────────────────────────────
+   LISTA GIORNO
+   ────────────────────────────────────────────────────────────── */
 function renderLista(items){
+  if (!contenuto) return;
   contenuto.innerHTML = "";
 
   const h2 = document.createElement("h2");
@@ -168,9 +332,16 @@ function renderLista(items){
 
   items.sort((A,B)=>(A.ora||"").localeCompare(B.ora||""));
 
+  const frag = document.createDocumentFragment();
+
   items.forEach(appt => {
     const row = document.createElement("div");
     row.className = "evento-giorno";
+    row.dataset.id = appt.id || "";
+
+    // Accessibilità / iOS click
+    row.tabIndex = 0;
+    row.setAttribute("role","button");
 
     const oraEl = document.createElement("span");
     oraEl.className = "eg-ora";
@@ -184,15 +355,23 @@ function renderLista(items){
       img.alt = t.nome || "";
       iconeEl.appendChild(img);
     });
+    if ((appt.trattamenti||[]).length > 6) {
+      const more = document.createElement("span");
+      more.className = "eg-more";
+      more.textContent = `+${appt.trattamenti.length-6}`;
+      iconeEl.appendChild(more);
+    }
 
     const nomeEl = document.createElement("span");
     nomeEl.className = "eg-nome";
     nomeEl.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente";
 
-    // 🔔 pulsante inline
     const promemEl = document.createElement("button");
     promemEl.className = "btn-pill promem-ico";
+    promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
+    promemEl.title = "Promemoria WhatsApp";
     promemEl.innerHTML = '<i class="fa-solid fa-bell"></i>';
+
     promemEl.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (openingWA) return;
@@ -207,61 +386,203 @@ function renderLista(items){
     row.appendChild(nomeEl);
     row.appendChild(promemEl);
 
-    // 🔑 questo mancava nella tua versione nuova
-    row.addEventListener("click", ()=> openModal(appt));
-
-    contenuto.appendChild(row);
+    frag.appendChild(row);
   });
 
+  contenuto.appendChild(frag);
   ensureMinHeight();
 }
 
-// ── Query Firestore
+// Delegation robusta per click/Enter/Space sulla riga
+contenuto?.addEventListener("click", (e)=>{
+  const row = e.target.closest?.(".evento-giorno");
+  if (!row) return;
+  const id = row.dataset.id;
+  const appt = appuntamenti.find(a => a.id === id);
+  if (appt) openModal(appt);
+});
+contenuto?.addEventListener("keydown", (e)=>{
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const row = e.target.closest?.(".evento-giorno");
+  if (!row) return;
+  e.preventDefault();
+  const id = row.dataset.id;
+  const appt = appuntamenti.find(a => a.id === id);
+  if (appt) openModal(appt);
+});
+
+/* ──────────────────────────────────────────────────────────────
+   DATI: FIRESTORE con fallback IndexedDB
+   ────────────────────────────────────────────────────────────── */
 async function caricaAppuntamentiGiornoISO(iso){
   appuntamenti = [];
   const { start, end } = dayRangeFromISO(iso);
-  const qRef = query(
-    collection(db,"appuntamenti"),
-    where("data", ">=", start),
-    where("data", "<",  end),
-    orderBy("data","asc")
-  );
-  const snap = await getDocs(qRef);
 
-  for (const d of snap.docs) {
-    const a = d.data();
-    const { iso: isoApp } = pickDate(a.data);
+  try {
+    // 🔹 Online o cache Firestore disponibile (grazie a persistentLocalCache)
+    const qRef = query(
+      collection(db,"appuntamenti"),
+      where("data", ">=", start),
+      where("data", "<",  end),
+      orderBy("data","asc")
+    );
+    const snap = await getDocs(qRef);
 
-    const cid = a.clienteId || a.cliente || "";
-    if (cid && !clientiCache[cid]) {
-      const csnap = await getDoc(doc(db,"clienti",cid));
-      clientiCache[cid] = csnap.exists() ? csnap.data() : { nome:"", telefono:"", email:"" };
+    const appts = [];
+    for (const d of snap.docs) {
+      const a = d.data();
+      const { iso: isoApp } = pickDate(a.data);
+      const cid = a.clienteId || a.cliente || "";
+
+      if (cid && !clientiCache[cid]) {
+        try {
+          const csnap = await getDoc(doc(db,"clienti",cid));
+          if (csnap.exists()) {
+            const c = csnap.data();
+            clientiCache[cid] = {
+              nome: c?.nome || "",
+              telefono: (c?.telefono || "").toString().trim(),
+              email: (c?.email || "").toString().trim()
+            };
+          } else {
+            clientiCache[cid] = { nome:"", telefono:"", email:"" };
+          }
+        } catch {
+          // se fallisce la fetch cliente, ignora (non bloccare UI)
+          clientiCache[cid] = clientiCache[cid] || { nome:"", telefono:"", email:"" };
+        }
+      }
+
+      appts.push({
+        id: d.id,
+        clienteId: cid,
+        iso: isoApp,
+        ora: a.ora || "",
+        trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
+      });
     }
 
-    appuntamenti.push({
-      id: d.id,
-      clienteId: cid,
-      iso: isoApp,
-      ora: a.ora || "",
-      trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
-    });
+    appuntamenti = appts;
+    renderLista(appuntamenti);
+    return;
+  } catch (err) {
+    console.warn("[giorno] Firestore non disponibile, uso cache IndexedDB", err);
   }
 
-  renderLista(appuntamenti);
+  // 🔸 Fallback IndexedDB (offline “duro”)
+  try {
+    const cachedAppts = await getAll("appuntamenti");
+    const todays = cachedAppts.filter(a => (a.dataISO || "").slice(0,10) === iso);
+    const cachedClients = await getAll("clienti");
+    cachedClients.forEach(c => {
+      clientiCache[c.id] = clientiCache[c.id] || {
+        nome: c?.nome || "",
+        telefono: (c?.telefono || "").toString().trim(),
+        email: (c?.email || "").toString().trim()
+      };
+    });
+
+    appuntamenti = todays.map(a => ({
+      id: a.id,
+      clienteId: a.clienteId || a.cliente || "",
+      iso: a.dataISO || iso,
+      ora: a.ora || "",
+      trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
+    }));
+
+    renderLista(appuntamenti);
+  } catch (err2) {
+    console.error("[giorno] Fallback cache fallito:", err2);
+    renderLista([]); // evita UI vuota “bloccata”
+  }
 }
 
-// ── Init
+/* ──────────────────────────────────────────────────────────────
+   HEADER / NAVIGAZIONE
+   ────────────────────────────────────────────────────────────── */
+function aggiornaHeader(){
+  if (!lblMese || !lblAnno || !btnOggi) return;
+  lblMese.textContent = dataCorrente.toLocaleDateString("it-IT",{month:"long"});
+  lblAnno.textContent = dataCorrente.getFullYear();
+  btnOggi.textContent = (new Date()).getDate();
+}
+
+function vaiAData(dateObj, anim){
+  dataCorrente = dateObj;
+  const iso = dateObj.toISOString().slice(0,10);
+  history.replaceState(null, "", `giorno.html?data=${iso}`);
+  aggiornaHeader();
+
+  if (anim && contenuto) {
+    contenuto.classList.add(anim);
+    setTimeout(()=>contenuto.classList.remove(anim), 300);
+  }
+
+  renderLista([]);
+  caricaAppuntamentiGiornoISO(iso);
+
+  if (miniCalendario && miniCalendario.style.display === "block") {
+    renderMiniCalendario(dataCorrente.getFullYear(), dataCorrente.getMonth());
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   INIT
+   ────────────────────────────────────────────────────────────── */
 (function init(){
   const params = new URLSearchParams(location.search);
   const dataParam = params.get("data");
   const oggi = new Date();
   dataCorrente = dataParam ? new Date(dataParam) : oggi;
 
-  renderLista([]);
-  caricaAppuntamentiGiornoISO(dataCorrente.toISOString().slice(0,10));
+  aggiornaHeader();
+  ensureMinHeight();
 
-  document.getElementById("aggiungiAppuntamentoBtn").addEventListener("click", ()=>{
+  renderLista([]);
+  const iso = (dataParam ? dataParam : oggi.toISOString().slice(0,10));
+  caricaAppuntamentiGiornoISO(iso);
+
+  document.getElementById("aggiungiAppuntamentoBtn")?.addEventListener("click", ()=>{
     const d = dataCorrente.toISOString().slice(0,10);
     location.href = `nuovo-appuntamento.html?data=${d}`;
   });
+  btnOggi?.addEventListener("click", ()=>{
+    const isoOggi = new Date().toISOString().slice(0,10);
+    location.href = `giorno.html?data=${isoOggi}`;
+  });
+
+  document.getElementById("meseSwitch")?.addEventListener("click", ()=>{
+    if (!mesiBar || !miniCalendario) return;
+    const vis = mesiBar.classList.contains("visibile");
+    if (vis) {
+      mesiBar.classList.remove("visibile");
+      mesiBar.style.display = "none";
+      miniCalendario.style.display = "none";
+    } else {
+      mesiBar.classList.add("visibile");
+      mesiBar.style.display = "flex";
+      miniCalendario.style.display = "block";
+
+      if (!mesiBar.dataset.built) {
+        generaBarraMesiCompleta();
+        mesiBar.dataset.built = "1";
+      }
+      renderMiniCalendario(dataCorrente.getFullYear(), dataCorrente.getMonth());
+      const attivo = mesiBar.querySelector(".attivo");
+      if (attivo) attivo.scrollIntoView({ behavior:"smooth", inline:"center" });
+    }
+  });
+
+  // Swipe tra giorni nella lista
+  if (contenuto) {
+    let startX=0, swiping=false;
+    contenuto.addEventListener("touchstart",(e)=>{ if(e.touches.length===1){ swiping=true; startX=e.touches[0].clientX; }}, {passive:true});
+    contenuto.addEventListener("touchend",(e)=>{
+      if(!swiping) return; swiping=false;
+      const endX = (e.changedTouches && e.changedTouches[0]?.clientX) || startX;
+      const dx = endX - startX;
+      if (dx < -50){ const d=new Date(dataCorrente); d.setDate(d.getDate()+1); vaiAData(d,"slide-left"); }
+      if (dx >  50){ const d=new Date(dataCorrente); d.setDate(d.getDate()-1); vaiAData(d,"slide-right"); }
+    }, {passive:true});
+  }
 })();
