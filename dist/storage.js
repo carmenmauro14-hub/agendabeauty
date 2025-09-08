@@ -2,7 +2,7 @@
 // ES Module
 
 const DB_NAME = "beautybook";
-const DB_VERSION = 2; // aumenta se modifichi lo schema
+const DB_VERSION = 3; // 🔼 incrementato per forzare upgrade schema
 
 const STORES = {
   appuntamenti: { keyPath: "id", indexes: [
@@ -17,6 +17,7 @@ const STORES = {
   trattamenti: { keyPath: "id", indexes: [
     ["nomeLower", "nomeLower", { unique: false }],
   ]},
+  settings: { keyPath: "id", indexes: [] }, // ⬅️ AGGIUNTO
   promemoria: { keyPath: "id", indexes: [
     ["clienteId", "clienteId", { unique: false }],
     ["scheduledAt", "scheduledAt", { unique: false }],
