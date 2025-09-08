@@ -1,5 +1,5 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = 'v1.2.0';
+const CACHE_VERSION = 'v1.3.0';
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 // Asset statici principali
@@ -59,12 +59,16 @@ self.addEventListener('activate', (e) => {
 // Fetch handler
 self.addEventListener('fetch', (e) => {
   const req = e.request;
+
+  // 🔹 Ignora tutte le richieste che non sono GET
+  if (req.method !== 'GET') return;
+
   const url = new URL(req.url);
 
-  // Ignora Firebase/gstatic
+  // 🔹 Ignora chiamate Firebase/gstatic
   if (url.origin.includes('firebaseio') || url.host.includes('gstatic.com')) return;
 
-  // HTML → network-first
+  // 🔹 HTML → network-first
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
       fetch(req).then(res => {
@@ -76,7 +80,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Asset statici → cache-first + update in background
+  // 🔹 Asset statici → cache-first + update in background
   e.respondWith(
     caches.match(req).then(cached => {
       const fetchPromise = fetch(req).then(res => {
