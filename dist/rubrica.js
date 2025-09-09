@@ -23,9 +23,19 @@ import { getAll, putOne, queueChange } from "./storage.js";
   }
 
   // ─── Helper: modal ───────────────────────────────────
-  const showModal  = (m) => { if (m) m.style.display = "flex"; };
-  const closeModal = (m) => { if (m) m.style.display = "none"; };
+const showModal  = (m) => {
+  if (!m) return;
+  m.style.display = "flex";
+  m.setAttribute("aria-hidden", "false");   // 🔹 prima rendilo visibile
+  const input = m.querySelector("input");
+  if (input) setTimeout(() => input.focus(), 50); // 🔹 focus dopo
+};
 
+const closeModal = (m) => {
+  if (!m) return;
+  m.style.display = "none";
+  m.setAttribute("aria-hidden", "true");    // 🔹 nascondilo
+};
   // ─── Carica & render rubrica ─────────────────────────
   async function caricaClienti() {
     clientList.innerHTML = `<li class="section" style="opacity:.6">Caricamento…</li>`;
