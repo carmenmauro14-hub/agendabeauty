@@ -4,9 +4,9 @@
 import { db } from "./auth.js";
 import {
   collection, query, where, orderBy,
-  getDocs, doc, getDoc, Timestamp
+  getDocs, doc, getDoc, Timestamp, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAll } from "./storage.js";
+import { getAll, deleteById, queueChange } from "./storage.js";
 import { openWhatsAppReminder } from "./reminder-core.js";
 
 // ── Stato
@@ -251,6 +251,38 @@ function openModal(appt){
       const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
       try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
       finally { setTimeout(()=>openingWA=false, 1800); }
+    };
+
+    // 🔹 Pulsante "Elimina Appuntamento" (inserito sotto Promemoria)
+    let btnElimina = document.getElementById("detElimina");
+    if (!btnElimina) {
+      btnElimina = document.createElement("button");
+      btnElimina.id = "detElimina";
+      btnElimina.className = "btn-danger";
+      btnElimina.style.marginTop = "12px";
+      btnElimina.innerHTML = '<i class="fa-solid fa-trash"></i> Elimina Appuntamento';
+      // inserisci subito dopo il bottone Promemoria
+      btnPromem?.insertAdjacentElement("afterend", btnElimina);
+    }
+    // handler per l'appuntamento attuale
+    btnElimina.onclick = async () => {
+      const conferma = confirm("Vuoi davvero eliminare questo appuntamento?");
+      if (!conferma) return;
+
+      try {
+        if (navigator.onLine) {
+          await deleteDoc(doc(db, "appuntamenti", appt.id));
+        } else {
+          await queueChange({ collezione: "appuntamenti", op: "delete", id: appt.id, payload: { id: appt.id } });
+        }
+        await deleteById("appuntamenti", appt.id);
+        appuntamenti = appuntamenti.filter(a => a.id !== appt.id);
+        closeModal();
+        renderLista(appuntamenti);
+      } catch (err) {
+        console.error("[giorno] errore eliminazione appuntamento:", err);
+        alert("Errore durante l'eliminazione.");
+      }
     };
 
     detModal.setAttribute("aria-hidden","false");
