@@ -262,3 +262,20 @@ body {
   box-shadow: 0 0 0 3px rgba(210,184,163,.16);
 }
 .promem-ico:active { transform: scale(.95); }
+
+/* ===== Delete button ===== */
+.btn-danger {
+  background: #e07a5f;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 14px;
+}
+.btn-danger:hover {
+  background: #c95e4a;
+}
