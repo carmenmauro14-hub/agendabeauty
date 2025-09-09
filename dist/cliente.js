@@ -1,8 +1,7 @@
 // cliente.js — dettaglio cliente con supporto offline-first + sync_queue
 import { db } from "./auth.js";
 import {
-  doc, getDoc, updateDoc, deleteDoc,
-  collection, getDocs, query, where
+  doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import { openWhatsAppReminder } from "./reminder-core.js";
@@ -189,61 +188,178 @@ noteInput.addEventListener('input', ()=>{ autosize(noteInput); saveNote(); });
 window.addEventListener('resize', ()=>autosize(noteInput));
 
 // ===== Storico & Totale ======================================================
-// (codice invariato: caricaStoricoETotale, processStorico, renderHistoryList)
+async function caricaStoricoETotale(){
+  historyList.innerHTML = "";
+  allHistoryItems = [];
+  allAppointmentsRaw = [];
+
+  try {
+    const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
+    const qs = await getDocs(q);
+    const docs = qs.docs.map(s=>({ id:s.id, ...s.data() }));
+    await putMany("appuntamenti", docs); // aggiorna cache
+
+    processStorico(docs);
+  } catch (err) {
+    console.warn("[cliente] offline storico:", err);
+    const cached = await getAll("appuntamenti");
+    processStorico(cached.filter(a => a.clienteId === clienteId));
+  }
+}
+
+function processStorico(arr){
+  let totaleSempre = 0;
+  allHistoryItems = [];
+  allAppointmentsRaw = arr;
+
+  arr.forEach(a=>{
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    const tot = getApptTotal(a);
+    totaleSempre += tot;
+    allHistoryItems.push({ dt, tratt: getApptNames(a) || "—", prezzo: tot });
+  });
+
+  allHistoryItems.sort((a,b)=>(b.dt?.getTime?.()||0)-(a.dt?.getTime?.()||0));
+
+  renderHistoryList(historyList, allHistoryItems.slice(0,3));
+  showAllBtn.style.display = allHistoryItems.length > 3 ? "" : "none";
+
+  valTotale.textContent = formatEuro(totaleSempre);
+  barTotale.style.width = "100%";
+
+  const anni = new Set();
+  allHistoryItems.forEach(it => { if(it.dt) anni.add(it.dt.getFullYear()); });
+  allYears = [...anni].sort((a,b)=>b-a);
+}
+
+function renderHistoryList(container, items){
+  container.innerHTML = "";
+  items.forEach(it=>{
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div>
+        <div class="h-date">${it.dt ? FMT_DATA.format(it.dt) : "—"}</div>
+        <div class="h-tratt">${it.tratt}</div>
+      </div>
+      <div class="h-amt">${formatEuro(it.prezzo)}</div>`;
+    container.appendChild(li);
+  });
+}
 
 // ===== Statistiche ===========================================================
-// (codice invariato: popolaAnniERender, aggiornaStatistiche, renderStats)
+async function popolaAnniERender(){
+  try {
+    const q  = query(collection(db,"appuntamenti"), where("clienteId","==",clienteId));
+    const qs = await getDocs(q);
+    const docs = qs.docs.map(s=>({ id:s.id, ...s.data() }));
+    await putMany("appuntamenti", docs);
 
-// ===== Edit inline + Delete ==================================================
-function addDeleteButton() {
-  if (document.getElementById("btnDeleteCliente")) return;
+    renderStats(docs);
+  } catch (err) {
+    console.warn("[cliente] offline stats:", err);
+    const cached = await getAll("appuntamenti");
+    renderStats(cached.filter(a => a.clienteId === clienteId));
+  }
+}
 
-  const btn = document.createElement("button");
-  btn.id = "btnDeleteCliente";
-  btn.className = "btn-danger";
-  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Elimina Cliente';
+async function aggiornaStatistiche(anno){
+  const items = allAppointmentsRaw.filter(a=>{
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    return dt && dt.getFullYear() === anno;
+  });
+  renderStats(items, anno);
+}
 
-  btn.addEventListener("click", async () => {
-    if (!confirm("Vuoi davvero eliminare questo cliente? L'operazione è irreversibile.")) return;
+function renderStats(arr, anno){
+  let totAnno = 0;
+  const perTratt = {};
 
-    try {
-      if (navigator.onLine) {
-        await deleteDoc(doc(db, "clienti", clienteId));
-        await deleteById("clienti", clienteId);
-      } else {
-        await deleteById("clienti", clienteId);
-        await queueChange({
-          collezione: "clienti",
-          op: "delete",
-          id: clienteId,
-          payload: { id: clienteId }
-        });
-        alert("Cliente eliminato offline (sarà sincronizzato)");
-      }
-      location.href = "rubrica.html";
-    } catch (err) {
-      console.error("[cliente] errore eliminazione:", err);
-      alert("Errore durante l'eliminazione del cliente.");
+  arr.forEach(a=>{
+    const dt = safeDate(a.data || a.date || a.dateTime);
+    if (anno && (!dt || dt.getFullYear()!==anno)) return;
+
+    const apptTotal = getApptTotal(a);
+    totAnno += apptTotal;
+
+    if(Array.isArray(a.trattamenti)&&a.trattamenti.length){
+      a.trattamenti.forEach(t=>{
+        const nome = t?.nome || "Trattamento";
+        const p    = toNumberSafe(t?.prezzo ?? t?.costo ?? t?.price);
+        if(!perTratt[nome]) perTratt[nome] = {count:0,sum:0};
+        perTratt[nome].count += 1;
+        perTratt[nome].sum   += p;
+      });
     }
   });
 
-  infoEdit.appendChild(btn);
+  if (anno) {
+    valAnno.textContent = formatEuro(totAnno);
+    const totalSempreNum = Number(valTotale.textContent.replace(/[^\d,.-]/g,"").replace(",","."));
+    const perc = totalSempreNum>0 ? Math.max(0,Math.min(100,(totAnno/totalSempreNum)*100)) : 0;
+    barAnno.style.width = `${perc.toFixed(0)}%`;
+
+    const entries = Object.entries(perTratt).sort((a,b)=> b[1].count - a[1].count);
+    yearByTreatment.innerHTML = entries.length
+      ? entries.map(([nome,v]) =>
+          `<li><div class="qta-nome">${v.count} ${nome}</div><div class="totale">${formatEuro(v.sum)}</div></li>`
+        ).join("")
+      : "<li>—</li>";
+  } else {
+    const anni = [...new Set(arr.map(a=>safeDate(a.data)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+    yearSelect.innerHTML = anni.map(y=>`<option value="${y}">${y}</option>`).join("");
+    yearSelect.value = anni[0] || new Date().getFullYear();
+    yearSelect.onchange = ()=>aggiornaStatistiche(Number(yearSelect.value));
+    aggiornaStatistiche(Number(yearSelect.value));
+  }
 }
 
-function removeDeleteButton() {
-  const btn = document.getElementById("btnDeleteCliente");
-  if (btn) btn.remove();
-}
-
+// ===== Edit inline ===========================================================
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
   infoView.style.display = on ? "none" : "";
   infoEdit.style.display = on ? "flex" : "none";
 
+  // Mostra o nascondi il bottone elimina
+  let delBtn = document.getElementById("deleteClienteBtn");
   if (on) {
-    addDeleteButton();
-  } else {
-    removeDeleteButton();
+    if (!delBtn) {
+      delBtn = document.createElement("button");
+      delBtn.id = "deleteClienteBtn";
+      delBtn.className = "btn-danger";
+      delBtn.style.marginTop = "14px";
+      delBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Elimina Cliente';
+      infoEdit.appendChild(delBtn);
+
+      delBtn.addEventListener("click", async () => {
+        const conferma = confirm("Vuoi davvero eliminare questo cliente? L'operazione è irreversibile.");
+        if (!conferma) {
+          // 🔹 Se annulli, rimani in modalità modifica
+          return;
+        }
+
+        try {
+          if (navigator.onLine) {
+            await deleteDoc(doc(db, "clienti", clienteId));
+            await deleteById("clienti", clienteId);
+          } else {
+            await deleteById("clienti", clienteId);
+            await queueChange({
+              collezione: "clienti",
+              op: "delete",
+              id: clienteId,
+              payload: { id: clienteId }
+            });
+            alert("Cliente eliminato offline (sarà sincronizzato)");
+          }
+          location.href = "rubrica.html";
+        } catch (err) {
+          console.error("[cliente] errore eliminazione:", err);
+          alert("Errore durante l'eliminazione del cliente.");
+        }
+      });
+    }
+  } else if (delBtn) {
+    delBtn.remove();
   }
 }
 
