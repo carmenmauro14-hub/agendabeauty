@@ -313,7 +313,7 @@ function renderStats(arr, anno){
   }
 }
 
-// ===== Edit inline ===========================================================
+// ===== Edit inline + Soft Delete ============================================
 function setEditMode(on){
   document.body.classList.toggle('editing', on);
   infoView.style.display = on ? "none" : "";
@@ -331,24 +331,36 @@ function setEditMode(on){
       infoEdit.appendChild(delBtn);
 
       delBtn.addEventListener("click", async () => {
-        const conferma = confirm("Vuoi davvero eliminare questo cliente? L'operazione è irreversibile.");
-        if (!conferma) {
-          // 🔹 Se annulli, rimani in modalità modifica
-          return;
-        }
+        const conferma = confirm("Vuoi davvero eliminare questo cliente? Gli appuntamenti resteranno ma senza collegamento.");
+        if (!conferma) return;
 
         try {
           if (navigator.onLine) {
+            // 🔹 elimina cliente
             await deleteDoc(doc(db, "clienti", clienteId));
             await deleteById("clienti", clienteId);
+
+            // 🔹 aggiorna appuntamenti online
+            const q = query(collection(db, "appuntamenti"), where("clienteId", "==", clienteId));
+            const qs = await getDocs(q);
+            for (const d of qs.docs) {
+              await updateDoc(d.ref, { clienteId: null, nome: "Cliente eliminato" });
+              await putOne("appuntamenti", { ...d.data(), id: d.id, clienteId: null, nome: "Cliente eliminato" });
+            }
+
           } else {
+            // 🔹 offline
             await deleteById("clienti", clienteId);
-            await queueChange({
-              collezione: "clienti",
-              op: "delete",
-              id: clienteId,
-              payload: { id: clienteId }
-            });
+            await queueChange({ collezione: "clienti", op: "delete", id: clienteId, payload: { id: clienteId } });
+
+            const all = await getAll("appuntamenti");
+            const affected = all.filter(a => a.clienteId === clienteId);
+            for (const a of affected) {
+              a.clienteId = null;
+              a.nome = "Cliente eliminato";
+              await putOne("appuntamenti", a);
+              await queueChange({ collezione: "appuntamenti", op: "update", id: a.id, payload: a });
+            }
             alert("Cliente eliminato offline (sarà sincronizzato)");
           }
           location.href = "rubrica.html";
