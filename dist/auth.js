@@ -1,4 +1,4 @@
-// auth.js — Firebase + offline cache + sync_queue + daily sync (DEBUG)
+// auth.js
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
@@ -6,7 +6,6 @@ import {
   collection, getDocs, addDoc, setDoc, updateDoc, deleteDoc, doc,
   query, where, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,14 +16,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
+  initStorage,           // 👈 aggiunto qui
   bulkUpsert, getAll, putOne, getLastSync, setLastSync,
   getQueuedChanges, clearQueue
 } from "./storage.js";
+
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
 
-import { initStorage } from "./storage.js";
-
-// subito dopo export const auth = getAuth(app);
+// Inizializza IndexedDB SUBITO (top-level await, file caricato con type="module")
 await initStorage();
 
 // ───────────────────────────────────────────────
