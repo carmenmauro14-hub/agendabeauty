@@ -2,7 +2,7 @@
 // ES Module
 
 const DB_NAME = "beautybook";
-const DB_VERSION = 3; // 🔼 incrementato per forzare upgrade schema
+const DB_VERSION = 4; // 🔼 incrementato per forzare upgrade schema
 
 const STORES = {
   appuntamenti: { keyPath: "id", indexes: [
@@ -17,7 +17,7 @@ const STORES = {
   trattamenti: { keyPath: "id", indexes: [
     ["nomeLower", "nomeLower", { unique: false }],
   ]},
-  settings: { keyPath: "id", indexes: [] }, // ⬅️ AGGIUNTO per reminder/trattamenti
+  settings: { keyPath: "id", indexes: [] },
   promemoria: { keyPath: "id", indexes: [
     ["clienteId", "clienteId", { unique: false }],
     ["scheduledAt", "scheduledAt", { unique: false }],
@@ -76,6 +76,42 @@ async function withStore(storeName, mode, fn) {
   });
 }
 
+/* -------------------- Helpers -------------------- */
+function normalizeForStore(storeName, obj) {
+  if (!obj) return obj;
+
+  if (storeName === "clienti" && obj.nome) {
+    obj.nomeLower = String(obj.nome).toLowerCase();
+  }
+
+  if (storeName === "trattamenti" && obj.nome) {
+    obj.nomeLower = String(obj.nome).toLowerCase();
+  }
+
+  if (storeName === "appuntamenti") {
+    if (obj.data) {
+      // Firestore Timestamp → Date
+      if (typeof obj.data.toDate === "function") {
+        obj.dataISO = obj.data.toDate().toISOString().slice(0, 10);
+      }
+      // Date JS
+      else if (obj.data instanceof Date) {
+        obj.dataISO = obj.data.toISOString().slice(0, 10);
+      }
+      // Stringa "YYYY-MM-DD"
+      else if (typeof obj.data === "string" && obj.data.length >= 10) {
+        obj.dataISO = obj.data.slice(0, 10);
+      }
+    }
+    // fallback
+    if (!obj.dataISO && obj.iso) {
+      obj.dataISO = obj.iso;
+    }
+  }
+
+  return obj;
+}
+
 /* -------------------- API base -------------------- */
 export async function getAll(storeName, { index, query } = {}) {
   return withStore(storeName, "readonly", (store) => {
@@ -89,18 +125,13 @@ export async function getById(storeName, id) {
 }
 
 export async function putOne(storeName, obj) {
-  if (storeName === "clienti" && obj.nome) obj.nomeLower = String(obj.nome).toLowerCase();
-  if (storeName === "trattamenti" && obj.nome) obj.nomeLower = String(obj.nome).toLowerCase();
-  return withStore(storeName, "readwrite", (store) => store.put(obj));
+  const norm = normalizeForStore(storeName, obj);
+  return withStore(storeName, "readwrite", (store) => store.put(norm));
 }
 
 export async function putMany(storeName, arr) {
   return withStore(storeName, "readwrite", (store) => {
-    arr.forEach((obj) => {
-      if (storeName === "clienti" && obj?.nome) obj.nomeLower = String(obj.nome).toLowerCase();
-      if (storeName === "trattamenti" && obj?.nome) obj.nomeLower = String(obj.nome).toLowerCase();
-      store.put(obj);
-    });
+    arr.forEach((obj) => store.put(normalizeForStore(storeName, obj)));
   });
 }
 
