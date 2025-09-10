@@ -50,6 +50,22 @@ document.addEventListener("DOMContentLoaded", () => {
     annoCorrente.textContent = dataCorrente.getFullYear();
   }
 
+  // ---- pickDate (allineato a giorno.js) ----
+  function pickDate(d) {
+    if (d && typeof d.toDate === "function") {
+      const dateObj = d.toDate();
+      return { dateObj, iso: dateObj.toISOString().slice(0,10) };
+    }
+    if (typeof d === "string") {
+      const dateObj = new Date(d.length === 10 ? d + "T00:00:00" : d);
+      return { dateObj, iso: dateObj.toISOString().slice(0,10) };
+    }
+    if (d instanceof Date) {
+      return { dateObj: d, iso: d.toISOString().slice(0,10) };
+    }
+    return { dateObj: null, iso: "" };
+  }
+
   // ---- Caricamento clienti ----
   async function caricaClientiCache() {
     const clienti = await getAll("clienti");
@@ -79,12 +95,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // prepara eventi
       docs.forEach(dati => {
-        const dateObj = dati.data?.toDate ? dati.data.toDate() : new Date(dati.data);
-        const key = isoFromDateLocal(dateObj);
-        if (!eventi[key]) eventi[key] = [];
-
+        const { dateObj, iso } = pickDate(dati.data);
+        if (!dateObj) return;
+        if (!eventi[iso]) eventi[iso] = [];
         const nomeCliente = clientiCache[dati.clienteId] || "";
-        eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
+        eventi[iso].push({ ora: dati.ora || "", nome: nomeCliente });
       });
 
       generaGriglia(inizioGriglia);
@@ -94,12 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
       // 🔹 Offline: prendi da IndexedDB
       const tutti = await getAll("appuntamenti");
       tutti.forEach(dati => {
-        const dateObj = dati.data?.toDate ? dati.data.toDate() : new Date(dati.data);
-        const key = isoFromDateLocal(dateObj);
-        if (!eventi[key]) eventi[key] = [];
-
+        const { dateObj, iso } = pickDate(dati.data);
+        if (!dateObj) return;
+        if (!eventi[iso]) eventi[iso] = [];
         const nomeCliente = clientiCache[dati.clienteId] || "";
-        eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
+        eventi[iso].push({ ora: dati.ora || "", nome: nomeCliente });
       });
 
       generaGriglia(inizioGriglia);
