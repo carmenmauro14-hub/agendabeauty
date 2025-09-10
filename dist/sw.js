@@ -1,5 +1,5 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = 'v1.3.0';
+const CACHE_VERSION = 'v1.3.1';
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 // Asset statici principali
