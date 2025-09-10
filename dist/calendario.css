@@ -171,6 +171,14 @@
   z-index: 9999;
 }
 
+.no-cache-msg {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .cella.fuori-mese {
   background-color: #f3f3f3;
 }
