@@ -185,6 +185,15 @@ button i{ margin-right:6px; }
   content:""; position:absolute; left:16px; right:80px; bottom:0; height:1px; background-color:var(--line);
 }
 
+if (!data.length) {
+  clientList.innerHTML = `
+    <li class="section offline-empty">
+      Nessun cliente disponibile offline.<br>
+      Apri almeno una volta online.
+    </li>`;
+  return;
+}
+
 /* ─── Placeholder coerente ─────────────────────── */
 .top-bar input::placeholder, form input::placeholder{
   color:var(--text); opacity:.6;
