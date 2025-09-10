@@ -7,6 +7,8 @@ import { abilitaSwipe } from "./swipe.js";
 import { getAll, putMany } from "./storage.js";
 
 function initCalendario() {
+  console.log("[calendario] init"); // debug
+
   // ---- DOM ----
   const griglia       = document.getElementById("grigliaCalendario");
   const meseCorrente  = document.getElementById("meseCorrente");
@@ -25,9 +27,9 @@ function initCalendario() {
   btnOggi.textContent = oggi.getDate();
 
   // ---- Stato ----
-  let dataCorrente = new Date();
+  let dataCorrente = new Date(); // mese visualizzato
   let eventi = {};               // {"YYYY-MM-DD": [{ora, nome}, ...]}
-  let clientiCache = {};         // {id: nome}
+  let clientiCache = {};         // cache {id: nome}
 
   // ---- Helpers ----
   const pad2 = n => String(n).padStart(2, "0");
@@ -42,11 +44,7 @@ function initCalendario() {
     inizioGriglia.setDate(1 - (dow - 1));
     const fineGriglia = new Date(inizioGriglia);
     fineGriglia.setDate(fineGriglia.getDate() + 42);
-    return {
-      start: tsFromDate(startOfDay(inizioGriglia)),
-      end: tsFromDate(startOfDay(fineGriglia)),
-      inizioGriglia
-    };
+    return { start: tsFromDate(startOfDay(inizioGriglia)), end: tsFromDate(startOfDay(fineGriglia)), inizioGriglia };
   }
 
   function aggiornaHeader(){
@@ -54,6 +52,7 @@ function initCalendario() {
     annoCorrente.textContent = dataCorrente.getFullYear();
   }
 
+  // ---- pickDate (allineato a giorno.js) ----
   function pickDate(d) {
     if (d && typeof d.toDate === "function") {
       const dateObj = d.toDate();
@@ -69,18 +68,21 @@ function initCalendario() {
     return { dateObj: null, iso: "" };
   }
 
-  // ---- Caricamento ----
+  // ---- Caricamento clienti ----
   async function caricaClientiCache() {
     const clienti = await getAll("clienti");
-    clienti.forEach(c => { clientiCache[c.id] = c.nome || ""; });
+    clienti.forEach(c => {
+      clientiCache[c.id] = c.nome || "";
+    });
   }
 
-  async function caricaEventi(anno, mese){
+  // ---- Caricamento appuntamenti ----
+  async function caricaEventiDaFirebase(anno, mese){
     eventi = {};
     const { start, end, inizioGriglia } = monthGridRange(anno, mese);
 
     try {
-      // Online → Firestore
+      // 🔹 Firestore
       const qy = query(
         collection(db, "appuntamenti"),
         where("data", ">=", start),
@@ -90,11 +92,13 @@ function initCalendario() {
       const snapshot = await getDocs(qy);
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      await putMany("appuntamenti", docs); // cache
+      // aggiorna cache
+      await putMany("appuntamenti", docs);
 
+      // prepara eventi
       docs.forEach(dati => {
-        const { iso } = pickDate(dati.data);
-        if (!iso) return;
+        const { dateObj, iso } = pickDate(dati.data);
+        if (!dateObj) return;
         if (!eventi[iso]) eventi[iso] = [];
         const nomeCliente = clientiCache[dati.clienteId] || "";
         eventi[iso].push({ ora: dati.ora || "", nome: nomeCliente });
@@ -102,22 +106,30 @@ function initCalendario() {
 
       generaGriglia(inizioGriglia);
     } catch (err) {
-      console.warn("[calendario] offline → uso cache:", err);
+      console.warn("[calendario] offline, uso cache:", err);
 
-      const cached = await getAll("appuntamenti");
-      cached.forEach(dati => {
-        const { iso } = pickDate(dati.data);
-        if (!iso) return;
+      // 🔹 Offline: prendi da IndexedDB
+      const tutti = await getAll("appuntamenti");
+      tutti.forEach(dati => {
+        const { dateObj, iso } = pickDate(dati.data);
+        if (!dateObj) return;
         if (!eventi[iso]) eventi[iso] = [];
         const nomeCliente = clientiCache[dati.clienteId] || "";
         eventi[iso].push({ ora: dati.ora || "", nome: nomeCliente });
       });
 
-      generaGriglia(inizioGriglia);
+      if (Object.keys(eventi).length === 0) {
+        griglia.innerHTML = `
+          <div class="no-cache-msg">
+            Nessun dato disponibile offline.<br>
+            Apri almeno una volta online per caricare gli appuntamenti.
+          </div>`;
+      } else {
+        generaGriglia(inizioGriglia);
+      }
     }
   }
 
-  // ---- UI ----
   function generaBarraMesiCompleta(){
     mesiBar.innerHTML = "";
     let annoPrecedente = null;
@@ -148,16 +160,14 @@ function initCalendario() {
           dataCorrente = new Date(anno, mese, 1);
           aggiornaHeader();
           evidenziaMeseAttivo();
-          caricaEventi(anno, mese);
+          caricaEventiDaFirebase(anno, mese);
         });
 
         mesiBar.appendChild(span);
       }
     }
 
-    setTimeout(() => {
-      currentSpan?.scrollIntoView({ behavior: "smooth", inline: "center" });
-    }, 50);
+    setTimeout(() => { currentSpan?.scrollIntoView({ behavior: "smooth", inline: "center" }); }, 50);
   }
 
   function evidenziaMeseAttivo(){
@@ -180,9 +190,7 @@ function initCalendario() {
 
     const primoGiorno     = new Date(anno, mese, 1);
     const inizioSettimana = (primoGiorno.getDay() === 0 ? 6 : primoGiorno.getDay() - 1);
-    const giornoInizioGriglia = inizioGrigliaOpt
-      ? new Date(inizioGrigliaOpt)
-      : new Date(anno, mese, 1 - inizioSettimana);
+    const giornoInizioGriglia = inizioGrigliaOpt ? new Date(inizioGrigliaOpt) : new Date(anno, mese, 1 - inizioSettimana);
 
     for (let i = 0; i < 42; i++){
       const dataCella = new Date(giornoInizioGriglia);
@@ -235,7 +243,7 @@ function initCalendario() {
     }
   }
 
-  // ---- Event listeners ----
+  // ---- UI ----
   document.getElementById("meseSwitch")?.addEventListener("click", () => {
     mesiBar.classList.toggle("visibile");
     if (mesiBar.classList.contains("visibile")) evidenziaMeseAttivo();
@@ -249,25 +257,26 @@ function initCalendario() {
     dataCorrente = new Date();
     aggiornaHeader();
     evidenziaMeseAttivo();
-    caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth());
+    caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
   });
 
+  // Swipe mese ← →
   abilitaSwipe(
     griglia,
-    () => { dataCorrente.setMonth(dataCorrente.getMonth() + 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth()); },
-    () => { dataCorrente.setMonth(dataCorrente.getMonth() - 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth()); }
+    () => { dataCorrente.setMonth(dataCorrente.getMonth() + 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth()); },
+    () => { dataCorrente.setMonth(dataCorrente.getMonth() - 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth()); }
   );
 
   // ---- Avvio ----
   (async () => {
-    await caricaClientiCache();
+    await caricaClientiCache(); // carica clienti in cache
     aggiornaHeader();
     generaBarraMesiCompleta();
-    caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth());
+    caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
   })();
 }
 
-// Avvio robusto
+// 👇 Avvio robusto: se il DOM è già pronto, parte subito
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initCalendario, { once: true });
 } else {
