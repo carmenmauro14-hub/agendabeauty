@@ -1,8 +1,8 @@
-// storage.js — IndexedDB wrapper per offline-first
+// storage.js — IndexedDB wrapper per offline-first (BeautyBook)
 // ES Module
 
 const DB_NAME = "beautybook";
-const DB_VERSION = 4; // 🔼 incrementato per forzare upgrade schema
+const DB_VERSION = 5; // bump per reset schema coerente
 
 const STORES = {
   appuntamenti: { keyPath: "id", indexes: [
@@ -69,8 +69,8 @@ async function withStore(storeName, mode, fn) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, mode);
     const store = tx.objectStore(storeName);
-    const request = fn(store);
-    tx.oncomplete = () => resolve(request?.result ?? true);
+    const result = fn(store);
+    tx.oncomplete = () => resolve(result?.result ?? result ?? true);
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error || new Error("Transaction aborted"));
   });
@@ -90,22 +90,19 @@ function normalizeForStore(storeName, obj) {
 
   if (storeName === "appuntamenti") {
     if (obj.data) {
-      // Firestore Timestamp → Date
       if (typeof obj.data.toDate === "function") {
         obj.dataISO = obj.data.toDate().toISOString().slice(0, 10);
-      }
-      // Date JS
-      else if (obj.data instanceof Date) {
+      } else if (obj.data instanceof Date) {
         obj.dataISO = obj.data.toISOString().slice(0, 10);
-      }
-      // Stringa "YYYY-MM-DD"
-      else if (typeof obj.data === "string" && obj.data.length >= 10) {
+      } else if (typeof obj.data === "string" && obj.data.length >= 10) {
         obj.dataISO = obj.data.slice(0, 10);
       }
     }
-    // fallback
     if (!obj.dataISO && obj.iso) {
       obj.dataISO = obj.iso;
+    }
+    if (!("clienteId" in obj)) {
+      obj.clienteId = null;
     }
   }
 
@@ -125,8 +122,7 @@ export async function getById(storeName, id) {
 }
 
 export async function putOne(storeName, obj) {
-  const norm = normalizeForStore(storeName, obj);
-  return withStore(storeName, "readwrite", (store) => store.put(norm));
+  return withStore(storeName, "readwrite", (store) => store.put(normalizeForStore(storeName, obj)));
 }
 
 export async function putMany(storeName, arr) {
