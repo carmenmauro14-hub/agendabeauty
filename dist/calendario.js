@@ -6,12 +6,16 @@ import {
 import { abilitaSwipe } from "./swipe.js";
 import { getAll, putMany } from "./storage.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+function initCalendario() {
+  console.log("[calendario] init"); // debug
+
+  // ---- DOM ----
   const griglia       = document.getElementById("grigliaCalendario");
   const meseCorrente  = document.getElementById("meseCorrente");
   const annoCorrente  = document.getElementById("annoCorrente");
   const mesiBar       = document.getElementById("mesiBar");
 
+  // Pulsante “oggi”
   const topBar = document.querySelector(".top-bar");
   let btnOggi = topBar?.querySelector(".btn-oggi");
   if (!btnOggi) {
@@ -23,30 +27,15 @@ document.addEventListener("DOMContentLoaded", () => {
   btnOggi.textContent = oggi.getDate();
 
   // ---- Stato ----
-  let dataCorrente = new Date(); 
-  let eventi = {};               
-  let clientiCache = {};         
+  let dataCorrente = new Date(); // mese visualizzato
+  let eventi = {};               // {"YYYY-MM-DD": [{ora, nome}, ...]}
+  let clientiCache = {};         // cache {id: nome}
 
   // ---- Helpers ----
   const pad2 = n => String(n).padStart(2, "0");
   const isoFromDateLocal = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const tsFromDate = d => Timestamp.fromDate(d);
-
-  function pickDate(d) {
-    if (d && typeof d.toDate === "function") {
-      const dateObj = d.toDate();
-      return { dateObj, iso: dateObj.toISOString().slice(0,10) };
-    }
-    if (typeof d === "string") {
-      const dateObj = new Date(d.length === 10 ? d + "T00:00:00" : d);
-      return { dateObj, iso: dateObj.toISOString().slice(0,10) };
-    }
-    if (d instanceof Date) {
-      return { dateObj: d, iso: d.toISOString().slice(0,10) };
-    }
-    return { dateObj: null, iso: "" };
-  }
 
   function monthGridRange(anno, mese){
     const primo = new Date(anno, mese, 1);
@@ -63,6 +52,23 @@ document.addEventListener("DOMContentLoaded", () => {
     annoCorrente.textContent = dataCorrente.getFullYear();
   }
 
+  // ---- pickDate (allineato a giorno.js) ----
+  function pickDate(d) {
+    if (d && typeof d.toDate === "function") {
+      const dateObj = d.toDate();
+      return { dateObj, iso: dateObj.toISOString().slice(0,10) };
+    }
+    if (typeof d === "string") {
+      const dateObj = new Date(d.length === 10 ? d + "T00:00:00" : d);
+      return { dateObj, iso: dateObj.toISOString().slice(0,10) };
+    }
+    if (d instanceof Date) {
+      return { dateObj: d, iso: d.toISOString().slice(0,10) };
+    }
+    return { dateObj: null, iso: "" };
+  }
+
+  // ---- Caricamento clienti ----
   async function caricaClientiCache() {
     const clienti = await getAll("clienti");
     clienti.forEach(c => {
@@ -76,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const { start, end, inizioGriglia } = monthGridRange(anno, mese);
 
     try {
+      // 🔹 Firestore
       const qy = query(
         collection(db, "appuntamenti"),
         where("data", ">=", start),
@@ -85,8 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const snapshot = await getDocs(qy);
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
+      // aggiorna cache
       await putMany("appuntamenti", docs);
 
+      // prepara eventi
       docs.forEach(dati => {
         const { dateObj, iso } = pickDate(dati.data);
         if (!dateObj) return;
@@ -95,20 +104,21 @@ document.addEventListener("DOMContentLoaded", () => {
         eventi[iso].push({ ora: dati.ora || "", nome: nomeCliente });
       });
 
-      generaGriglia(inizioGriglia || new Date(anno, mese, 1));
+      generaGriglia(inizioGriglia);
     } catch (err) {
       console.warn("[calendario] offline, uso cache:", err);
 
+      // 🔹 Offline: prendi da IndexedDB
       const tutti = await getAll("appuntamenti");
       tutti.forEach(dati => {
-        const { dateObj, iso } = pickDate(dati.data || dati.dataISO);
+        const { dateObj, iso } = pickDate(dati.data);
         if (!dateObj) return;
         if (!eventi[iso]) eventi[iso] = [];
         const nomeCliente = clientiCache[dati.clienteId] || "";
         eventi[iso].push({ ora: dati.ora || "", nome: nomeCliente });
       });
 
-      generaGriglia(inizioGriglia || new Date(anno, mese, 1));
+      generaGriglia(inizioGriglia);
     }
   }
 
@@ -226,12 +236,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- UI ----
-  document.getElementById("meseSwitch").addEventListener("click", () => {
+  document.getElementById("meseSwitch")?.addEventListener("click", () => {
     mesiBar.classList.toggle("visibile");
     if (mesiBar.classList.contains("visibile")) evidenziaMeseAttivo();
   });
 
-  document.getElementById("aggiungiAppuntamentoBtn").addEventListener("click", () => {
+  document.getElementById("aggiungiAppuntamentoBtn")?.addEventListener("click", () => {
     window.location.href = "nuovo-appuntamento.html";
   });
 
@@ -242,6 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
   });
 
+  // Swipe mese ← →
   abilitaSwipe(
     griglia,
     () => { dataCorrente.setMonth(dataCorrente.getMonth() + 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth()); },
@@ -250,10 +261,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---- Avvio ----
   (async () => {
-    console.log("[calendario] init, dataCorrente:", dataCorrente);
-    await caricaClientiCache();
+    await caricaClientiCache(); // carica clienti in cache
     aggiornaHeader();
     generaBarraMesiCompleta();
     caricaEventiDaFirebase(dataCorrente.getFullYear(), dataCorrente.getMonth());
   })();
-});
+}
+
+// 👇 Avvio robusto: se il DOM è già pronto, parte subito
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initCalendario, { once: true });
+} else {
+  initCalendario();
+}
