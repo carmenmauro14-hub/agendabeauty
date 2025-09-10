@@ -23,19 +23,20 @@ import { getAll, putOne, queueChange } from "./storage.js";
   }
 
   // ─── Helper: modal ───────────────────────────────────
-const showModal  = (m) => {
-  if (!m) return;
-  m.style.display = "flex";
-  m.setAttribute("aria-hidden", "false");   // 🔹 prima rendilo visibile
-  const input = m.querySelector("input");
-  if (input) setTimeout(() => input.focus(), 50); // 🔹 focus dopo
-};
+  const showModal  = (m) => {
+    if (!m) return;
+    m.style.display = "flex";
+    m.setAttribute("aria-hidden", "false");
+    const input = m.querySelector("input");
+    if (input) setTimeout(() => input.focus(), 50);
+  };
 
-const closeModal = (m) => {
-  if (!m) return;
-  m.style.display = "none";
-  m.setAttribute("aria-hidden", "true");    // 🔹 nascondilo
-};
+  const closeModal = (m) => {
+    if (!m) return;
+    m.style.display = "none";
+    m.setAttribute("aria-hidden", "true");
+  };
+
   // ─── Carica & render rubrica ─────────────────────────
   async function caricaClienti() {
     clientList.innerHTML = `<li class="section" style="opacity:.6">Caricamento…</li>`;
@@ -45,11 +46,17 @@ const closeModal = (m) => {
       // 🔹 Online → Firestore
       const snapshot = await getDocs(collection(db, "clienti"));
       data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      for (const c of data) await putOne("clienti", c);
+
+      for (const c of data) await putOne("clienti", c); // aggiorna cache
     } catch (err) {
       console.warn("[rubrica] offline, uso cache:", err);
+
       // 🔹 Offline → IndexedDB
       data = await getAll("clienti");
+      if (!data.length) {
+        clientList.innerHTML = `<li class="section" style="opacity:.6">Nessun cliente disponibile offline.<br>Apri almeno una volta online.</li>`;
+        return;
+      }
     }
 
     data.forEach(c => {
