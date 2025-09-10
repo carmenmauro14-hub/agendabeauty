@@ -1,33 +1,39 @@
 // giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA + mini-calendario on-demand)
+// Coerente con: auth.js (Firestore con persistentLocalCache) + storage.js (IndexedDB) + sw.js (cache statici)
 
-// 🔁 Usa l'istanza condivisa inizializzata in auth.js
 import { db } from "./auth.js";
 import {
-  collection, query, where, orderBy,
-  getDocs, doc, getDoc, Timestamp, deleteDoc
+  collection, query, where, orderBy, getDocs,
+  doc, getDoc, Timestamp, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAll, deleteById, queueChange } from "./storage.js";
+import { getAll, getById, putOne, deleteById, queueChange } from "./storage.js";
 import { openWhatsAppReminder } from "./reminder-core.js";
 
-// ── Stato
-let dataCorrente;
-let appuntamenti = [];
-const clientiCache = {};
-let openingWA = false; // anti-doppio-tap
+/* ──────────────────────────────────────────────────────────────
+   STATO
+   ────────────────────────────────────────────────────────────── */
+let dataCorrente;              // Date dell’area visualizzata
+let appuntamenti = [];         // appuntamenti del giorno corrente
+const clientiCache = {};       // { clienteId: {nome, telefono, email} }
+let openingWA = false;         // anti-doppio-tap promemoria
 
-// mini-cal
-let meseMiniCorrente = null;
+let meseMiniCorrente = null;   // mini-calendario stato
 let annoMiniCorrente = null;
 
-// ── DOM
+/* ──────────────────────────────────────────────────────────────
+   DOM
+   ────────────────────────────────────────────────────────────── */
 const contenuto      = document.getElementById("contenutoGiorno");
 const mesiBar        = document.getElementById("mesiBar");
 const miniCalendario = document.getElementById("miniCalendario");
 const lblMese        = document.getElementById("meseCorrente");
 const lblAnno        = document.getElementById("annoCorrente");
 const btnOggi        = document.getElementById("btnTornaOggi");
+const btnAggiungi    = document.getElementById("aggiungiAppuntamentoBtn");
 
-// Modal (già in HTML)
+/* ──────────────────────────────────────────────────────────────
+   MODALE DETTAGLIO
+   ────────────────────────────────────────────────────────────── */
 const detModal     = document.getElementById("detModal");
 const detSheet     = detModal?.querySelector?.(".det-sheet");
 const detCloseBtn  = document.getElementById("detCloseBtn");
@@ -40,16 +46,19 @@ const elTotale     = document.getElementById("detTotale");
 const btnModifica  = document.getElementById("detModifica");
 const btnPromem    = document.getElementById("detPromemoria");
 
-// ── Utils
+/* ──────────────────────────────────────────────────────────────
+   UTILS
+   ────────────────────────────────────────────────────────────── */
 const fmtEuro = (n) => Number(n || 0).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
 
 function dayRangeFromISO(iso) {
   const start = new Date(iso + "T00:00:00");
-  const end   = new Date(start); end.setDate(end.getDate()+1);
+  const end   = new Date(start); end.setDate(end.getDate() + 1);
   return { start: Timestamp.fromDate(start), end: Timestamp.fromDate(end) };
 }
 
-function pickDate(d){
+function pickDate(d) {
+  // Normalizza Firestore Timestamp / ISO string / Date → {dateObj, iso}
   if (d && typeof d.toDate === "function") {
     const dateObj = d.toDate();
     return { dateObj, iso: dateObj.toISOString().slice(0,10) };
@@ -77,17 +86,12 @@ function trovaIcona(nome) {
 
 function ensureMinHeight() {
   const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-  const extra = 220;
+  const extra = 220; // header/footer
   if (contenuto) contenuto.style.minHeight = (vh - extra) + "px";
 }
 
-// Normalizza l’oggetto appuntamento per reminder-core
 function apptForReminder(appt){
-  return {
-    data: appt.iso,                // "YYYY-MM-DD"
-    ora: appt.ora || "",
-    trattamenti: appt.trattamenti || []
-  };
+  return { data: appt.iso, ora: appt.ora || "", trattamenti: appt.trattamenti || [] };
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -97,6 +101,7 @@ function generaBarraMesiCompleta() {
   if (!mesiBar) return;
   mesiBar.innerHTML = "";
   let currentSpan = null;
+
   for (let anno = 2020; anno <= 2050; anno++) {
     const sep = document.createElement("span");
     sep.textContent = anno;
@@ -109,7 +114,7 @@ function generaBarraMesiCompleta() {
       span.dataset.mese = mese;
       span.dataset.anno = anno;
 
-      if (mese === dataCorrente.getMonth() && anno === dataCorrente.getFullYear()) {
+      if (dataCorrente && mese === dataCorrente.getMonth() && anno === dataCorrente.getFullYear()) {
         span.classList.add("attivo");
         currentSpan = span;
       }
@@ -123,9 +128,8 @@ function generaBarraMesiCompleta() {
       mesiBar.appendChild(span);
     }
   }
-  setTimeout(() => {
-    if (currentSpan) currentSpan.scrollIntoView({ behavior: "smooth", inline: "center" });
-  }, 50);
+
+  setTimeout(() => { currentSpan?.scrollIntoView({ behavior: "smooth", inline: "center" }); }, 40);
 }
 
 function renderMiniCalendario(anno, mese) {
@@ -135,13 +139,14 @@ function renderMiniCalendario(anno, mese) {
   annoMiniCorrente = anno;
 
   const oggiStr = new Date().toISOString().slice(0,10);
-  const giornoVisualizzato = dataCorrente.toISOString().slice(0,10);
+  const giornoVisualizzato = dataCorrente?.toISOString().slice(0,10);
 
-  const primaGiorno = new Date(anno, mese, 1).getDay(); // 0=Dom
+  const primaGiorno  = new Date(anno, mese, 1).getDay(); // 0=Dom
   const ultimoGiorno = new Date(anno, mese+1, 0).getDate();
 
   const giorniSettimana = ["L","M","M","G","V","S","D"];
   const table = document.createElement("table");
+
   const thead = document.createElement("thead");
   const trHead = document.createElement("tr");
   giorniSettimana.forEach(g => {
@@ -156,29 +161,29 @@ function renderMiniCalendario(anno, mese) {
   let tr = document.createElement("tr");
   let dayCount = 0;
 
-  const offset = (primaGiorno + 6) % 7;
+  const offset = (primaGiorno + 6) % 7; // lunedì=0
   for (let i=0; i<offset; i++) {
     tr.appendChild(document.createElement("td"));
     dayCount++;
   }
 
-  for (let giorno=1; giorno<=ultimoGiorno; giorno++) {
+  for (let giorno = 1; giorno <= ultimoGiorno; giorno++) {
     if (dayCount % 7 === 0) {
       tbody.appendChild(tr);
       tr = document.createElement("tr");
     }
     const td = document.createElement("td");
     const dataStr = `${anno}-${String(mese+1).padStart(2,"0")}-${String(giorno).padStart(2,"0")}`;
-    td.textContent = giorno;
+    td.textContent = String(giorno);
 
     if (dataStr === oggiStr) td.classList.add("oggi");
     if (dataStr === giornoVisualizzato) td.classList.add("selezionato");
 
     td.addEventListener("click", () => {
-      const nuovaData = new Date(dataStr);
-      vaiAData(nuovaData, "");
+      const d = new Date(dataStr);
+      vaiAData(d, "");
       if (miniCalendario.style.display === "block") {
-        renderMiniCalendario(nuovaData.getFullYear(), nuovaData.getMonth());
+        renderMiniCalendario(d.getFullYear(), d.getMonth());
       }
     });
 
@@ -189,12 +194,7 @@ function renderMiniCalendario(anno, mese) {
   table.appendChild(tbody);
   miniCalendario.appendChild(table);
 
-  document.querySelectorAll("#mesiBar span").forEach(s => {
-    const sm = parseInt(s.dataset.mese);
-    const sa = parseInt(s.dataset.anno);
-    s.classList.toggle("attivo", sm === mese && sa === anno);
-  });
-
+  // Swipe locale (solo nel riquadro mini-cal)
   enableLocalSwipe(miniCalendario,
     () => { const next = new Date(anno, mese+1, 1); renderMiniCalendario(next.getFullYear(), next.getMonth()); },
     () => { const prev = new Date(anno, mese-1, 1); renderMiniCalendario(prev.getFullYear(), prev.getMonth()); }
@@ -231,14 +231,17 @@ function openModal(appt){
     (appt.trattamenti||[]).forEach(t => {
       const r = document.createElement("div");
       r.className = "det-tratt-item";
+
       const n = document.createElement("span");
       n.className = "det-tratt-nome";
       n.textContent = t?.nome || "-";
+
       const p = document.createElement("span");
       p.className = "det-tratt-prezzo";
       const val = Number(t?.prezzo ?? 0);
       p.textContent = fmtEuro(val);
       tot += val;
+
       r.appendChild(n); r.appendChild(p);
       elTrattList.appendChild(r);
     });
@@ -250,10 +253,10 @@ function openModal(appt){
       openingWA = true;
       const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
       try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
-      finally { setTimeout(()=>openingWA=false, 1800); }
+      finally { setTimeout(()=>openingWA=false, 1600); }
     };
 
-    // 🔹 Pulsante "Elimina Appuntamento" (inserito sotto Promemoria)
+    // pulsante elimina (creato una sola volta)
     let btnElimina = document.getElementById("detElimina");
     if (!btnElimina) {
       btnElimina = document.createElement("button");
@@ -261,14 +264,11 @@ function openModal(appt){
       btnElimina.className = "btn-danger";
       btnElimina.style.marginTop = "12px";
       btnElimina.innerHTML = '<i class="fa-solid fa-trash"></i> Elimina Appuntamento';
-      // inserisci subito dopo il bottone Promemoria
       btnPromem?.insertAdjacentElement("afterend", btnElimina);
     }
-    // handler per l'appuntamento attuale
     btnElimina.onclick = async () => {
       const conferma = confirm("Vuoi davvero eliminare questo appuntamento?");
       if (!conferma) return;
-
       try {
         if (navigator.onLine) {
           await deleteDoc(doc(db, "appuntamenti", appt.id));
@@ -285,6 +285,7 @@ function openModal(appt){
       }
     };
 
+    // mostra modale
     detModal.setAttribute("aria-hidden","false");
     detModal.style.display = "flex";
   } catch (err) {
@@ -306,10 +307,11 @@ function closeModal(){
 }
 
 detCloseBtn?.addEventListener("click", closeModal);
+// chiusura cliccando fuori
 detModal?.addEventListener("click", (e) => { if (e.target === detModal) closeModal(); });
 
 // swipe-down sulla topbar del modal
-(()=> {
+(()=>{
   if (!detTopbar || !detSheet) return;
   let startY=0, dragging=false, lastY=0, lastT=0, velocity=0;
   const getY = (e)=> e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
@@ -410,13 +412,21 @@ function renderLista(items){
       openingWA = true;
       const cliente = clientiCache[appt.clienteId] || { nome: appt.nome || "", telefono: "" };
       try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
-      finally { setTimeout(() => (openingWA = false), 1800); }
+      finally { setTimeout(() => (openingWA = false), 1600); }
     });
 
     row.appendChild(oraEl);
     row.appendChild(iconeEl);
     row.appendChild(nomeEl);
     row.appendChild(promemEl);
+
+    // click/Enter/Space → apri dettagli
+    row.addEventListener("click", () => openModal(appt));
+    row.addEventListener("keydown", (e)=>{
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      openModal(appt);
+    });
 
     frag.appendChild(row);
   });
@@ -425,33 +435,15 @@ function renderLista(items){
   ensureMinHeight();
 }
 
-// Delegation robusta per click/Enter/Space sulla riga
-contenuto?.addEventListener("click", (e)=>{
-  const row = e.target.closest?.(".evento-giorno");
-  if (!row) return;
-  const id = row.dataset.id;
-  const appt = appuntamenti.find(a => a.id === id);
-  if (appt) openModal(appt);
-});
-contenuto?.addEventListener("keydown", (e)=>{
-  if (e.key !== "Enter" && e.key !== " ") return;
-  const row = e.target.closest?.(".evento-giorno");
-  if (!row) return;
-  e.preventDefault();
-  const id = row.dataset.id;
-  const appt = appuntamenti.find(a => a.id === id);
-  if (appt) openModal(appt);
-});
-
 /* ──────────────────────────────────────────────────────────────
-   DATI: FIRESTORE con fallback IndexedDB
+   DATA: Firestore (online/cache) + IndexedDB (offline duro)
    ────────────────────────────────────────────────────────────── */
 async function caricaAppuntamentiGiornoISO(iso){
   appuntamenti = [];
   const { start, end } = dayRangeFromISO(iso);
 
   try {
-    // 🔹 Online o cache Firestore disponibile (grazie a persistentLocalCache)
+    // 🔹 Firestore (online o cache SDK)
     const qRef = query(
       collection(db,"appuntamenti"),
       where("data", ">=", start),
@@ -466,22 +458,33 @@ async function caricaAppuntamentiGiornoISO(iso){
       const { iso: isoApp } = pickDate(a.data);
       const cid = a.clienteId || a.cliente || "";
 
+      // cache cliente (prima prova IndexedDB, poi eventualmente Firestore)
       if (cid && !clientiCache[cid]) {
-        try {
-          const csnap = await getDoc(doc(db,"clienti",cid));
-          if (csnap.exists()) {
-            const c = csnap.data();
-            clientiCache[cid] = {
-              nome: c?.nome || "",
-              telefono: (c?.telefono || "").toString().trim(),
-              email: (c?.email || "").toString().trim()
-            };
-          } else {
-            clientiCache[cid] = { nome:"", telefono:"", email:"" };
+        const local = await getById("clienti", cid);
+        if (local) {
+          clientiCache[cid] = {
+            nome: local?.nome || "",
+            telefono: (local?.telefono || "").toString().trim(),
+            email: (local?.email || "").toString().trim()
+          };
+        } else {
+          try {
+            const csnap = await getDoc(doc(db,"clienti",cid));
+            if (csnap.exists()) {
+              const c = csnap.data();
+              clientiCache[cid] = {
+                nome: c?.nome || "",
+                telefono: (c?.telefono || "").toString().trim(),
+                email: (c?.email || "").toString().trim()
+              };
+              // aggiorna cache locale
+              await putOne("clienti", { id: cid, ...c });
+            } else {
+              clientiCache[cid] = { nome:"", telefono:"", email:"" };
+            }
+          } catch {
+            clientiCache[cid] = clientiCache[cid] || { nome:"", telefono:"", email:"" };
           }
-        } catch {
-          // se fallisce la fetch cliente, ignora (non bloccare UI)
-          clientiCache[cid] = clientiCache[cid] || { nome:"", telefono:"", email:"" };
         }
       }
 
@@ -501,7 +504,7 @@ async function caricaAppuntamentiGiornoISO(iso){
     console.warn("[giorno] Firestore non disponibile, uso cache IndexedDB", err);
   }
 
-  // 🔸 Fallback IndexedDB (offline “duro”)
+  // 🔸 IndexedDB (offline “duro”)
   try {
     const cachedAppts = await getAll("appuntamenti");
     const todays = cachedAppts.filter(a => (a.dataISO || "").slice(0,10) === iso);
@@ -525,7 +528,7 @@ async function caricaAppuntamentiGiornoISO(iso){
     renderLista(appuntamenti);
   } catch (err2) {
     console.error("[giorno] Fallback cache fallito:", err2);
-    renderLista([]); // evita UI vuota “bloccata”
+    renderLista([]); // evita UI bloccata
   }
 }
 
@@ -547,7 +550,7 @@ function vaiAData(dateObj, anim){
 
   if (anim && contenuto) {
     contenuto.classList.add(anim);
-    setTimeout(()=>contenuto.classList.remove(anim), 300);
+    setTimeout(()=>contenuto.classList.remove(anim), 280);
   }
 
   renderLista([]);
@@ -562,10 +565,10 @@ function vaiAData(dateObj, anim){
    INIT
    ────────────────────────────────────────────────────────────── */
 (function init(){
-  const params = new URLSearchParams(location.search);
-  const dataParam = params.get("data");
-  const oggi = new Date();
-  dataCorrente = dataParam ? new Date(dataParam) : oggi;
+  const params   = new URLSearchParams(location.search);
+  const dataParam= params.get("data");
+  const oggi     = new Date();
+  dataCorrente   = dataParam ? new Date(dataParam) : oggi;
 
   aggiornaHeader();
   ensureMinHeight();
@@ -574,15 +577,19 @@ function vaiAData(dateObj, anim){
   const iso = (dataParam ? dataParam : oggi.toISOString().slice(0,10));
   caricaAppuntamentiGiornoISO(iso);
 
-  document.getElementById("aggiungiAppuntamentoBtn")?.addEventListener("click", ()=>{
+  // Aggiungi appuntamento
+  btnAggiungi?.addEventListener("click", ()=>{
     const d = dataCorrente.toISOString().slice(0,10);
     location.href = `nuovo-appuntamento.html?data=${d}`;
   });
+
+  // Torna oggi
   btnOggi?.addEventListener("click", ()=>{
     const isoOggi = new Date().toISOString().slice(0,10);
     location.href = `giorno.html?data=${isoOggi}`;
   });
 
+  // Toggle mini-cal
   document.getElementById("meseSwitch")?.addEventListener("click", ()=>{
     if (!mesiBar || !miniCalendario) return;
     const vis = mesiBar.classList.contains("visibile");
@@ -605,7 +612,7 @@ function vaiAData(dateObj, anim){
     }
   });
 
-  // Swipe tra giorni nella lista
+  // Swipe tra giorni nella lista (globale sulla lista)
   if (contenuto) {
     let startX=0, swiping=false;
     contenuto.addEventListener("touchstart",(e)=>{ if(e.touches.length===1){ swiping=true; startX=e.touches[0].clientX; }}, {passive:true});
