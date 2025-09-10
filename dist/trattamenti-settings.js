@@ -4,7 +4,7 @@ import {
   collection, getDocs, addDoc, deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { getAll, putOne, queueChange } from "./storage.js";
+import { getAll, putOne, queueChange, deleteById } from "./storage.js";
 
 const btnNuovo = document.getElementById("btn-nuovo-trattamento");
 const form = document.getElementById("form-trattamento");
@@ -180,11 +180,16 @@ listaTrattamenti.addEventListener("click", async e => {
 
   if (e.target.classList.contains("btn-delete")) {
     if (confirm("Eliminare questo trattamento?")) {
-      if (navigator.onLine) {
-        await deleteDoc(doc(db, "trattamenti", id));
-      } else {
-        await queueChange({ collezione:"trattamenti", op:"delete", id });
-        alert("Eliminazione salvata offline (sarà sincronizzata)");
+      try {
+        if (navigator.onLine) {
+          await deleteDoc(doc(db, "trattamenti", id));
+        } else {
+          await queueChange({ collezione:"trattamenti", op:"delete", id });
+          alert("Eliminazione salvata offline (sarà sincronizzata)");
+        }
+        await deleteById("trattamenti", id); // 🔹 pulizia cache immediata
+      } catch (err) {
+        console.error("[trattamenti] errore eliminazione:", err);
       }
       await caricaTrattamenti();
     }
