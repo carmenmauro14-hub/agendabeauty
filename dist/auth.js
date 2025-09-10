@@ -1,9 +1,9 @@
-// auth.js
+// auth.js — gestione login, sync e offline-first
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   initializeFirestore,
   persistentLocalCache,
-  collection, getDocs, addDoc, setDoc, updateDoc, deleteDoc, doc,
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc,
   query, where, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
@@ -16,14 +16,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  initStorage,           // 👈 aggiunto qui
+  initStorage,
   bulkUpsert, getAll, putOne, getLastSync, setLastSync,
   getQueuedChanges, clearQueue
 } from "./storage.js";
 
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
 
-// Inizializza IndexedDB SUBITO (top-level await, file caricato con type="module")
+// Inizializza IndexedDB SUBITO
 await initStorage();
 
 // ───────────────────────────────────────────────
@@ -37,7 +37,7 @@ const firebaseConfig = {
   appId: "1:959324976221:web:780c8e9195965cea0749b4"
 };
 
-// Init
+// Init Firebase
 export const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const db   = initializeFirestore(app, { localCache: persistentLocalCache() });
 export const auth = getAuth(app);
@@ -78,6 +78,8 @@ function monthRange(centerDate = new Date(), offsetMonths = 0){
 // Full Sync (cloud → cache)
 async function fullSyncAll() {
   try {
+    console.log("[sync] Avvio fullSyncAll...");
+
     // Clienti
     const snapClienti = await getDocs(collection(db, "clienti"));
     await bulkUpsert("clienti", snapClienti.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -110,63 +112,37 @@ async function fullSyncAll() {
     await Promise.all(tasks);
 
     await setLastSync("all", Date.now());
+    console.log("[sync] Full sync completato ✅");
     showSyncOK();
   } catch (err) {
-    console.error("[fullSyncAll] errore sync:", err);
+    console.error("[sync] Errore durante fullSyncAll:", err);
     showSyncFail();
   }
 }
 
 // ───────────────────────────────────────────────
-// Auto-refresh giornaliero
-async function maybeDailySync() {
-  const last = await getLastSync("all");
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  if (now - last > oneDay) {
-    fullSyncAll();
-  }
-}
-
-// ───────────────────────────────────────────────
-// Sync pending (gestisce add / update / delete) + DEBUG LOG
+// Sync pending (gestisce add / update / delete)
 async function syncPending() {
   try {
     const queue = await getQueuedChanges();
-    if (!queue.length) {
-      console.info("[syncPending] Nessun item in coda.");
-      return;
-    }
+    if (!queue.length) return;
 
     console.group("[syncPending] Avvio sync");
     console.table(queue);
 
     for (const q of queue) {
       try {
-        console.log("[syncPending] Elaboro item:", q);
-
-        const collRef = collection(db, q.collezione);
-
         if (q.op === "add") {
-          const ref = await addDoc(collRef, q.payload);
+          const ref = await addDoc(collection(db, q.collezione), q.payload);
           await putOne(q.collezione, { ...q.payload, id: ref.id });
-          console.log("[syncPending] ADD ok:", ref.id);
         }
-
-        if (q.op === "update") {
-          if (!q.payload.id) throw new Error("update senza id");
+        if (q.op === "update" && q.payload.id) {
           await updateDoc(doc(db, q.collezione, q.payload.id), q.payload);
           await putOne(q.collezione, q.payload);
-          console.log("[syncPending] UPDATE ok:", q.payload.id);
         }
-
-        if (q.op === "delete") {
-          if (!q.payload.id) throw new Error("delete senza id");
+        if (q.op === "delete" && q.payload.id) {
           await deleteDoc(doc(db, q.collezione, q.payload.id));
-          console.log("[syncPending] DELETE ok:", q.payload.id);
-          // opzionale: deleteById in storage.js
         }
-
       } catch (e) {
         console.error("[syncPending] Errore su item:", q, e);
       }
@@ -185,18 +161,16 @@ async function syncPending() {
 // Stato connessione
 window.addEventListener("online", () => {
   showOnline();
-  syncPending();
+  fullSyncAll().then(syncPending);
 });
 window.addEventListener("offline", () => showOffline());
 
 // Mostra stato iniziale
-if (!navigator.onLine) {
-  showOffline();
-}
+if (!navigator.onLine) showOffline();
 
 // ───────────────────────────────────────────────
 // Protezione route + sync
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async (user) => {
   const isFree = PAGINE_LIBERE.has(FILE);
 
   if (!user) {
@@ -209,7 +183,11 @@ onAuthStateChanged(auth, user => {
     return;
   }
 
-  // Loggato
-  maybeDailySync();  
-  syncPending();
+  // 🔹 Utente loggato
+  if (navigator.onLine) {
+    await fullSyncAll();
+    await syncPending();
+  } else {
+    console.warn("[auth] Avvio offline: uso dati IndexedDB già presenti");
+  }
 });
