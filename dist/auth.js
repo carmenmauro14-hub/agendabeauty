@@ -22,6 +22,11 @@ import {
 } from "./storage.js";
 import { showOffline, showOnline, showSyncOK, showSyncFail } from "./ui.js";
 
+import { initStorage } from "./storage.js";
+
+// subito dopo export const auth = getAuth(app);
+await initStorage();
+
 // ───────────────────────────────────────────────
 // Config Firebase
 const firebaseConfig = {
