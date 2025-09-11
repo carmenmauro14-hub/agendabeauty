@@ -1,5 +1,5 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = "v1.4.0"; // bump → forza refresh
+const CACHE_VERSION = "v1.4.1"; // bump → forza refresh
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -8,6 +8,7 @@ const ASSETS = [
   "/calendario.html","/giorno.html","/nuovo-appuntamento.html",
   "/rubrica.html","/cliente.html","/statistiche.html","/settings.html",
   "/navbar.html","/reminder-settings.html","/trattamenti-settings.html",
+  "/debug.html",   // 👈 aggiunto
 
   // Manifest & icone
   "/manifest.json",
@@ -58,15 +59,21 @@ self.addEventListener("activate", (e) => {
 // Fetch handler
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET") return; // ignora POST/PUT ecc.
+  if (req.method !== "GET") return;
 
   const url = new URL(req.url);
 
-  // 🔹 ignora Firebase/gstatic
+  // ignora Firebase/gstatic
   if (url.origin.includes("firebaseio") || url.host.includes("gstatic.com")) return;
 
-  // 🔹 HTML → network-first
+  // HTML → network-first, con eccezione per debug.html
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
+    if (url.pathname.endsWith("/debug.html")) {
+      // 👇 Debug.html → cache-only
+      e.respondWith(caches.match(req).then(r => r) || fetch(req));
+      return;
+    }
+
     e.respondWith(
       fetch(req).then((res) => {
         const copy = res.clone();
@@ -77,13 +84,11 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // 🔹 CSS/JS/immagini → cache-first con aggiornamento in background
+  // CSS/JS/immagini → cache-first
   e.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req).then((res) => {
-        if (res.ok) {
-          caches.open(STATIC_CACHE).then((c) => c.put(req, res.clone()));
-        }
+        if (res.ok) caches.open(STATIC_CACHE).then((c) => c.put(req, res.clone()));
         return res;
       }).catch(() => cached);
       return cached || fetchPromise;
@@ -91,12 +96,9 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-// 🔄 Messaggi da app
+// Messaggi da app
 self.addEventListener("message", (event) => {
   if (event.data?.type === "PRECACHE_PAGES") {
-    caches.open(STATIC_CACHE).then((c) => {
-      console.log("[SW] Refresh assets richiesto");
-      return c.addAll(ASSETS);
-    });
+    caches.open(STATIC_CACHE).then((c) => c.addAll(ASSETS));
   }
 });
