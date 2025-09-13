@@ -1,5 +1,5 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = "v1.4.1"; // bump → forza refresh
+const CACHE_VERSION = "v1.5.0"; // bump → forza refresh
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -8,7 +8,7 @@ const ASSETS = [
   "/calendario.html","/giorno.html","/nuovo-appuntamento.html",
   "/rubrica.html","/cliente.html","/statistiche.html","/settings.html",
   "/navbar.html","/reminder-settings.html","/trattamenti-settings.html",
-  "/debug.html",   // 👈 aggiunto
+  "/debug.html",
 
   // Manifest & icone
   "/manifest.json",
@@ -24,6 +24,7 @@ const ASSETS = [
   "/auth.js","/navbar.js","/swipe.js","/calendario.js","/giorno.js",
   "/nuovo-appuntamento.js","/rubrica.js","/cliente.js","/statistiche.js",
   "/reminder-core.js","/reminder-settings.js","/trattamenti-settings.js",
+  "/storage.js","/ui.js","/debug.js", // 👈 aggiunti
 
   // Icone trattamenti
   "/icones_trattamenti/makeup.png",
