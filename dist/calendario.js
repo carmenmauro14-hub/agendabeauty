@@ -108,32 +108,57 @@ function initCalendario() {
   }
 
   // ---- Caricamento eventi ----
-  async function caricaEventi(anno, mese){
-    eventi = {};
-    const start = new Date(anno, mese, 1);
-    const end   = new Date(anno, mese+1, 1);
+async function caricaEventi(anno, mese){
+  eventi = {};
+  const start = new Date(anno, mese, 1);
+  const end   = new Date(anno, mese+1, 1);
 
-    if (navigator.onLine) {
-      try {
-        const qy = query(
-          collection(db, "appuntamenti"),
-          where("data", ">=", Timestamp.fromDate(start)),
-          where("data", "<",  Timestamp.fromDate(end)),
-          orderBy("data","asc")
-        );
-        const snapshot = await getDocs(qy);
-        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        await putMany("appuntamenti", docs);
-        docs.forEach(d => inserisciEvento(d));
-      } catch {
-        await caricaDaCache();
-      }
-    } else {
+  if (navigator.onLine) {
+    debugMsg(`Carico eventi da Firestore per ${anno}-${pad2(mese+1)}`);
+    try {
+      const qy = query(
+        collection(db, "appuntamenti"),
+        where("data", ">=", Timestamp.fromDate(start)),
+        where("data", "<",  Timestamp.fromDate(end)),
+        orderBy("data","asc")
+      );
+      const snapshot = await getDocs(qy);
+
+      // 🔹 Normalizza documenti con dataISO
+      const docs = snapshot.docs.map(d => {
+        const raw = d.data();
+        let dataISO = "";
+        if (raw.data?.toDate) {
+          dataISO = raw.data.toDate().toISOString().slice(0,10);
+        } else if (raw.data?.seconds) {
+          const dd = new Date(raw.data.seconds * 1000);
+          dataISO = dd.toISOString().slice(0,10);
+        } else if (typeof raw.data === "string") {
+          dataISO = raw.data.slice(0,10);
+        }
+        return {
+          id: d.id,
+          ...raw,
+          dataISO   // 👈 sempre presente
+        };
+      });
+
+      // 🔹 Salva in cache normalizzato
+      await putMany("appuntamenti", docs);
+      debugMsg(`Eventi online: ${docs.length}`);
+
+      docs.forEach(d => inserisciEvento(d));
+    } catch (err) {
+      debugMsg("Errore Firestore, passo a cache: " + err.message);
       await caricaDaCache();
     }
-
-    generaGriglia(start);
+  } else {
+    debugMsg("Offline → uso solo IndexedDB");
+    await caricaDaCache();
   }
+
+  generaGriglia(start);
+}
 
   // ---- Inserimento evento con supporto data.seconds e dataISO ----
   function inserisciEvento(dati) {
