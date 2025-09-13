@@ -15,15 +15,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22   # ✅ Ultima versione supportata
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools@latest
+        run: npm install -g firebase-tools@latest   # ✅ sempre aggiornato
 
       - name: Write Firebase service account key
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $GITHUB_WORKSPACE/firebase-key.json
+        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > $GITHUB_WORKSPACE/firebase-key.json
 
       - name: Deploy to Firebase
         run: |
           GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-key.json \
-          firebase deploy --only hosting --project agenda-carmenmauro --config dist/firebase.json
+          firebase deploy --only hosting --non-interactive \
+            --project agenda-carmenmauro \
+            --config dist/firebase.json
