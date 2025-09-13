@@ -1,5 +1,5 @@
-// sw.js — Service Worker BeautyBook
-const CACHE_VERSION = "v1.6.1";   // bump per refresh
+// sw.js — Service Worker BeautyBook (pulito, senza debug)
+const CACHE_VERSION = "v1.6.2";   // bump per refresh
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -8,7 +8,6 @@ const ASSETS = [
   "/calendario.html","/giorno.html","/nuovo-appuntamento.html",
   "/rubrica.html","/cliente.html","/statistiche.html","/settings.html",
   "/navbar.html","/reminder-settings.html","/trattamenti-settings.html",
-  "/debug.html",
 
   // Manifest & icone
   "/manifest.json",
@@ -24,7 +23,7 @@ const ASSETS = [
   "/auth.js","/navbar.js","/swipe.js","/calendario.js","/giorno.js",
   "/nuovo-appuntamento.js","/rubrica.js","/cliente.js","/statistiche.js",
   "/reminder-core.js","/reminder-settings.js","/trattamenti-settings.js",
-  "/storage.js","/ui.js","/debug.js",
+  "/storage.js","/ui.js",
 
   // Icone trattamenti
   "/icones_trattamenti/makeup.png",
@@ -80,12 +79,8 @@ self.addEventListener("fetch", (e) => {
 
   const url = new URL(req.url);
 
-  // 🔹 HTML → network-first (debug.html cache-only)
+  // 🔹 HTML → network-first
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
-    if (url.pathname.endsWith("/debug.html")) {
-      e.respondWith(caches.match(req).then(r => r || fetch(req).catch(() => caches.match("/index.html"))));
-      return;
-    }
     e.respondWith(
       fetch(req).then((res) => {
         const copy = res.clone();
