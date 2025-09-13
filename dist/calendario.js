@@ -12,6 +12,7 @@ function initCalendario() {
   const meseCorrente  = document.getElementById("meseCorrente");
   const annoCorrente  = document.getElementById("annoCorrente");
   const mesiBar       = document.getElementById("mesiBar");
+  const meseSwitch    = document.getElementById("meseSwitch");
 
   // Pulsante “oggi”
   const topBar = document.querySelector(".top-bar");
@@ -25,9 +26,9 @@ function initCalendario() {
   btnOggi.textContent = oggi.getDate();
 
   // ---- Stato ----
-  let dataCorrente = new Date();
-  let eventi = {};
-  let clientiCache = {};
+  let dataCorrente = new Date(); // mese visualizzato
+  let eventi = {};               // {"YYYY-MM-DD": [{ora, nome}, ...]}
+  let clientiCache = {};         // cache {id: nome}
 
   // ---- Helpers ----
   const pad2 = n => String(n).padStart(2, "0");
@@ -37,6 +38,68 @@ function initCalendario() {
     meseCorrente.textContent = dataCorrente.toLocaleDateString("it-IT", { month: "long" });
     annoCorrente.textContent = dataCorrente.getFullYear();
   }
+
+  // ---- Barra mesi (ripristinata) ----
+  function generaBarraMesiCompleta(){
+    mesiBar.innerHTML = "";
+    let annoPrecedente = null;
+    let currentSpan = null;
+
+    for (let anno = 2020; anno <= 2050; anno++){
+      for (let mese = 0; mese < 12; mese++){
+        if (anno !== annoPrecedente){
+          const separatore = document.createElement("span");
+          separatore.textContent = anno;
+          separatore.classList.add("separatore-anno");
+          mesiBar.appendChild(separatore);
+          annoPrecedente = anno;
+        }
+
+        const label = new Date(anno, mese, 1).toLocaleDateString("it-IT", { month: "short" });
+        const span  = document.createElement("span");
+        span.textContent = label;
+        span.dataset.mese = mese;
+        span.dataset.anno = anno;
+
+        if (mese === dataCorrente.getMonth() && anno === dataCorrente.getFullYear()){
+          span.classList.add("attivo");
+          currentSpan = span;
+        }
+
+        span.addEventListener("click", () => {
+          dataCorrente = new Date(anno, mese, 1);
+          aggiornaHeader();
+          evidenziaMeseAttivo();
+          caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth());
+        });
+
+        mesiBar.appendChild(span);
+      }
+    }
+
+    // centra il mese attivo
+    setTimeout(() => { currentSpan?.scrollIntoView({ behavior: "smooth", inline: "center" }); }, 50);
+  }
+
+  function evidenziaMeseAttivo(){
+    const spans = mesiBar.querySelectorAll("span:not(.separatore-anno)");
+    spans.forEach(s => s.classList.remove("attivo"));
+    const attivo = [...spans].find(s =>
+      Number(s.dataset.mese) === dataCorrente.getMonth() &&
+      Number(s.dataset.anno) === dataCorrente.getFullYear()
+    );
+    if (attivo){
+      attivo.classList.add("attivo");
+      // centra in vista
+      attivo.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }
+
+  // Mostra/Nasconde barra mesi (se supportato dal CSS)
+  meseSwitch?.addEventListener("click", () => {
+    mesiBar.classList.toggle("visibile");
+    if (mesiBar.classList.contains("visibile")) evidenziaMeseAttivo();
+  });
 
   // ---- Caricamento clienti ----
   async function caricaClientiCache() {
@@ -113,6 +176,20 @@ function initCalendario() {
 
       const cella = document.createElement("div");
       cella.className = "cella";
+      if (dataCella.getMonth() !== start.getMonth()) {
+        // opzionale: stile dei giorni fuori mese
+        cella.classList.add("fuori-mese");
+      }
+
+      // evidenzia oggi
+      if (
+        dataCella.getFullYear() === oggi.getFullYear() &&
+        dataCella.getMonth() === oggi.getMonth() &&
+        dataCella.getDate() === oggi.getDate()
+      ) {
+        cella.classList.add("oggi");
+      }
+
       const giornoSpan = document.createElement("div");
       giornoSpan.className = "giorno";
       giornoSpan.textContent = dataCella.getDate();
@@ -120,12 +197,19 @@ function initCalendario() {
 
       const iso = isoFromDateLocal(dataCella);
       const lista = eventi[iso] || [];
-      lista.forEach(ev => {
+      lista.sort((a,b) => (a.ora || "").localeCompare(b.ora || ""));
+      lista.slice(0, 4).forEach(ev => {
         const div = document.createElement("div");
         div.className = "evento";
         div.textContent = `Ore ${ev.ora} ${ev.nome}`;
         cella.appendChild(div);
       });
+      if (lista.length > 4) {
+        const extra = document.createElement("div");
+        extra.className = "evento";
+        extra.textContent = `+${lista.length - 4} altri`;
+        cella.appendChild(extra);
+      }
 
       cella.addEventListener("click", () => {
         window.location.href = `giorno.html?data=${iso}`;
@@ -133,25 +217,31 @@ function initCalendario() {
 
       griglia.appendChild(cella);
     }
+
+    // aggiorna evidenza barra mesi (se visibile)
+    evidenziaMeseAttivo();
   }
 
   // ---- UI ----
   btnOggi.addEventListener("click", () => {
     dataCorrente = new Date();
     aggiornaHeader();
+    evidenziaMeseAttivo();
     caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth());
   });
 
   abilitaSwipe(
     griglia,
-    () => { dataCorrente.setMonth(dataCorrente.getMonth() + 1); aggiornaHeader(); caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth()); },
-    () => { dataCorrente.setMonth(dataCorrente.getMonth() - 1); aggiornaHeader(); caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth()); }
+    () => { dataCorrente.setMonth(dataCorrente.getMonth() + 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth()); },
+    () => { dataCorrente.setMonth(dataCorrente.getMonth() - 1); aggiornaHeader(); evidenziaMeseAttivo(); caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth()); }
   );
 
   // ---- Avvio ----
   (async () => {
     await caricaClientiCache();
     aggiornaHeader();
+    generaBarraMesiCompleta();
+    evidenziaMeseAttivo();
     await caricaEventi(dataCorrente.getFullYear(), dataCorrente.getMonth());
   })();
 }
