@@ -12,6 +12,10 @@
         "destination": "/debug.html"
       },
       {
+        "source": "**/*.@(js|css|png|jpg|jpeg|svg|webp)",
+        "destination": "/$1"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
