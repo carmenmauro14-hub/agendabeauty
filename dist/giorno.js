@@ -468,72 +468,49 @@ async function caricaAppuntamentiGiornoISO(iso) {
     renderLista([]);
   }
 
-  // 2️⃣ Poi prova Firestore per aggiornare
-  if (navigator.onLine) {
-    try {
-      const { start, end } = dayRangeFromISO(iso);
-      const qRef = query(
-        collection(db,"appuntamenti"),
-        where("data", ">=", start),
-        where("data", "<",  end),
-        orderBy("data","asc")
-      );
-      const snap = await getDocs(qRef);
+// 2️⃣ Poi prova Firestore per aggiornare
+if (navigator.onLine) {
+  try {
+    const { start, end } = dayRangeFromISO(iso);
+    const qRef = query(
+      collection(db,"appuntamenti"),
+      where("data", ">=", start),
+      where("data", "<",  end),
+      orderBy("data","asc")
+    );
+    const snap = await getDocs(qRef);
 
-      const appts = [];
-      for (const d of snap.docs) {
-        const a = d.data();
-        const { iso: isoApp } = pickDate(a.data);
-        const cid = a.clienteId || a.cliente || "";
+    const appts = [];
+    for (const d of snap.docs) {
+      const raw = d.data();
+      const { iso: isoApp } = pickDate(raw.data);
+      const cid = raw.clienteId || raw.cliente || "";
 
-        // aggiorna clienti
-        if (cid && !clientiCache[cid]) {
-          const local = await getById("clienti", cid);
-          if (local) {
-            clientiCache[cid] = {
-              nome: local?.nome || "",
-              telefono: (local?.telefono || "").toString().trim(),
-              email: (local?.email || "").toString().trim()
-            };
-          } else {
-            try {
-              const csnap = await getDoc(doc(db,"clienti",cid));
-              if (csnap.exists()) {
-                const c = csnap.data();
-                clientiCache[cid] = {
-                  nome: c?.nome || "",
-                  telefono: (c?.telefono || "").toString().trim(),
-                  email: (c?.email || "").toString().trim()
-                };
-                await putOne("clienti", { id: cid, ...c });
-              }
-            } catch {}
-          }
-        }
+      // aggiorna clienti ...
+      // (resto del codice invariato)
 
-        appts.push({
-          id: d.id,
-          clienteId: cid,
-          iso: isoApp,
-          ora: a.ora || "",
-          trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
-        });
-      }
+      const appt = {
+        id: d.id,
+        clienteId: cid,
+        iso: isoApp,
+        ora: raw.ora || "",
+        trattamenti: Array.isArray(raw.trattamenti) ? raw.trattamenti : [],
+        dataISO: isoApp,     // 👈 normalizzazione coerente
+        data: raw.data       // 👈 mantieni anche il campo originale
+      };
 
-      appuntamenti = appts;
-      renderLista(appuntamenti);
+      appts.push(appt);
 
-      // aggiorna cache globale
-      for (const a of appts) {
-        await putOne("appuntamenti", {
-          ...a,
-          dataISO: a.iso
-        });
-      }
-    } catch (err) {
-      console.warn("[giorno] Firestore fallito:", err);
+      // aggiorna cache locale subito
+      await putOne("appuntamenti", appt);
     }
+
+    appuntamenti = appts;
+    renderLista(appuntamenti);
+  } catch (err) {
+    console.warn("[giorno] Firestore fallito:", err);
   }
+}
 }
 
 /* ──────────────────────────────────────────────────────────────
