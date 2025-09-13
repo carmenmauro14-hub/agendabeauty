@@ -1,5 +1,5 @@
-// sw.js — Service Worker BeautyBook
-const CACHE_VERSION = "v1.6.0";                // ⬅️ bump
+// sw.js — Service Worker BeautyBook (fix clone error)
+const CACHE_VERSION = "v1.5.1"; // bump → forza refresh
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -20,7 +20,7 @@ const ASSETS = [
   "/cliente.css","/statistiche.css","/reminder-settings.css",
   "/navbar.css","/index.css","/settings.css","/trattamenti-settings.css","/style.css",
 
-  // JS locali
+  // JS
   "/auth.js","/navbar.js","/swipe.js","/calendario.js","/giorno.js",
   "/nuovo-appuntamento.js","/rubrica.js","/cliente.js","/statistiche.js",
   "/reminder-core.js","/reminder-settings.js","/trattamenti-settings.js",
@@ -41,32 +41,21 @@ const ASSETS = [
   "/icone_uniformate_colore/setting.png"
 ];
 
-// 🔹 CDN Firebase da precache esplicito (moduli ESM)
-const CDN_ASSETS = [
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
-];
-
-// Install → precache base + CDN Firebase
+// Install → precache base
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    (async () => {
-      const cache = await caches.open(STATIC_CACHE);
-      await cache.addAll(ASSETS);
-      // Prova a precaricare i moduli Firebase; se uno fallisce non blocchiamo l'install
-      try { await cache.addAll(CDN_ASSETS); } catch (_) {}
-      await self.skipWaiting();
-    })()
+    caches.open(STATIC_CACHE)
+      .then((c) => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
 // Activate → pulizia vecchie cache
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== STATIC_CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== STATIC_CACHE).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
@@ -77,41 +66,37 @@ self.addEventListener("fetch", (e) => {
 
   const url = new URL(req.url);
 
-  // 🔹 HTML → network-first (debug.html cache-only)
+  // ignora Firebase/gstatic
+  if (url.origin.includes("firebaseio") || url.host.includes("gstatic.com")) return;
+
+  // HTML → network-first, con eccezione per debug.html
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     if (url.pathname.endsWith("/debug.html")) {
+      // Debug.html → cache-only
       e.respondWith(caches.match(req).then(r => r) || fetch(req));
       return;
     }
+
     e.respondWith(
       fetch(req).then((res) => {
-        const copy = res.clone();
+        const copy = res.clone(); // 🔹 fix clone
         caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
         return res;
-      }).catch(() => caches.match(req).then((r) => r || caches.match("/index.html")))
+      }).catch(() =>
+        caches.match(req).then((r) => r || caches.match("/index.html"))
+      )
     );
     return;
   }
 
-  // 🔹 Firebase SDK su gstatic → cache-first
-  if (url.origin === "https://www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) {
-    e.respondWith(
-      caches.match(req).then(cached => {
-        if (cached) return cached;
-        return fetch(req).then(res => {
-          if (res.ok) caches.open(STATIC_CACHE).then(c => c.put(req, res.clone()));
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // 🔹 tutto il resto (CSS/JS/img) → cache-first con aggiornamento
+  // CSS/JS/immagini → cache-first
   e.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req).then((res) => {
-        if (res.ok) caches.open(STATIC_CACHE).then((c) => c.put(req, res.clone()));
+        if (res.ok) {
+          const copy = res.clone(); // 🔹 fix clone
+          caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
+        }
         return res;
       }).catch(() => cached);
       return cached || fetchPromise;
@@ -122,6 +107,6 @@ self.addEventListener("fetch", (e) => {
 // Messaggi da app
 self.addEventListener("message", (event) => {
   if (event.data?.type === "PRECACHE_PAGES") {
-    caches.open(STATIC_CACHE).then((c) => c.addAll([...ASSETS, ...CDN_ASSETS]));
+    caches.open(STATIC_CACHE).then((c) => c.addAll(ASSETS));
   }
 });
