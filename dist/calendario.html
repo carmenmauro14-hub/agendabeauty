@@ -6,9 +6,13 @@
   <title>Agenda Calendario</title>
   <link rel="stylesheet" href="calendario.css">
   <link rel="stylesheet" href="navbar.css">
-<script type="module" src="auth.js">
-<script type="module" src="debug.js"></script>
 
+  <!-- JS principali -->
+  <script src="auth.js" defer></script>
+  <script src="storage.js" defer></script>
+  <script src="swipe.js" defer></script>
+  <script src="debug.js" defer></script>
+  <script src="calendario.js" defer></script>
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -22,7 +26,7 @@
 
     <div class="top-right">
       <span id="annoCorrente">2025</span>
-      <button id="btnTornaOggi" class="btn-oggi">29</button> <!-- ← giorno attuale -->
+      <button id="btnTornaOggi" class="btn-oggi">29</button>
     </div>
   </header>
 
@@ -54,17 +58,14 @@
   <!-- ─── PULSANTE AGGIUNGI APPUNTAMENTO ──────────────── -->
   <button id="aggiungiAppuntamentoBtn" class="floating-btn">＋</button>
 
-  <!-- ─── SCRIPT ───────────────────────────────────────── -->
-  <script src="calendario.js" type="module"></script>
-
+  <!-- ─── NAVBAR ──────────────────────────────────────── -->
   <script>
     fetch("navbar.html")
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById("navbar-placeholder").innerHTML = data;
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById("navbar-placeholder").innerHTML = html;
       });
   </script>
-
-  <script src="navbar.js"></script>
+  <script src="navbar.js" defer></script>
 </body>
 </html>
