@@ -1,5 +1,5 @@
 // sw.js — Service Worker BeautyBook
-const CACHE_VERSION = "v1.6.0";                // ⬅️ bump
+const CACHE_VERSION = "v1.6.1";   // bump per refresh
 const STATIC_CACHE  = `static-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -53,9 +53,12 @@ self.addEventListener("install", (e) => {
   e.waitUntil(
     (async () => {
       const cache = await caches.open(STATIC_CACHE);
-      await cache.addAll(ASSETS);
-      // Prova a precaricare i moduli Firebase; se uno fallisce non blocchiamo l'install
-      try { await cache.addAll(CDN_ASSETS); } catch (_) {}
+      try {
+        await cache.addAll(ASSETS);
+        await cache.addAll(CDN_ASSETS);
+      } catch (err) {
+        console.warn("[SW] Alcuni asset non precaricati:", err);
+      }
       await self.skipWaiting();
     })()
   );
@@ -64,9 +67,9 @@ self.addEventListener("install", (e) => {
 // Activate → pulizia vecchie cache
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== STATIC_CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== STATIC_CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
@@ -80,38 +83,41 @@ self.addEventListener("fetch", (e) => {
   // 🔹 HTML → network-first (debug.html cache-only)
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     if (url.pathname.endsWith("/debug.html")) {
-      e.respondWith(caches.match(req).then(r => r) || fetch(req));
+      e.respondWith(caches.match(req).then(r => r || fetch(req).catch(() => caches.match("/index.html"))));
       return;
     }
     e.respondWith(
       fetch(req).then((res) => {
         const copy = res.clone();
-        caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
+        caches.open(STATIC_CACHE).then(c => c.put(req, copy)).catch(() => {});
         return res;
-      }).catch(() => caches.match(req).then((r) => r || caches.match("/index.html")))
+      }).catch(() => caches.match(req).then(r => r || caches.match("/index.html")))
     );
     return;
   }
 
-  // 🔹 Firebase SDK su gstatic → cache-first
-  if (url.origin === "https://www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) {
+  // 🔹 Firebase SDK su gstatic → cache-first puro
+  if (url.hostname === "www.gstatic.com" && url.pathname.includes("/firebasejs/")) {
     e.respondWith(
-      caches.match(req).then(cached => {
-        if (cached) return cached;
-        return fetch(req).then(res => {
-          if (res.ok) caches.open(STATIC_CACHE).then(c => c.put(req, res.clone()));
-          return res;
-        });
-      })
+      caches.match(req).then(cached => cached || fetch(req).then(res => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(STATIC_CACHE).then(c => c.put(req, copy)).catch(() => {});
+        }
+        return res;
+      }).catch(() => cached))
     );
     return;
   }
 
-  // 🔹 tutto il resto (CSS/JS/img) → cache-first con aggiornamento
+  // 🔹 CSS/JS/immagini → cache-first con aggiornamento in background
   e.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req).then((res) => {
-        if (res.ok) caches.open(STATIC_CACHE).then((c) => c.put(req, res.clone()));
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(STATIC_CACHE).then(c => c.put(req, copy)).catch(() => {});
+        }
         return res;
       }).catch(() => cached);
       return cached || fetchPromise;
@@ -119,9 +125,9 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-// Messaggi da app
+// 🔹 Messaggi da app
 self.addEventListener("message", (event) => {
   if (event.data?.type === "PRECACHE_PAGES") {
-    caches.open(STATIC_CACHE).then((c) => c.addAll([...ASSETS, ...CDN_ASSETS]));
+    caches.open(STATIC_CACHE).then(c => c.addAll([...ASSETS, ...CDN_ASSETS]).catch(() => {}));
   }
 });
