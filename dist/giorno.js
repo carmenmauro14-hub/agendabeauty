@@ -438,73 +438,10 @@ function renderLista(items){
 /* ──────────────────────────────────────────────────────────────
    DATA: Firestore (online/cache) + IndexedDB (offline duro)
    ────────────────────────────────────────────────────────────── */
-async function caricaAppuntamentiGiornoISO(iso){
+async function caricaAppuntamentiGiornoISO(iso) {
   appuntamenti = [];
-  const { start, end } = dayRangeFromISO(iso);
 
-  try {
-    // 🔹 Firestore (online o cache SDK)
-    const qRef = query(
-      collection(db,"appuntamenti"),
-      where("data", ">=", start),
-      where("data", "<",  end),
-      orderBy("data","asc")
-    );
-    const snap = await getDocs(qRef);
-
-    const appts = [];
-    for (const d of snap.docs) {
-      const a = d.data();
-      const { iso: isoApp } = pickDate(a.data);
-      const cid = a.clienteId || a.cliente || "";
-
-      // cache cliente (prima prova IndexedDB, poi eventualmente Firestore)
-      if (cid && !clientiCache[cid]) {
-        const local = await getById("clienti", cid);
-        if (local) {
-          clientiCache[cid] = {
-            nome: local?.nome || "",
-            telefono: (local?.telefono || "").toString().trim(),
-            email: (local?.email || "").toString().trim()
-          };
-        } else {
-          try {
-            const csnap = await getDoc(doc(db,"clienti",cid));
-            if (csnap.exists()) {
-              const c = csnap.data();
-              clientiCache[cid] = {
-                nome: c?.nome || "",
-                telefono: (c?.telefono || "").toString().trim(),
-                email: (c?.email || "").toString().trim()
-              };
-              // aggiorna cache locale
-              await putOne("clienti", { id: cid, ...c });
-            } else {
-              clientiCache[cid] = { nome:"", telefono:"", email:"" };
-            }
-          } catch {
-            clientiCache[cid] = clientiCache[cid] || { nome:"", telefono:"", email:"" };
-          }
-        }
-      }
-
-      appts.push({
-        id: d.id,
-        clienteId: cid,
-        iso: isoApp,
-        ora: a.ora || "",
-        trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
-      });
-    }
-
-    appuntamenti = appts;
-    renderLista(appuntamenti);
-    return;
-  } catch (err) {
-    console.warn("[giorno] Firestore non disponibile, uso cache IndexedDB", err);
-  }
-
-  // 🔸 IndexedDB (offline “duro”)
+  // 1️⃣ Carica subito dalla cache
   try {
     const cachedAppts = await getAll("appuntamenti");
     const todays = cachedAppts.filter(a => (a.dataISO || "").slice(0,10) === iso);
@@ -526,9 +463,76 @@ async function caricaAppuntamentiGiornoISO(iso){
     }));
 
     renderLista(appuntamenti);
-  } catch (err2) {
-    console.error("[giorno] Fallback cache fallito:", err2);
-    renderLista([]); // evita UI bloccata
+  } catch (err) {
+    console.warn("[giorno] errore lettura cache:", err);
+    renderLista([]);
+  }
+
+  // 2️⃣ Poi prova Firestore per aggiornare
+  if (navigator.onLine) {
+    try {
+      const { start, end } = dayRangeFromISO(iso);
+      const qRef = query(
+        collection(db,"appuntamenti"),
+        where("data", ">=", start),
+        where("data", "<",  end),
+        orderBy("data","asc")
+      );
+      const snap = await getDocs(qRef);
+
+      const appts = [];
+      for (const d of snap.docs) {
+        const a = d.data();
+        const { iso: isoApp } = pickDate(a.data);
+        const cid = a.clienteId || a.cliente || "";
+
+        // aggiorna clienti
+        if (cid && !clientiCache[cid]) {
+          const local = await getById("clienti", cid);
+          if (local) {
+            clientiCache[cid] = {
+              nome: local?.nome || "",
+              telefono: (local?.telefono || "").toString().trim(),
+              email: (local?.email || "").toString().trim()
+            };
+          } else {
+            try {
+              const csnap = await getDoc(doc(db,"clienti",cid));
+              if (csnap.exists()) {
+                const c = csnap.data();
+                clientiCache[cid] = {
+                  nome: c?.nome || "",
+                  telefono: (c?.telefono || "").toString().trim(),
+                  email: (c?.email || "").toString().trim()
+                };
+                await putOne("clienti", { id: cid, ...c });
+              }
+            } catch {}
+          }
+        }
+
+        appts.push({
+          id: d.id,
+          clienteId: cid,
+          iso: isoApp,
+          ora: a.ora || "",
+          trattamenti: Array.isArray(a.trattamenti) ? a.trattamenti : []
+        });
+      }
+
+      appuntamenti = appts;
+      renderLista(appuntamenti);
+
+      // aggiorna cache globale
+      for (const a of appts) {
+        await putOne("appuntamenti", {
+          ...a,
+          dataISO: a.iso
+        });
+      }
+    } catch (err) {
+      console.warn("[giorno] Firestore fallito:", err);
+    }
   }
 }
 
