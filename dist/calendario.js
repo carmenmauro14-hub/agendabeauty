@@ -82,11 +82,26 @@ function initCalendario() {
     generaGriglia(start);
   }
 
+  // ---- Inserimento evento con supporto data.seconds e dataISO ----
   function inserisciEvento(dati) {
     let iso = "";
-    if (dati.data?.toDate) iso = dati.data.toDate().toISOString().slice(0,10);
-    else if (typeof dati.data === "string") iso = dati.data.slice(0,10);
-    else if (dati.data instanceof Date) iso = dati.data.toISOString().slice(0,10);
+
+    if (dati.data?.toDate) {
+      // Caso Firestore online
+      iso = dati.data.toDate().toISOString().slice(0,10);
+    } else if (dati.data?.seconds) {
+      // Caso IndexedDB con Timestamp serializzato
+      const d = new Date(dati.data.seconds * 1000);
+      iso = d.toISOString().slice(0,10);
+    } else if (typeof dati.dataISO === "string") {
+      // Supporto campo dataISO
+      iso = dati.dataISO.slice(0,10);
+    } else if (typeof dati.data === "string") {
+      iso = dati.data.slice(0,10);
+    } else if (dati.data instanceof Date) {
+      iso = dati.data.toISOString().slice(0,10);
+    }
+
     if (!iso) return;
 
     if (!eventi[iso]) eventi[iso] = [];
