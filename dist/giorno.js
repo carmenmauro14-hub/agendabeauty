@@ -1,6 +1,5 @@
 // giorno.js — VISTA GIORNO (lista appuntamenti + promemoria WA + mini-calendario on-demand)
 // Coerente con: auth.js (Firestore con persistentLocalCache) + storage.js (IndexedDB) + sw.js (cache statici)
-
 import { db } from "./auth.js";
 import {
   collection, query, where, orderBy, getDocs,
