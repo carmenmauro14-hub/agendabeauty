@@ -93,8 +93,143 @@ function apptForReminder(appt){
 }
 
 // ── Mini-calendario (render + barra mesi + swipe interno) ─────────────────────
-// ... (qui resta tutta la parte identica che avevi: generaBarraMesiCompleta, renderMiniCalendario, enableLocalSwipe)
-// Lascio invariata per non eliminare nulla
+function generaBarraMesiCompleta() {
+  mesiBar.innerHTML = "";
+  let currentSpan = null;
+  for (let anno = 2020; anno <= 2050; anno++) {
+    const sep = document.createElement("span");
+    sep.textContent = anno;
+    sep.classList.add("separatore-anno");
+    mesiBar.appendChild(sep);
+
+    for (let mese = 0; mese < 12; mese++) {
+      const span = document.createElement("span");
+      span.textContent = new Date(anno, mese).toLocaleDateString("it-IT", { month: "short" });
+      span.dataset.mese = mese;
+      span.dataset.anno = anno;
+
+      if (mese === dataCorrente.getMonth() && anno === dataCorrente.getFullYear()) {
+        span.classList.add("attivo");
+        currentSpan = span;
+      }
+
+      span.addEventListener("click", () => {
+        renderMiniCalendario(anno, mese);
+        mesiBar.querySelectorAll("span").forEach(s => s.classList.remove("attivo"));
+        span.classList.add("attivo");
+      });
+
+      mesiBar.appendChild(span);
+    }
+  }
+  // scroll alla posizione corrente
+  setTimeout(() => {
+    if (currentSpan) currentSpan.scrollIntoView({ behavior: "smooth", inline: "center" });
+  }, 50);
+}
+
+function renderMiniCalendario(anno, mese) {
+  miniCalendario.innerHTML = "";
+  meseMiniCorrente = mese;
+  annoMiniCorrente = anno;
+
+  const oggiStr = new Date().toISOString().slice(0,10);
+  const giornoVisualizzato = dataCorrente.toISOString().slice(0,10);
+
+  const primaGiorno = new Date(anno, mese, 1).getDay();     // 0=Dom
+  const ultimoGiorno = new Date(anno, mese+1, 0).getDate();
+
+  const giorniSettimana = ["L","M","M","G","V","S","D"];
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const trHead = document.createElement("tr");
+  giorniSettimana.forEach(g => {
+    const th = document.createElement("th");
+    th.textContent = g;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  let tr = document.createElement("tr");
+  let dayCount = 0;
+
+  // offset: in JS 0=Dom → spostiamo per avere Lunedì come primo
+  const offset = (primaGiorno + 6) % 7;
+  for (let i=0; i<offset; i++) {
+    tr.appendChild(document.createElement("td"));
+    dayCount++;
+  }
+
+  for (let giorno=1; giorno<=ultimoGiorno; giorno++) {
+    if (dayCount % 7 === 0) {
+      tbody.appendChild(tr);
+      tr = document.createElement("tr");
+    }
+    const td = document.createElement("td");
+    const dataStr = `${anno}-${String(mese+1).padStart(2,"0")}-${String(giorno).padStart(2,"0")}`;
+    td.textContent = giorno;
+
+    if (dataStr === oggiStr) td.classList.add("oggi");
+    if (dataStr === giornoVisualizzato) td.classList.add("selezionato");
+
+    td.addEventListener("click", () => {
+      const nuovaData = new Date(dataStr);
+      vaiAData(nuovaData, "");
+      // se il mini è aperto, resta aperto e si aggiorna la selezione
+      if (miniCalendario.style.display === "block") {
+        renderMiniCalendario(nuovaData.getFullYear(), nuovaData.getMonth());
+      }
+    });
+
+    tr.appendChild(td);
+    dayCount++;
+  }
+  tbody.appendChild(tr);
+  table.appendChild(tbody);
+  miniCalendario.appendChild(table);
+
+  // evidenzia mese attivo in barra
+  document.querySelectorAll("#mesiBar span").forEach(s => {
+    const sm = parseInt(s.dataset.mese);
+    const sa = parseInt(s.dataset.anno);
+    s.classList.toggle("attivo", sm === mese && sa === anno);
+  });
+
+  // Swipe orizzontale interno al mini-cal per cambiare mese
+  enableLocalSwipe(miniCalendario,
+    () => { // next
+      const next = new Date(anno, mese+1, 1);
+      renderMiniCalendario(next.getFullYear(), next.getMonth());
+    },
+    () => { // prev
+      const prev = new Date(anno, mese-1, 1);
+      renderMiniCalendario(prev.getFullYear(), prev.getMonth());
+    }
+  );
+}
+
+// swipe minimale orizzontale per un contenitore
+function enableLocalSwipe(el, onLeft, onRight) {
+  let startX = 0, tracking = false;
+  const TH = 40;
+
+  el.addEventListener("touchstart", (e)=>{
+    if (e.touches.length !== 1) return;
+    tracking = true;
+    startX = e.touches[0].clientX;
+  }, {passive:true});
+
+  el.addEventListener("touchend", (e)=>{
+    if (!tracking) return;
+    const endX = (e.changedTouches && e.changedTouches[0]?.clientX) || startX;
+    const dx = endX - startX;
+    tracking = false;
+    if (dx < -TH) { onLeft?.(); }
+    if (dx >  TH) { onRight?.(); }
+  }, {passive:true});
+}
 
 // ── Modal
 function openModal(appt){
