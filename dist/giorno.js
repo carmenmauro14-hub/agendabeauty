@@ -4,7 +4,7 @@
 import { app } from "./auth.js";
 import {
   getFirestore, collection, query, where, orderBy,
-  getDocs, doc, getDoc, Timestamp
+  getDocs, doc, getDoc, Timestamp, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { openWhatsAppReminder } from "./reminder-core.js";
 
