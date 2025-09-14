@@ -27,7 +27,6 @@ const miniCalendario = document.getElementById("miniCalendario");
 const lblMese        = document.getElementById("meseCorrente");
 const lblAnno        = document.getElementById("annoCorrente");
 const btnOggi        = document.getElementById("btnTornaOggi");
-const btnElimina     = document.getElementById("detElimina");
 
 // Modal (già in HTML)
 const detModal     = document.getElementById("detModal");
@@ -41,6 +40,7 @@ const elTrattList  = document.getElementById("detTrattList");
 const elTotale     = document.getElementById("detTotale");
 const btnModifica  = document.getElementById("detModifica");
 const btnPromem    = document.getElementById("detPromemoria");
+const btnElimina   = document.getElementById("detElimina");
 
 // ── Utils
 const fmtEuro = (n) => Number(n || 0).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
@@ -132,6 +132,22 @@ function openModal(appt){
     try { await openWhatsAppReminder(cliente, [apptForReminder(appt)]); }
     finally { setTimeout(()=>openingWA=false, 1800); }
   };
+
+  btnElimina.onclick = async () => {
+  if (!appt.id) return;
+  if (!confirm("Vuoi eliminare questo appuntamento?")) return;
+
+  try {
+    await deleteDoc(doc(db, "appuntamenti", appt.id));
+    alert("Appuntamento eliminato con successo.");
+    detModal.style.display = "none";
+    // Ricarica lista
+    caricaAppuntamentiGiornoISO(appt.iso);
+  } catch (err) {
+    console.error("Errore eliminazione:", err);
+    alert("Errore durante l'eliminazione.");
+  }
+};
 
   detModal.setAttribute("aria-hidden","false");
   detModal.style.display = "flex";
