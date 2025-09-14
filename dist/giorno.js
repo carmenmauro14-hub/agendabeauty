@@ -27,6 +27,7 @@ const miniCalendario = document.getElementById("miniCalendario");
 const lblMese        = document.getElementById("meseCorrente");
 const lblAnno        = document.getElementById("annoCorrente");
 const btnOggi        = document.getElementById("btnTornaOggi");
+const btnElimina     = document.getElementById("detElimina");
 
 // Modal (già in HTML)
 const detModal     = document.getElementById("detModal");
