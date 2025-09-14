@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
     annoCorrente.textContent = dataCorrente.getFullYear();
   }
 
+  // ==== CARICAMENTO EVENTI ===================================================
   async function caricaEventiDaFirebase(anno, mese){
     eventi = {};
     const { start, end, inizioGriglia } = monthGridRange(anno, mese);
@@ -77,12 +78,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const key = isoFromDateLocal(dateObj);
       if (!eventi[key]) eventi[key] = [];
 
+      // 👇 Gestione appuntamenti orfani (senza clienteId)
       const idCliente = dati.clienteId;
-      let nomeCliente = clientiCache[idCliente];
-      if (!nomeCliente){
-        const clienteDoc = await getDoc(doc(db, "clienti", idCliente));
-        nomeCliente = clienteDoc.exists() ? (clienteDoc.data().nome || "") : "";
-        clientiCache[idCliente] = nomeCliente;
+      let nomeCliente = "Cliente eliminato"; // fallback di default
+
+      if (idCliente) {
+        nomeCliente = clientiCache[idCliente];
+        if (!nomeCliente){
+          try {
+            const clienteDoc = await getDoc(doc(db, "clienti", idCliente));
+            nomeCliente = clienteDoc.exists() ? (clienteDoc.data().nome || "") : "Cliente eliminato";
+          } catch {
+            nomeCliente = "Cliente eliminato";
+          }
+          clientiCache[idCliente] = nomeCliente;
+        }
       }
 
       eventi[key].push({ ora: dati.ora || "", nome: nomeCliente });
@@ -91,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     generaGriglia(inizioGriglia);
   }
 
+  // ==== BARRA MESI ===========================================================
   function generaBarraMesiCompleta(){
     mesiBar.innerHTML = "";
     let annoPrecedente = null;
@@ -144,6 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ==== GRIGLIA CALENDARIO ===================================================
   function generaGriglia(inizioGrigliaOpt){
     griglia.innerHTML = "";
     const anno = dataCorrente.getFullYear();
@@ -204,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---- UI ----
+  // ==== UI ==================================================================
   document.getElementById("meseSwitch").addEventListener("click", () => {
     mesiBar.classList.toggle("visibile");
     if (mesiBar.classList.contains("visibile")) evidenziaMeseAttivo();
