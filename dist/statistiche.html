@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Statistiche - BeautyBook</title>
+
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="statistiche.css">
+<script type="module" src="auth.js"></script>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <main class="stats-container">
+    <h1 class="stats-title">Statistiche</h1>
+    <p class="info-text">Riepilogo ricavi e trattamenti sul periodo selezionato.</p>
+
+    <!-- Filtri -->
+    <section class="filters">
+      <div class="period-tabs" id="periodTabs">
+  <button data-range="month" class="tab active">Mese corrente</button>
+  <button data-range="lastmonth" class="tab">Mese scorso</button>
+  <button data-range="year" class="tab">Anno corrente</button>
+  <button data-range="thisweek" class="tab">Sett corrente</button>
+  <button data-range="lastweek" class="tab">Sett scorsa</button>
+  <button data-range="lastyear" class="tab">Anno scorso</button>
+</div>
+
+      <!-- Solo per intervallo personalizzato -->
+      <div class="custom-range" id="customRange" hidden>
+        <input type="date" id="dateFrom">
+        <span class="dash">–</span>
+        <input type="date" id="dateTo">
+        <button id="applyRange" class="btn-apply">Applica</button>
+      </div>
+    </section>
+
+    <!-- KPI -->
+    <section class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Fatturato</div>
+        <div class="kpi-value" id="kpiRevenue">€ 0,00</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Appuntamenti</div>
+        <div class="kpi-value" id="kpiCount">0</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Scontrino medio</div>
+        <div class="kpi-value" id="kpiAvg">€ 0,00</div>
+      </div>
+    </section>
+
+    <!-- Top trattamenti -->
+    <section class="card">
+      <div class="card-title">Top trattamenti</div>
+      <ul class="list" id="listTopTreatments"></ul>
+    </section>
+
+    <!-- Top clienti -->
+    <section class="card">
+      <div class="card-title">Top clienti</div>
+      <ul class="list" id="listTopClients"></ul>
+    </section>
+
+    <!-- Andamento -->
+    <section class="card" id="trendCard">
+      <div class="card-title">Andamento</div>
+      <div class="bars" id="barsContainer"></div>
+      <div class="bars-legend" id="barsLegend"></div>
+    </section>
+  </main>
+
+  <!-- Navbar load -->
+  <script>
+    fetch("navbar.html")
+      .then(r => r.text())
+      .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
+  </script>
+
+  <script type="module" src="statistiche.js"></script>
+  <script src="navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+:root{
+  --prim:#d2b8a3;
+  --text:#a07863;
+  --muted:#666;
+  --line:#e6d9d0;
+  --bg:#fff;
+}
+
+html,body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+}
+
+/* Header indietro (senza riga sotto) */
+.back-header{
+  display:flex; align-items:center;
+  font-size:18px; font-weight:500;
+  color:#d2b8a3; padding:15px 20px 10px;
+  background:#fff; cursor:pointer;
+  border-bottom: none;                 /* ← niente riga */
+}
+.back-arrow{ font-size:24px; margin-right:6px; }
+
+/* Container pagina */
+.settings-container{
+  padding:20px;
+  display:flex; flex-direction:column;
+  height:calc(100vh - 84px - 48px);
+  box-sizing:border-box;
+}
+.settings-title{
+  font-size:22px; font-weight:700; margin:0 0 10px;
+  color:var(--text);
+}
+.info-text{ font-size:14px; margin:0 0 20px; color:var(--muted); }
+
+/* Lista scrollabile */
+.settings-list{
+  flex:1 1 auto;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  list-style:none; padding:0; margin:0;
+}
+.settings-list li{ padding:14px 0; }
+
+/* Titolo sezione e sottotitolo */
+.section-title{
+  font-size:18px;
+  font-weight:700;
+  color:var(--text);
+  margin:6px 0 8px;
+}
+.section-title.soft{ opacity:.9; } /* per la sezione "in arrivo" */
+
+.section-subtitle{
+  font-size:14px;
+  font-weight:500;
+  color:var(--muted);
+  margin:0 0 8px;
+}
+
+/* Riga token che va a capo in automatico */
+.token-row{
+  display:flex; flex-wrap:wrap; gap:6px 8px;
+  margin-bottom:10px;
+}
+
+/* Textarea */
+textarea{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  color:var(--text);
+  font-size:16px;
+  line-height:1.35;
+  min-height:130px;
+  resize:vertical;
+}
+textarea:focus{
+  outline:none;
+  border-color:var(--prim);
+  box-shadow:0 0 0 3px rgba(210,184,163,.28);
+}
+
+/* Token cliccabili */
+.token{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  background:#efe2d8;
+  color:var(--text);
+  font-size:12px; font-weight:700;
+  margin:0; cursor:pointer; user-select:none;
+  transition:background .2s, transform .1s;
+}
+.token:hover{ background:#e8d7cb; }
+.token:active{ transform:scale(.92); }
+
+/* Riga “suggerimento” */
+.hint-row{
+  margin-top:10px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+/* Bottoni */
+.bottoni-form{
+  display:flex; justify-content:center;
+  gap:20px; margin-top:14px;
+}
+.bottoni-form button{
+  background:#d2b8a3; color:#fff; border:0;
+  border-radius:10px; padding:10px 20px;
+  font-size:15px; cursor:pointer; font-weight:700;
+  transition:transform .12s ease, opacity .12s ease;
+}
+.bottoni-form button:active{ transform:scale(.94); }
+
+/* Sezione “in arrivo” (soft) */
+.soft-line{
+  display:flex; align-items:center; gap:12px;
+  margin:12px 0 6px; opacity:.9;
+}
+.soft-line.space-between{ justify-content:space-between; }
+.soft-line__label{ color:var(--text); display:flex; align-items:center; gap:10px; }
+.soft-line__text{ color:var(--text); }
+
+.soft-pill{
+  padding:8px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f7f2ee;
+  color:#b59a87;
+  font-size:14px;
+  pointer-events:none;
+}
+
+/* Nota finale soft */
+.soft-note{
+  color:#9a8b82;
+  font-size:14px;
+  margin-top:8px;
+}
+
+/* Scrollbar */
+.settings-list::-webkit-scrollbar{ width:4px; }
+.settings-list::-webkit-scrollbar-thumb{ background:#d9b5a3; border-radius:2px; }
+.settings-list::-webkit-scrollbar-track{ background:transparent; }
+
+/* Effetto sezione non disponibile */
+.disabled-block {
+  opacity: .55;          /* semitrasparente */
+  filter: grayscale(10%); /* leggermente spenta */
+  pointer-events: none;  /* disattiva interazioni */
+}

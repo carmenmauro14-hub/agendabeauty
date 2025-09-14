@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Impostazioni Promemoria - BeautyBook</title>
+
+  <!-- Stili principali dell'app -->
+  <link rel="stylesheet" href="navbar.css">
+  <!-- Stili dedicati a questa pagina -->
+  <link rel="stylesheet" href="reminder-settings.css">
+<script type="module" src="auth.js"></script>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <!-- Header “indietro” -->
+  <div class="back-header" onclick="location.href='settings.html'">
+    <span class="back-arrow">‹</span> Impostazioni
+  </div>
+
+  <main class="settings-container">
+    <h1 class="settings-title">Impostazioni Promemoria</h1>
+    <p class="info-text">
+      Personalizza il testo del promemoria WhatsApp che invierai ai clienti.
+    </p>
+
+    <ul class="settings-list">
+      <!-- SEZIONE: Testo promemoria -->
+      <li>
+        <div class="section-title">Testo promemoria</div>
+        <div class="section-subtitle">Puoi usare variabili:</div>
+
+        <div class="token-row">
+          <span class="token" data-insert="{NOME}">{NOME}</span>
+          <span class="token" data-insert="{DATA}">{DATA}</span>
+          <span class="token" data-insert="{ORA}">{ORA}</span>
+          <span class="token" data-insert="{TRATTAMENTI}">{TRATTAMENTI}</span>
+        </div>
+
+        <textarea id="reminder-template"
+          placeholder="Ciao {NOME}! Ti ricordiamo l’appuntamento del {DATA} alle {ORA}. A presto!"></textarea>
+
+        <div class="hint-row">
+          Suggerimento: mantieni il messaggio breve e chiaro.
+        </div>
+
+        <div class="bottoni-form">
+          <button type="button" id="btnAnteprima">Anteprima</button>
+          <button type="button" id="btnSalvaTemplate">Salva</button>
+        </div>
+      </li>
+
+      <!-- SEZIONE: Invio automatico (placeholder) -->
+      <li class="disabled-block">
+        <div class="section-title soft">Invio automatico (in arrivo)</div>
+
+        <div class="soft-line">
+          <label class="soft-line__label">
+            <input type="checkbox" disabled>
+            Attiva promemoria automatici
+          </label>
+        </div>
+
+        <div class="soft-line space-between">
+          <span class="soft-line__text">Anticipo promemoria</span>
+          <div class="soft-pill" aria-disabled="true">24 ore prima ▾</div>
+        </div>
+
+        <div class="soft-note">
+          Presto potrai far inviare all’app i promemoria in automatico,
+          all’orario scelto.
+        </div>
+      </li>
+    </ul>
+  </main>
+
+  <!-- Caricamento navbar -->
+  <script>
+    fetch("navbar.html")
+      .then(r => r.text())
+      .then(h => { document.getElementById("navbar-placeholder").innerHTML = h; });
+  </script>
+
+  <script src="navbar.js"></script>
+  <script type="module" src="reminder-settings.js"></script>
+</body>
+</html>

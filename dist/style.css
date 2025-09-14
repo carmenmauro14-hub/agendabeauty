@@ -1,0 +1,78 @@
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+               "Helvetica Neue", sans-serif;
+  background: linear-gradient(135deg, #ffffff, #ffffff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+.login-box {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.title {
+  color: #d2b8a3; 32px;
+  margin-bottom: 20px;
+}
+
+form input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+}
+
+form button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background-color: #d2b8a3;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+form button:hover {
+  background-color: #d2b8a3;
+}
+
+.links {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.links a {
+  color: #d2b8a3;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* Stile per l'icona Home nella navbar */
+.nav-item img {
+  width: 32px;
+  height: 32px;
+  margin: 10px;
+  filter: brightness(0.9); /* effetto beige su sfondo scuro */
+}
