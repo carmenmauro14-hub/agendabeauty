@@ -153,7 +153,54 @@ function openModal(appt){
   detModal.style.display = "flex";
 }
 
-// ... (qui resto uguale: closeModal, swipe down sulla modale, ecc.)
+function closeModal() {
+  detModal.style.display = "none";
+  detModal.setAttribute("aria-hidden", "true");
+}
+
+function closeModal(){
+  detSheet.classList.add("swipe-out-down");
+  const finish = () => {
+    detSheet.removeEventListener("transitionend", finish);
+    detModal.style.display = "none";
+    detModal.setAttribute("aria-hidden","true");
+    detSheet.classList.remove("swipe-out-down");
+  };
+  setTimeout(finish, 200);
+  detSheet.addEventListener("transitionend", finish);
+}
+
+detCloseBtn.addEventListener("click", closeModal);
+detModal.addEventListener("click", (e) => { if (e.target === detModal) closeModal(); });
+
+// swipe-down sulla topbar del modal
+(() => {
+  let startY=0, dragging=false, lastY=0, lastT=0, velocity=0;
+  const getY = (e)=> e?.touches?.[0]?.clientY ?? e?.clientY ?? 0;
+  const begin = (e)=>{ dragging=true; startY=lastY=getY(e); lastT=performance.now(); velocity=0; detSheet.style.transition="none"; e.preventDefault(); };
+  const move  = (e)=>{
+    if(!dragging) return;
+    const y=getY(e), now=performance.now(), dy=Math.max(0, y-startY);
+    const dt=Math.max(1, now-lastT);
+    velocity=(y-lastY)/dt; lastY=y; lastT=now;
+    detSheet.style.transform=`translateY(${dy}px)`; e.preventDefault();
+  };
+  const end   = ()=>{
+    if(!dragging) return; dragging=false; detSheet.style.transition="";
+    detSheet.style.transform="";
+    const dy = Math.max(0, lastY-startY);
+    const shouldClose = dy>120 || (dy>60 && velocity>0.35);
+    if(shouldClose) closeModal();
+  };
+  const opts={passive:false};
+  detTopbar.addEventListener("touchstart", begin, opts);
+  detTopbar.addEventListener("mousedown",  begin, opts);
+  window.addEventListener("touchmove", move, opts);
+  window.addEventListener("mousemove",  move, opts);
+  window.addEventListener("touchend",  end);
+  window.addEventListener("mouseup",   end);
+  window.addEventListener("touchcancel", end);
+})();
 
 // ── Render lista
 function renderLista(items){
