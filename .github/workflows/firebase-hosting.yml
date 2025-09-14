@@ -2,8 +2,7 @@ name: Deploy to Firebase Hosting
 
 on:
   push:
-    branches:
-      - main   # puoi cambiare se usi un altro branch
+    branches: [main]
 
 jobs:
   deploy:
@@ -16,19 +15,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20   # versione stabile e compatibile
+          node-version: 20
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
       - name: Write Firebase service account key
-        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > $GITHUB_WORKSPACE/firebase-key.json
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $GITHUB_WORKSPACE/firebase-key.json
 
       - name: Deploy to Firebase
+        run: firebase deploy --only hosting --project agenda-carmenmauro --config dist/firebase.json
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $GITHUB_WORKSPACE/firebase-key.json
-        run: |
-          firebase deploy \
-            --only hosting \
-            --project agenda-carmenmauro \
-            --config dist/firebase.json
