@@ -288,11 +288,6 @@ function openModal(appt){
   detModal.style.display = "flex";
 }
 
-function closeModal() {
-  detModal.style.display = "none";
-  detModal.setAttribute("aria-hidden", "true");
-}
-
 function closeModal(){
   detSheet.classList.add("swipe-out-down");
   const finish = () => {
