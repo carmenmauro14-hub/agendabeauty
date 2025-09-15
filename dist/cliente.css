@@ -279,8 +279,8 @@ a.qa:focus, button:focus, select:focus, .link:focus{
   width: 100%;
   padding: 12px;
   margin-top: 14px;
-  background: #fff0f0;       /* rosso chiaro */
-  color: #b0413e;            /* rosso scuro */
+  background: #fff0f0;          /* rosso chiaro */
+  color: #b0413e;               /* rosso scuro */
   border: 1px solid #e6d9d0;
   border-radius: 12px;
   font-size: 16px;
