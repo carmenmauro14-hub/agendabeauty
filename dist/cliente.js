@@ -466,6 +466,24 @@ infoEdit.addEventListener("submit", async (e)=>{
   caricaCliente();
 });
 
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const btnEliminaCliente = document.getElementById("btnEliminaCliente");
+
+btnEliminaCliente.onclick = async () => {
+  if (!clienteId) return;
+  if (!confirm("Vuoi eliminare definitivamente questo cliente?")) return;
+
+  try {
+    await deleteDoc(doc(db, "clienti", clienteId));
+    alert("Cliente eliminato con successo.");
+    window.location.href = "rubrica.html"; // torna alla lista clienti
+  } catch (err) {
+    console.error("Errore eliminazione cliente:", err);
+    alert("Errore durante l'eliminazione.");
+  }
+};
+
 // ===== Back ==================================================================
 backBtn.addEventListener("click", ()=>history.back());
 
