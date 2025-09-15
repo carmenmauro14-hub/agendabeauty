@@ -268,8 +268,13 @@ a.qa:focus, button:focus, select:focus, .link:focus{
 /* allinea la pill a destra nella riga appuntamento */
 .evento-giorno .eg-nome{ margin-right: 8px; }
 .evento-giorno .promem-ico{ margin-left:auto; }
+
 @supports(padding:max(0px)){
-  .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-.btn-elimina-cliente {
+  .cliente-page{ padding-bottom: max(110px, env(safe-area-inset-bottom)); }
+}
+
+/* ===== Bottone elimina cliente ===== */
+.btn-elimina-cliente {
   display: block;
   width: 100%;
   padding: 12px;
@@ -293,5 +298,3 @@ a.qa:focus, button:focus, select:focus, .link:focus{
   transform: scale(0.98);
   background: #f8dcdc;
 }
-
-
