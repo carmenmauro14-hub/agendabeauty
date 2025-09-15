@@ -106,9 +106,13 @@
       <textarea id="noteInput" rows="4" placeholder="Aggiungi una nota…"></textarea>
     </section>
     
-    <!-- Bottone elimina cliente -->
-    <button id="btnEliminaCliente" class="btn-elimina-cliente">Elimina cliente</button>
-  
+    <!-- Bottone elimina cliente (SOLO in edit) -->
+<div class="edit-only">
+  <button id="btnEliminaCliente" class="btn-elimina-cliente">
+    <i class="fa-solid fa-trash"></i> Elimina cliente
+  </button>
+</div>
+
       <!-- STATISTICHE -->
     <section class="card stats-card hide-on-edit">
       <div class="card-title">
