@@ -446,4 +446,50 @@ input[type="checkbox"] {
   cursor: pointer;
   transition: transform .06s ease, opacity .15s ease;
 }
+
+/* === Step 3 - Trattamenti con quantità === */
+
+.trattamento-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.trattamento-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.trattamento-row .icona-trattamento {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.trattamento-extra {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.trattamento-extra input {
+  padding: 6px 8px;
+  font-size: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  text-align: center;
+  color: var(--text);
+  background: #fff;
+  width: 70px;
+}
+
+.trattamento-extra .quantita-input {
+  width: 55px;
+}
+
 #addClienteForm button:active { transform: scale(.97); }
