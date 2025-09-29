@@ -69,48 +69,19 @@ function updateNavState() {
 }
 [inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
 
-// Auto-selezione data → passa subito alle ore
-inpData?.addEventListener("change", () => {
-  if (inpData.value) {
-    inpOraHH.focus();
-  }
-});
-
-// Dopo 2 cifre nelle ore → passa ai minuti
-inpOraHH?.addEventListener("input", () => {
-  if (inpOraHH.value.length >= 2) {
-    inpOraMM.focus();
-  }
-});
-
 // ─── Overlay chiusura ─────────────────────────────────────────────
 function chiudiSheet() {
-  const doClose = () => {
-    if (history.length > 1) {
-      history.back();
-    } else {
-      pageModal.style.display = "none"; // chiude overlay
-      sheetEl.classList.remove("swipe-out-down");
-    }
-  };
-
+  const doClose = () => document.getElementById("cancelWizard")?.click();
   if (!sheetEl) return doClose();
-
   sheetEl.classList.add("swipe-out-down");
-  sheetEl.addEventListener("transitionend", () => {
-    sheetEl.classList.remove("swipe-out-down");
-    doClose();
-  }, { once: true });
+  sheetEl.addEventListener("transitionend", doClose, { once: true });
 }
-
-// Tasto ANNULLA
-btnCancel?.addEventListener("click", chiudiSheet);
 sheetClose?.addEventListener("click", chiudiSheet);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica ───────────────────────────────────────────────────────
+// ─── Rubrica (apertura e rendering) ────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -147,9 +118,10 @@ function renderRubrica(clienti) {
     const L = (c.nome ? c.nome.charAt(0) : "#").toUpperCase();
     (groups[L] = groups[L] || []).push(c);
   });
-  const letters = Object.keys(groups).sort();
 
+  const letters = Object.keys(groups).sort();
   clientListPicker.innerHTML = "";
+
   letters.forEach(L => {
     const sec = document.createElement("li");
     sec.textContent = L;
@@ -164,7 +136,6 @@ function renderRubrica(clienti) {
       li.onclick = () => {
         clienteIdHidden.value = c.id;
         const nome = c.nome || "(senza nome)";
-        clienteSelezionato.textContent = nome;
         if (pickerValue) pickerValue.textContent = nome;
         if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
         if (openRubricaField) openRubricaField.classList.remove("empty");
@@ -186,6 +157,66 @@ function renderRubrica(clienti) {
     letterNavPicker.appendChild(el);
   });
 }
+
+searchCliente?.addEventListener("input", () => {
+  const f = searchCliente.value.toLowerCase();
+  if (letterNavPicker) letterNavPicker.style.display = f ? "none" : "flex";
+
+  clientListPicker.querySelectorAll("li.item").forEach(li => {
+    li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
+  });
+
+  clientListPicker.querySelectorAll("li.section").forEach(sec => {
+    let el = sec.nextElementSibling, visible = false;
+    while (el && !el.classList.contains("section")) {
+      if (el.style.display !== "none") { visible = true; break; }
+      el = el.nextElementSibling;
+    }
+    sec.style.display = visible ? "" : "none";
+  });
+});
+
+// ─── Aggiungi Cliente dentro la rubrica modale ─────────────────────
+const btnAddCliente        = document.getElementById("btnAddCliente");
+const addClienteModal      = document.getElementById("addClienteModal");
+const closeAddClienteModal = document.getElementById("closeAddClienteModal");
+const addClienteForm       = document.getElementById("addClienteForm");
+const newClienteNome       = document.getElementById("newClienteNome");
+const newClienteTelefono   = document.getElementById("newClienteTelefono");
+
+function showAddClienteModal() { if(addClienteModal) addClienteModal.style.display = "flex"; }
+function hideAddClienteModal() { if(addClienteModal) addClienteModal.style.display = "none"; }
+
+btnAddCliente?.addEventListener("click", () => {
+  addClienteForm?.reset();
+  showAddClienteModal();
+});
+closeAddClienteModal?.addEventListener("click", hideAddClienteModal);
+addClienteModal?.addEventListener("click", (e) => {
+  if (e.target === addClienteModal) hideAddClienteModal();
+});
+
+addClienteForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const nome = (newClienteNome?.value || "").trim();
+  const telefono = (newClienteTelefono?.value || "").trim();
+  if (!nome) { alert("Inserisci il nome del cliente"); return; }
+
+  try {
+    const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
+    if (clienteIdHidden) clienteIdHidden.value = docRef.id;
+    if (pickerValue) pickerValue.textContent = nome;
+    if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+    if (openRubricaField) openRubricaField.classList.remove("empty");
+
+    hideAddClienteModal();
+    rubricaModal.style.display = "none";
+    updateNavState();
+  } catch (err) {
+    console.error("[nuovo-appuntamento] errore aggiunta cliente:", err);
+    alert("Errore durante il salvataggio del cliente.");
+  }
+});
 
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
@@ -267,7 +298,6 @@ btnBackToStep2?.addEventListener("click", () => {
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const dataISO   = inpData.value;
-
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(dataISO && inpOraHH.value !== "" && inpOraMM.value !== "")) {
     return alert("Inserisci data e ora");
@@ -280,6 +310,7 @@ btnSalva?.addEventListener("click", async () => {
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
+  // controlla duplicati
   const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
   const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const esiste = appuntamenti.some(app => {
@@ -370,12 +401,7 @@ btnSalva?.addEventListener("click", async () => {
         if (apptData.ora) {
           const [hh, mm] = apptData.ora.split(":");
           if (inpOraHH) inpOraHH.value = hh;
-          if (inpOraMM) inpOraMM.value = mm;
-        }
-
-        // Trattamenti preselezionati
-        const selectedMap = new Map(
-          (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
+          if (inp) ? apptData.trattamenti : [])
             .map(t => [t.nome, Number(t.prezzo) || 0])
         );
         await caricaTrattamenti(selectedMap);
@@ -391,10 +417,30 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
-  // Preimpostazioni se URL ?data=
+  // Preimposta cliente se passato da URL
+  if (!editId && presetClienteId) {
+    try {
+      const snap = await getDoc(doc(db, "clienti", presetClienteId));
+      if (snap.exists()) {
+        const c = snap.data();
+        clienteIdHidden.value = presetClienteId;
+        if (pickerValue) pickerValue.textContent = c.nome || "(senza nome)";
+        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+        if (openRubricaField) openRubricaField.classList.remove("empty");
+      }
+    } catch {}
+  }
+
+  // Preimposta data se passata da URL
   if (!editId && presetDataISO && inpData && !inpData.value) {
     inpData.value = presetDataISO;
   }
 
   updateNavState();
+
+  // Tasto ANNULLA
+  btnCancel?.addEventListener("click", () => {
+    if (history.length > 1) history.back();
+    else location.href = "calendario.html";
+  });
 })();
