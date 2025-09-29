@@ -38,7 +38,8 @@ const btnSalva           = document.getElementById("salvaAppuntamento");
 const btnCancel          = document.getElementById("cancelWizard");
 
 const inpData            = document.getElementById("dataAppuntamento");
-const inpOra             = document.getElementById("oraAppuntamento");
+const inpOraHH           = document.getElementById("oraAppuntamentoHH");
+const inpOraMM            = document.getElementById("oraAppuntamentoMM");
 const wrapperTratt       = document.getElementById("trattamentiWrapper");
 
 // Picker cliente (step 1)
@@ -70,7 +71,7 @@ let clientiCache   = null;   // rubrica in cache
 // ─── Abilitazioni UI ───────────────────────────────────────────────
 function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
-  if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOra.value);
+  if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
 }
 [inpData, inpOra].forEach(el => el?.addEventListener("input", updateNavState));
 
@@ -265,7 +266,9 @@ btnBackToStep1?.addEventListener("click", () => {
   step1.style.display = "block";
 });
 btnToStep3?.addEventListener("click", () => {
-  if (!(inpData.value && inpOra.value)) return alert("Inserisci data e ora");
+  if (!(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "")) {
+  return alert("Inserisci data e ora");
+}
   step2.style.display = "none";
   step3.style.display = "block";
 });
@@ -278,7 +281,9 @@ btnBackToStep2?.addEventListener("click", () => {
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const dataISO   = inpData.value;            // "YYYY-MM-DD"
-  const ora       = inpOra.value;             // "HH:mm"
+  const hh = String(Math.min(parseInt(inpOraHH.value || "0", 10), 23)).padStart(2, "0");
+  const mm = String(Math.min(parseInt(inpOraMM.value || "0", 10), 59)).padStart(2, "0");
+  const ora = `${hh}:${mm}`;
 
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(dataISO && ora)) return alert("Inserisci data e ora");
@@ -388,7 +393,11 @@ btnSalva?.addEventListener("click", async () => {
           iso = apptData.dataISO.slice(0,10);
         }
         if (inpData) inpData.value = iso || "";
-        if (inpOra)  inpOra.value  = apptData.ora || "";
+        if (apptData.ora) {
+        const [hh, mm] = apptData.ora.split(":");
+        if (inpOraHH) inpOraHH.value = hh;
+        if (inpOraMM) inpOraMM.value = mm;
+        }
 
         // Client preselect (da appuntamento)
         if (apptData.clienteId) {
