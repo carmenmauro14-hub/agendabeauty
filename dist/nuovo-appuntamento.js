@@ -73,7 +73,7 @@ function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
 }
-[inpData, inpOra].forEach(el => el?.addEventListener("input", updateNavState));
+[inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
 
 // ─── Overlay / Sheet controlli ─────────────────────────────────────
 function chiudiSheet() {
