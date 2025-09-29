@@ -1,5 +1,6 @@
 // nuovo-appuntamento.js
 
+// ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
 import { app } from "./auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
@@ -80,7 +81,90 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiShee
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// … [qui lasciamo invariata la parte della rubrica e dei trattamenti] …
+// ─── Rubrica (apertura e rendering) ────────────────────────────────
+async function apriRubrica() {
+  if (!clientiCache) {
+    const snap = await getDocs(collection(db, "clienti"));
+    clientiCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    clientiCache.sort((a,b) => (a.nome || "").localeCompare(b.nome || ""));
+  }
+  renderRubrica(clientiCache);
+  if (searchCliente) searchCliente.value = "";
+  if (letterNavPicker) letterNavPicker.style.display = "flex";
+  rubricaModal.style.display = "flex";
+}
+openRubrica?.addEventListener("click", apriRubrica);
+if (openRubricaField) {
+  openRubricaField.addEventListener("click", apriRubrica);
+  openRubricaField.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
+  });
+}
+rubricaModal?.addEventListener("click", (e) => {
+  if (e.target === rubricaModal) rubricaModal.style.display = "none";
+});
+btnRubricaClose?.addEventListener("click", () => {
+  if (!rubricaPanel) return (rubricaModal.style.display = "none");
+  rubricaPanel.classList.add("swipe-out-down");
+  rubricaPanel.addEventListener("transitionend", () => {
+    rubricaPanel.classList.remove("swipe-out-down");
+    rubricaModal.style.display = "none";
+  }, { once: true });
+});
+
+// ─── Trattamenti ───────────────────────────────────────────────────
+const iconeDisponibili = [
+  "makeup_sposa", "makeup", "microblading", "extension_ciglia",
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia",
+  "airbrush_sopracciglia", "laser"
+];
+function trovaIcona(nome) {
+  const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
+  for (const base of iconeDisponibili) {
+    if (norm.includes(base)) return `icones_trattamenti/${base}.png`;
+  }
+  return "icone_uniformate_colore/setting.png";
+}
+
+async function caricaTrattamenti(selectedMap = null) {
+  wrapperTratt.innerHTML = "";
+  try {
+    const snap = await getDocs(collection(db, "trattamenti"));
+    const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    lista.sort((a,b) => (a.nome || "").localeCompare(b.nome || ""));
+    for (const t of lista) {
+      const icona = t.icona || trovaIcona(t.nome);
+      const prezzoListino = Number(t.prezzo) || 0;
+
+      const row = document.createElement("div");
+      row.classList.add("trattamento-row");
+
+      const checked   = selectedMap ? selectedMap.has(t.nome) : false;
+      const prezzoSel = selectedMap && selectedMap.has(t.nome)
+                        ? Number(selectedMap.get(t.nome)) || 0
+                        : prezzoListino;
+
+      row.innerHTML = `
+        <label>
+          <input type="checkbox" class="trattamento-checkbox"
+                 ${checked ? "checked" : ""}
+                 data-nome="${t.nome}" data-prezzo="${prezzoListino}" data-icona="${icona}">
+          <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
+          ${t.nome}
+        </label>
+        <input type="number" class="prezzo-input"
+               placeholder="€${prezzoListino}"
+               value="${prezzoSel}"
+               min="0" step="0.01"
+               inputmode="decimal">
+      `;
+      wrapperTratt.appendChild(row);
+    }
+  } catch (e) {
+    console.error("Errore caricamento trattamenti:", e);
+    alert("Errore nel caricamento dei trattamenti.");
+  }
+}
 
 // ─── Navigazione step ──────────────────────────────────────────────
 btnToStep2?.addEventListener("click", () => {
@@ -104,7 +188,7 @@ btnBackToStep2?.addEventListener("click", () => {
   step2.style.display = "block";
 });
 
-// ─── Salvataggio ───────────────────────────────────────────────────
+// ─── Salvataggio appuntamento ──────────────────────────────────────
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const dataISO   = inpData.value;
@@ -118,7 +202,70 @@ btnSalva?.addEventListener("click", async () => {
   const mm = String(Math.min(parseInt(inpOraMM.value || "0", 10), 59)).padStart(2, "0");
   const ora = `${hh}:${mm}`;
 
-  // … [qui rimane invariata la parte di controllo duplicati e salvataggio su Firestore] …
+  const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
+  if (!selected.length) return alert("Seleziona almeno un trattamento");
+
+  // 🔍 Controlla duplicati
+  const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
+  const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const esiste = appuntamenti.some(app => {
+    return (
+      app.dataISO === dataISO &&
+      app.ora === ora &&
+      (!editId || app.id !== editId)
+    );
+  });
+  if (esiste) {
+    alert(`Hai già un appuntamento alle ${ora} del ${dataISO}`);
+    return;
+  }
+
+  const trattamenti = selected.map(cb => {
+    const row = cb.closest(".trattamento-row");
+    const prezzoInput = row.querySelector(".prezzo-input");
+    const prezzoVal = parseFloat(prezzoInput.value);
+    return {
+      nome: cb.dataset.nome,
+      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
+      icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
+    };
+  });
+
+  const dateMidnight = new Date(dataISO + "T00:00:00");
+  const dataTs = Timestamp.fromDate(dateMidnight);
+
+  const [hhNum, mmNum] = ora.split(":").map(n => parseInt(n,10));
+  const dateWithTime = new Date(dateMidnight);
+  dateWithTime.setHours(hhNum || 0, mmNum || 0, 0, 0);
+  const dateTime = Timestamp.fromDate(dateWithTime);
+
+  try {
+    if (editId) {
+      await updateDoc(doc(db, "appuntamenti", editId), {
+        clienteId,
+        data: dataTs,
+        dataISO,
+        ora,
+        dateTime,
+        trattamenti
+      });
+      alert("Appuntamento aggiornato!");
+    } else {
+      await addDoc(collection(db, "appuntamenti"), {
+        clienteId,
+        data: dataTs,
+        dataISO,
+        ora,
+        dateTime,
+        trattamenti
+      });
+      alert("Appuntamento salvato con successo!");
+    }
+    location.href = "calendario.html";
+  } catch (err) {
+    console.error("Errore salvataggio:", err);
+    alert("Errore durante il salvataggio.");
+  }
 });
 
 // ─── Avvio ─────────────────────────────────────────────────────────
@@ -152,12 +299,6 @@ btnSalva?.addEventListener("click", async () => {
           if (inpOraMM) inpOraMM.value = mm;
         }
 
-        // Cliente
-        if (apptData.clienteId) {
-          clienteIdHidden.value = apptData.clienteId;
-          // … caricamento nome cliente …
-        }
-
         // Trattamenti preselezionati
         const selectedMap = new Map(
           (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
@@ -176,7 +317,7 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
-  // Preimpostazioni se ?cliente= o ?data=
+  // Preimpostazioni se URL ?cliente= o ?data=
   if (!editId && presetDataISO && inpData && !inpData.value) {
     inpData.value = presetDataISO;
   }
