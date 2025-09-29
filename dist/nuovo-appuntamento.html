@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="navbar.css" />
   <link rel="stylesheet" href="rubrica.css" />
   <link rel="stylesheet" href="nuovo-appuntamento.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script type="module" src="auth.js"></script>
 </head>
 <body>
@@ -47,11 +48,11 @@
           <h2>2. Seleziona data e ora</h2>
           <input type="date" id="dataAppuntamento" />
 
-        <div class="time-input">
-          <input type="number" id="oraAppuntamentoHH" min="0" max="23" placeholder="HH">
-          <span>:</span>
-          <input type="number" id="oraAppuntamentoMM" min="0" max="59" placeholder="MM">
-        </div>
+          <div class="time-input">
+            <input type="number" id="oraAppuntamentoHH" min="0" max="23" placeholder="HH">
+            <span>:</span>
+            <input type="number" id="oraAppuntamentoMM" min="0" max="59" placeholder="MM">
+          </div>
           <div class="wizard-nav">
             <button id="backToStep1" class="btn" type="button">Indietro</button>
             <button id="toStep3" class="btn" disabled>Avanti</button>
@@ -82,11 +83,31 @@
       <div class="rubrica-header">
         <div class="rubrica-grabber" id="rubricaGrabber"></div>
       </div>
+
+      <!-- Barra ricerca + pulsante + -->
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
+        <button id="btnAddCliente" class="btn-add">+</button>
       </div>
+
+      <!-- Lista clienti -->
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
+    </div>
+  </div>
+
+  <!-- Mini Modal per aggiungere nuovo cliente -->
+  <div id="addClienteModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <header>
+        <h2>Nuovo Cliente</h2>
+        <button class="close" id="closeAddClienteModal">&times;</button>
+      </header>
+      <form id="addClienteForm">
+        <input id="newClienteNome" type="text" placeholder="Nome cliente" required>
+        <input id="newClienteTelefono" type="tel" placeholder="Telefono" inputmode="numeric">
+        <button type="submit" class="btn-primary"><i class="fas fa-check"></i> Salva</button>
+      </form>
     </div>
   </div>
 
