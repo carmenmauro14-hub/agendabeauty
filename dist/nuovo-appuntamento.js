@@ -1,3 +1,5 @@
+// nuovo-appuntamento.js
+
 // ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
 import { app } from "./auth.js";
 import {
@@ -67,6 +69,20 @@ function updateNavState() {
 }
 [inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
 
+// Auto-selezione data → passa subito alle ore
+inpData?.addEventListener("change", () => {
+  if (inpData.value) {
+    inpOraHH.focus();
+  }
+});
+
+// Dopo 2 cifre nelle ore → passa ai minuti
+inpOraHH?.addEventListener("input", () => {
+  if (inpOraHH.value.length >= 2) {
+    inpOraMM.focus();
+  }
+});
+
 // ─── Overlay chiusura ─────────────────────────────────────────────
 function chiudiSheet() {
   const doClose = () => document.getElementById("cancelWizard")?.click();
@@ -79,7 +95,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiShee
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica (apertura e rendering) ────────────────────────────────
+// ─── Rubrica ───────────────────────────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -91,6 +107,24 @@ async function apriRubrica() {
   if (letterNavPicker) letterNavPicker.style.display = "flex";
   rubricaModal.style.display = "flex";
 }
+openRubrica?.addEventListener("click", apriRubrica);
+if (openRubricaField) {
+  openRubricaField.addEventListener("click", apriRubrica);
+  openRubricaField.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
+  });
+}
+rubricaModal?.addEventListener("click", (e) => {
+  if (e.target === rubricaModal) rubricaModal.style.display = "none";
+});
+btnRubricaClose?.addEventListener("click", () => {
+  if (!rubricaPanel) return (rubricaModal.style.display = "none");
+  rubricaPanel.classList.add("swipe-out-down");
+  rubricaPanel.addEventListener("transitionend", () => {
+    rubricaPanel.classList.remove("swipe-out-down");
+    rubricaModal.style.display = "none";
+  }, { once: true });
+});
 
 function renderRubrica(clienti) {
   const groups = {};
@@ -137,25 +171,6 @@ function renderRubrica(clienti) {
     letterNavPicker.appendChild(el);
   });
 }
-
-openRubrica?.addEventListener("click", apriRubrica);
-if (openRubricaField) {
-  openRubricaField.addEventListener("click", apriRubrica);
-  openRubricaField.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
-  });
-}
-rubricaModal?.addEventListener("click", (e) => {
-  if (e.target === rubricaModal) rubricaModal.style.display = "none";
-});
-btnRubricaClose?.addEventListener("click", () => {
-  if (!rubricaPanel) return (rubricaModal.style.display = "none");
-  rubricaPanel.classList.add("swipe-out-down");
-  rubricaPanel.addEventListener("transitionend", () => {
-    rubricaPanel.classList.remove("swipe-out-down");
-    rubricaModal.style.display = "none";
-  }, { once: true });
-});
 
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
@@ -250,7 +265,6 @@ btnSalva?.addEventListener("click", async () => {
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
-  // 🔍 Controlla duplicati
   const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
   const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const esiste = appuntamenti.some(app => {
@@ -362,7 +376,7 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
-  // Preimpostazioni se URL ?cliente= o ?data=
+  // Preimpostazioni se URL ?data=
   if (!editId && presetDataISO && inpData && !inpData.value) {
     inpData.value = presetDataISO;
   }
