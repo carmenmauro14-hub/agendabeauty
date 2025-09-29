@@ -328,3 +328,28 @@ input[type="checkbox"] {
   color: var(--text);
   margin-bottom: 10px;
 }
+
+/* ===== INPUT ORARIO (HH:MM) ===== */
+.time-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.time-input input {
+  width: 70px;
+  padding: 12px 14px;
+  font-size: 16px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+}
+.time-input span {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text);
+}
