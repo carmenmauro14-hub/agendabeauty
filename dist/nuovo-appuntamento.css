@@ -353,3 +353,97 @@ input[type="checkbox"] {
   font-weight: bold;
   color: var(--text);
 }
+
+/* ─── Pulsante + dentro la rubrica modale ───────────────── */
+.btn-add {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--prim);
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .1s ease, opacity .2s ease;
+}
+.btn-add:hover { opacity: .9; }
+.btn-add:active { transform: scale(.95); }
+
+/* ─── Mini Modal nuovo cliente ───────────────────────────── */
+#addClienteModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#addClienteModal .modal-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  padding: 20px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#addClienteModal header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#addClienteModal header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+#addClienteModal .close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--text);
+  cursor: pointer;
+  opacity: .8;
+}
+#addClienteModal .close:hover { opacity: 1; }
+
+#addClienteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#addClienteForm input {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: #fff;
+  transition: all .2s;
+}
+#addClienteForm input:focus {
+  border-color: var(--prim);
+  box-shadow: 0 0 0 3px rgba(210,184,163,.25);
+  outline: none;
+}
+#addClienteForm button {
+  background: var(--prim);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .06s ease, opacity .15s ease;
+}
+#addClienteForm button:active { transform: scale(.97); }
