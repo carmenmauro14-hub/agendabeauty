@@ -85,11 +85,26 @@ inpOraHH?.addEventListener("input", () => {
 
 // ─── Overlay chiusura ─────────────────────────────────────────────
 function chiudiSheet() {
-  const doClose = () => document.getElementById("cancelWizard")?.click();
+  const doClose = () => {
+    if (history.length > 1) {
+      history.back();
+    } else {
+      pageModal.style.display = "none"; // chiude overlay
+      sheetEl.classList.remove("swipe-out-down");
+    }
+  };
+
   if (!sheetEl) return doClose();
+
   sheetEl.classList.add("swipe-out-down");
-  sheetEl.addEventListener("transitionend", doClose, { once: true });
+  sheetEl.addEventListener("transitionend", () => {
+    sheetEl.classList.remove("swipe-out-down");
+    doClose();
+  }, { once: true });
 }
+
+// Tasto ANNULLA
+btnCancel?.addEventListener("click", chiudiSheet);
 sheetClose?.addEventListener("click", chiudiSheet);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
