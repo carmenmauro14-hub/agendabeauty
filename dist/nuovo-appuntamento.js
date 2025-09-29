@@ -112,112 +112,6 @@ btnRubricaClose?.addEventListener("click", () => {
   }, { once: true });
 });
 
-function renderRubrica(clienti) {
-  const groups = {};
-  clienti.forEach(c => {
-    const L = (c.nome ? c.nome.charAt(0) : "#").toUpperCase();
-    (groups[L] = groups[L] || []).push(c);
-  });
-
-  const letters = Object.keys(groups).sort();
-  clientListPicker.innerHTML = "";
-
-  letters.forEach(L => {
-    const sec = document.createElement("li");
-    sec.textContent = L;
-    sec.className = "section";
-    sec.id = "picker-letter-" + L;
-    clientListPicker.appendChild(sec);
-
-    groups[L].forEach(c => {
-      const li = document.createElement("li");
-      li.className = "item";
-      li.textContent = c.nome || "(senza nome)";
-      li.onclick = () => {
-        clienteIdHidden.value = c.id;
-        const nome = c.nome || "(senza nome)";
-        if (pickerValue) pickerValue.textContent = nome;
-        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-        if (openRubricaField) openRubricaField.classList.remove("empty");
-        rubricaModal.style.display = "none";
-        updateNavState();
-      };
-      clientListPicker.appendChild(li);
-    });
-  });
-
-  letterNavPicker.innerHTML = "";
-  letters.forEach(L => {
-    const el = document.createElement("span");
-    el.textContent = L;
-    el.onclick = () => {
-      const target = document.getElementById("picker-letter-" + L);
-      target && target.scrollIntoView({ behavior: "smooth" });
-    };
-    letterNavPicker.appendChild(el);
-  });
-}
-
-searchCliente?.addEventListener("input", () => {
-  const f = searchCliente.value.toLowerCase();
-  if (letterNavPicker) letterNavPicker.style.display = f ? "none" : "flex";
-
-  clientListPicker.querySelectorAll("li.item").forEach(li => {
-    li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
-  });
-
-  clientListPicker.querySelectorAll("li.section").forEach(sec => {
-    let el = sec.nextElementSibling, visible = false;
-    while (el && !el.classList.contains("section")) {
-      if (el.style.display !== "none") { visible = true; break; }
-      el = el.nextElementSibling;
-    }
-    sec.style.display = visible ? "" : "none";
-  });
-});
-
-// ─── Aggiungi Cliente dentro la rubrica modale ─────────────────────
-const btnAddCliente        = document.getElementById("btnAddCliente");
-const addClienteModal      = document.getElementById("addClienteModal");
-const closeAddClienteModal = document.getElementById("closeAddClienteModal");
-const addClienteForm       = document.getElementById("addClienteForm");
-const newClienteNome       = document.getElementById("newClienteNome");
-const newClienteTelefono   = document.getElementById("newClienteTelefono");
-
-function showAddClienteModal() { if(addClienteModal) addClienteModal.style.display = "flex"; }
-function hideAddClienteModal() { if(addClienteModal) addClienteModal.style.display = "none"; }
-
-btnAddCliente?.addEventListener("click", () => {
-  addClienteForm?.reset();
-  showAddClienteModal();
-});
-closeAddClienteModal?.addEventListener("click", hideAddClienteModal);
-addClienteModal?.addEventListener("click", (e) => {
-  if (e.target === addClienteModal) hideAddClienteModal();
-});
-
-addClienteForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const nome = (newClienteNome?.value || "").trim();
-  const telefono = (newClienteTelefono?.value || "").trim();
-  if (!nome) { alert("Inserisci il nome del cliente"); return; }
-
-  try {
-    const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
-    if (clienteIdHidden) clienteIdHidden.value = docRef.id;
-    if (pickerValue) pickerValue.textContent = nome;
-    if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-    if (openRubricaField) openRubricaField.classList.remove("empty");
-
-    hideAddClienteModal();
-    rubricaModal.style.display = "none";
-    updateNavState();
-  } catch (err) {
-    console.error("[nuovo-appuntamento] errore aggiunta cliente:", err);
-    alert("Errore durante il salvataggio del cliente.");
-  }
-});
-
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
@@ -249,6 +143,9 @@ async function caricaTrattamenti(selectedMap = null) {
       const prezzoSel = selectedMap && selectedMap.has(t.nome)
                         ? Number(selectedMap.get(t.nome)) || 0
                         : prezzoListino;
+      const quantitaSel = selectedMap && selectedMap.has(t.nome)
+                        ? (selectedMap.get(t.nome+"_qta") || 1)
+                        : 1;
 
       row.innerHTML = `
         <label>
@@ -258,12 +155,24 @@ async function caricaTrattamenti(selectedMap = null) {
           <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
           ${t.nome}
         </label>
-        <input type="number" class="prezzo-input"
-               placeholder="€${prezzoListino}"
-               value="${prezzoSel}"
-               min="0" step="0.01"
-               inputmode="decimal">
+        <div class="trattamento-extra" style="display:${checked ? "flex" : "none"}; gap:8px; align-items:center;">
+          <input type="number" class="prezzo-input"
+                 placeholder="€${prezzoListino}"
+                 value="${prezzoSel}"
+                 min="0" step="0.01"
+                 inputmode="decimal">
+          <input type="number" class="quantita-input"
+                 value="${quantitaSel}" min="1" step="1"
+                 style="width:60px;">
+        </div>
       `;
+
+      const cb = row.querySelector(".trattamento-checkbox");
+      cb.addEventListener("change", (e) => {
+        const extra = row.querySelector(".trattamento-extra");
+        extra.style.display = e.target.checked ? "flex" : "none";
+      });
+
       wrapperTratt.appendChild(row);
     }
   } catch (e) {
@@ -298,6 +207,7 @@ btnBackToStep2?.addEventListener("click", () => {
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const dataISO   = inpData.value;
+
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(dataISO && inpOraHH.value !== "" && inpOraMM.value !== "")) {
     return alert("Inserisci data e ora");
@@ -310,7 +220,20 @@ btnSalva?.addEventListener("click", async () => {
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
-  // controlla duplicati
+  const trattamenti = selected.map(cb => {
+    const row = cb.closest(".trattamento-row");
+    const prezzoInput = row.querySelector(".prezzo-input");
+    const quantitaInput = row.querySelector(".quantita-input");
+    const prezzoVal = parseFloat(prezzoInput.value);
+    const quantitaVal = parseInt(quantitaInput.value, 10) || 1;
+    return {
+      nome: cb.dataset.nome,
+      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
+      icona: cb.dataset.icona || trovaIcona(cb.dataset.nome),
+      quantita: quantitaVal
+    };
+  });
+
   const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
   const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const esiste = appuntamenti.some(app => {
@@ -324,17 +247,6 @@ btnSalva?.addEventListener("click", async () => {
     alert(`Hai già un appuntamento alle ${ora} del ${dataISO}`);
     return;
   }
-
-  const trattamenti = selected.map(cb => {
-    const row = cb.closest(".trattamento-row");
-    const prezzoInput = row.querySelector(".prezzo-input");
-    const prezzoVal = parseFloat(prezzoInput.value);
-    return {
-      nome: cb.dataset.nome,
-      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
-      icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
-    };
-  });
 
   const dateMidnight = new Date(dataISO + "T00:00:00");
   const dataTs = Timestamp.fromDate(dateMidnight);
@@ -387,7 +299,6 @@ btnSalva?.addEventListener("click", async () => {
       if (apptDoc.exists()) {
         apptData = apptDoc.data();
 
-        // Data
         let iso = "";
         if (apptData.data && typeof apptData.data.toDate === "function") {
           const d = apptData.data.toDate();
@@ -397,13 +308,17 @@ btnSalva?.addEventListener("click", async () => {
         }
         if (inpData) inpData.value = iso;
 
-        // Ora
         if (apptData.ora) {
           const [hh, mm] = apptData.ora.split(":");
           if (inpOraHH) inpOraHH.value = hh;
-          if (inp) ? apptData.trattamenti : [])
-            .map(t => [t.nome, Number(t.prezzo) || 0])
-        );
+          if (inpOraMM) inpOraMM.value = mm;
+        }
+
+        const selectedMap = new Map();
+        (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : []).forEach(t => {
+          selectedMap.set(t.nome, Number(t.prezzo) || 0);
+          selectedMap.set(t.nome+"_qta", t.quantita || 1);
+        });
         await caricaTrattamenti(selectedMap);
 
       } else {
@@ -417,30 +332,9 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
-  // Preimposta cliente se passato da URL
-  if (!editId && presetClienteId) {
-    try {
-      const snap = await getDoc(doc(db, "clienti", presetClienteId));
-      if (snap.exists()) {
-        const c = snap.data();
-        clienteIdHidden.value = presetClienteId;
-        if (pickerValue) pickerValue.textContent = c.nome || "(senza nome)";
-        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-        if (openRubricaField) openRubricaField.classList.remove("empty");
-      }
-    } catch {}
-  }
-
-  // Preimposta data se passata da URL
   if (!editId && presetDataISO && inpData && !inpData.value) {
     inpData.value = presetDataISO;
   }
 
   updateNavState();
-
-  // Tasto ANNULLA
-  btnCancel?.addEventListener("click", () => {
-    if (history.length > 1) history.back();
-    else location.href = "calendario.html";
-  });
 })();
