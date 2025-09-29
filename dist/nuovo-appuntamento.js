@@ -1,5 +1,3 @@
-// nuovo-appuntamento.js
-
 // ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
 import { app } from "./auth.js";
 import {
@@ -93,6 +91,53 @@ async function apriRubrica() {
   if (letterNavPicker) letterNavPicker.style.display = "flex";
   rubricaModal.style.display = "flex";
 }
+
+function renderRubrica(clienti) {
+  const groups = {};
+  clienti.forEach(c => {
+    const L = (c.nome ? c.nome.charAt(0) : "#").toUpperCase();
+    (groups[L] = groups[L] || []).push(c);
+  });
+  const letters = Object.keys(groups).sort();
+
+  clientListPicker.innerHTML = "";
+  letters.forEach(L => {
+    const sec = document.createElement("li");
+    sec.textContent = L;
+    sec.className = "section";
+    sec.id = "picker-letter-" + L;
+    clientListPicker.appendChild(sec);
+
+    groups[L].forEach(c => {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.textContent = c.nome || "(senza nome)";
+      li.onclick = () => {
+        clienteIdHidden.value = c.id;
+        const nome = c.nome || "(senza nome)";
+        clienteSelezionato.textContent = nome;
+        if (pickerValue) pickerValue.textContent = nome;
+        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+        if (openRubricaField) openRubricaField.classList.remove("empty");
+        rubricaModal.style.display = "none";
+        updateNavState();
+      };
+      clientListPicker.appendChild(li);
+    });
+  });
+
+  letterNavPicker.innerHTML = "";
+  letters.forEach(L => {
+    const el = document.createElement("span");
+    el.textContent = L;
+    el.onclick = () => {
+      const target = document.getElementById("picker-letter-" + L);
+      target && target.scrollIntoView({ behavior: "smooth" });
+    };
+    letterNavPicker.appendChild(el);
+  });
+}
+
 openRubrica?.addEventListener("click", apriRubrica);
 if (openRubricaField) {
   openRubricaField.addEventListener("click", apriRubrica);
