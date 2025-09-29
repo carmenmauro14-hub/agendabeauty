@@ -39,7 +39,7 @@ const btnCancel          = document.getElementById("cancelWizard");
 
 const inpData            = document.getElementById("dataAppuntamento");
 const inpOraHH           = document.getElementById("oraAppuntamentoHH");
-const inpOraMM            = document.getElementById("oraAppuntamentoMM");
+const inpOraMM           = document.getElementById("oraAppuntamentoMM");
 const wrapperTratt       = document.getElementById("trattamentiWrapper");
 
 // Picker cliente (step 1)
@@ -110,7 +110,6 @@ rubricaModal?.addEventListener("click", (e) => {
   if (e.target === rubricaModal) rubricaModal.style.display = "none";
 });
 btnRubricaClose?.addEventListener("click", () => {
-  // piccola animazione in uscita
   if (!rubricaPanel) return (rubricaModal.style.display = "none");
   rubricaPanel.classList.add("swipe-out-down");
   rubricaPanel.addEventListener("transitionend", () => {
@@ -120,8 +119,8 @@ btnRubricaClose?.addEventListener("click", () => {
 });
 
 // --- Drag-to-close anche per la Rubrica nello step clienti ---
-const rubricaHeaderEl  = document.querySelector('#rubricaModal .rubrica-header'); // zona con la maniglia
-const rubricaPanelEl   = rubricaPanel; // già definito sopra (".rubrica-container")
+const rubricaHeaderEl  = document.querySelector('#rubricaModal .rubrica-header');
+const rubricaPanelEl   = rubricaPanel;
 
 function chiudiRubricaConAnimazione() {
   if (!rubricaPanelEl) { rubricaModal.style.display = "none"; return; }
@@ -129,13 +128,10 @@ function chiudiRubricaConAnimazione() {
   rubricaPanelEl.addEventListener('transitionend', () => {
     rubricaPanelEl.classList.remove('swipe-out-down');
     rubricaModal.style.display = 'none';
-    rubricaPanelEl.style.transform = 'translateY(0)'; // reset per apertura successiva
+    rubricaPanelEl.style.transform = 'translateY(0)';
   }, { once:true });
 }
-
-// attiva il drag verticale sulla maniglia della rubrica
 if (rubricaHeaderEl && rubricaPanelEl) {
-  // firma: abilitaSwipeVerticale(handleEl, panelEl, onClose, soloVersoGiu=true, sogliaPx)
   abilitaSwipeVerticale(rubricaHeaderEl, rubricaPanelEl, chiudiRubricaConAnimazione, true, 80);
 }
 
@@ -267,8 +263,8 @@ btnBackToStep1?.addEventListener("click", () => {
 });
 btnToStep3?.addEventListener("click", () => {
   if (!(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "")) {
-  return alert("Inserisci data e ora");
-}
+    return alert("Inserisci data e ora");
+  }
   step2.style.display = "none";
   step3.style.display = "block";
 });
@@ -280,18 +276,20 @@ btnBackToStep2?.addEventListener("click", () => {
 // ─── Salvataggio appuntamento ──────────────────────────────────────
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
-  const dataISO   = inpData.value;            // "YYYY-MM-DD"
+  const dataISO   = inpData.value;
   const hh = String(Math.min(parseInt(inpOraHH.value || "0", 10), 23)).padStart(2, "0");
   const mm = String(Math.min(parseInt(inpOraMM.value || "0", 10), 59)).padStart(2, "0");
   const ora = `${hh}:${mm}`;
 
   if (!clienteId) return alert("Seleziona un cliente");
-  if (!(dataISO && ora)) return alert("Inserisci data e ora");
+  if (!(dataISO && inpOraHH.value !== "" && inpOraMM.value !== "")) {
+    return alert("Inserisci data e ora");
+  }
 
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
-  // 🔍 Controlla se esiste già un appuntamento con stessa data e ora
+  // 🔍 Controlla duplicati
   const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
   const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -299,15 +297,14 @@ btnSalva?.addEventListener("click", async () => {
     return (
       app.dataISO === dataISO &&
       app.ora === ora &&
-      (!editId || app.id !== editId) // in modifica esclude se stesso
+      (!editId || app.id !== editId)
     );
   });
-
   if (esiste) {
     alert(`Hai già un appuntamento alle ${ora} del ${dataISO}`);
-    return; // blocca salvataggio
+    return;
   }
-  
+
   const trattamenti = selected.map(cb => {
     const row = cb.closest(".trattamento-row");
     const prezzoInput = row.querySelector(".prezzo-input");
@@ -319,14 +316,12 @@ btnSalva?.addEventListener("click", async () => {
     };
   });
 
-  // Timestamp giorno (mezzanotte locale)
   const dateMidnight = new Date(dataISO + "T00:00:00");
   const dataTs = Timestamp.fromDate(dateMidnight);
 
-  // Timestamp completo (data+ora) opzionale
-  const [hh, mm] = ora.split(":").map(n => parseInt(n,10));
+  const [hhNum, mmNum] = ora.split(":").map(n => parseInt(n,10));
   const dateWithTime = new Date(dateMidnight);
-  dateWithTime.setHours(hh || 0, mm || 0, 0, 0);
+  dateWithTime.setHours(hhNum || 0, mmNum || 0, 0, 0);
   const dateTime = Timestamp.fromDate(dateWithTime);
 
   try {
@@ -360,15 +355,12 @@ btnSalva?.addEventListener("click", async () => {
 
 // ─── Avvio ─────────────────────────────────────────────────────────
 (async function init() {
-  // Titolo base
   setPageTitle(editId ? "Modifica Appuntamento" : "Nuovo Appuntamento");
 
-  // Precarica trattamenti (se in edit, poi aggiorno con i selezionati)
   if (!editId) {
     await caricaTrattamenti();
   }
 
-  // Modalità MODIFICA: carica appuntamento e precompila tutto
   if (editId) {
     try {
       const apptDoc = await getDoc(doc(db, "appuntamenti", editId));
@@ -379,7 +371,6 @@ btnSalva?.addEventListener("click", async () => {
       } else {
         apptData = apptDoc.data();
 
-        // Data (da Timestamp o stringa fallback)
         let iso = "";
         if (apptData.data && typeof apptData.data.toDate === "function") {
           const d = apptData.data.toDate();
@@ -394,12 +385,11 @@ btnSalva?.addEventListener("click", async () => {
         }
         if (inpData) inpData.value = iso || "";
         if (apptData.ora) {
-        const [hh, mm] = apptData.ora.split(":");
-        if (inpOraHH) inpOraHH.value = hh;
-        if (inpOraMM) inpOraMM.value = mm;
+          const [hh, mm] = apptData.ora.split(":");
+          if (inpOraHH) inpOraHH.value = hh;
+          if (inpOraMM) inpOraMM.value = mm;
         }
 
-        // Client preselect (da appuntamento)
         if (apptData.clienteId) {
           clienteIdHidden.value = apptData.clienteId;
           try {
@@ -407,67 +397,4 @@ btnSalva?.addEventListener("click", async () => {
             const nomeCli = cliDoc.exists() ? (cliDoc.data().nome || "(senza nome)") : "(senza nome)";
             if (pickerValue) pickerValue.textContent = nomeCli;
             if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-            if (openRubricaField) openRubricaField.classList.remove("empty");
-          } catch {}
-        }
-
-        // Trattamenti preselezionati
-        const selectedMap = new Map(
-          (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
-            .map(t => [t.nome, Number(t.prezzo) || 0])
-        );
-        await caricaTrattamenti(selectedMap);
-      }
-    } catch (e) {
-      console.error("Errore caricamento appuntamento:", e);
-      alert("Errore nel caricamento. Procedo come 'Nuovo'.");
-      setPageTitle("Nuovo Appuntamento");
-      await caricaTrattamenti();
-    }
-  }
-
-  // Se arrivo con ?cliente=... → preimposta cliente (SOLO in modalità NUOVO)
-  if (!editId && presetClienteId) {
-    try {
-      const snap = await getDoc(doc(db, "clienti", presetClienteId));
-      if (snap.exists()) {
-        const c = snap.data();
-        const nome = c.nome || "(senza nome)";
-        clienteIdHidden.value = presetClienteId;
-        if (pickerValue) pickerValue.textContent = nome;
-        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-        if (openRubricaField) openRubricaField.classList.remove("empty");
-      } else {
-        // id non valido → stato vuoto
-        clienteIdHidden.value = "";
-      }
-    } catch {
-      clienteIdHidden.value = "";
-    }
-  }
-
-  // Se NON c’è ?cliente=... (apertura da “+”) → stato vuoto garantito
-  if (!editId && !presetClienteId) {
-    clienteIdHidden.value = "";
-    if (pickerValue) pickerValue.textContent = "";
-    if (pickerPlaceholder) pickerPlaceholder.style.display = "";
-    if (openRubricaField) openRubricaField.classList.add("empty");
-  }
-
-  // Preimposta data se passata in URL (solo Nuovo)
-  if (!editId && presetDataISO && inpData && !inpData.value) {
-    inpData.value = presetDataISO;
-  }
-
-  updateNavState();
-
-  // Tasto ANNULLA
-  btnCancel?.addEventListener("click", () => {
-    if (history.length > 1) {
-      history.back();
-    } else {
-      location.href = "calendario.html";
-    }
-  });
-  btnRubricaClose?.addEventListener("click", chiudiRubricaConAnimazione);
-})();
+            if (openRubricaField) openRubricaField
