@@ -71,17 +71,21 @@ function updateNavState() {
 
 // ─── Overlay chiusura ─────────────────────────────────────────────
 function chiudiSheet() {
-  const doClose = () => document.getElementById("cancelWizard")?.click();
-  if (!sheetEl) return doClose();
+  if (!sheetEl) {
+    btnCancel?.click();
+    return;
+  }
   sheetEl.classList.add("swipe-out-down");
-  sheetEl.addEventListener("transitionend", doClose, { once: true });
+  sheetEl.addEventListener("transitionend", () => {
+    btnCancel?.click();
+  }, { once: true });
 }
 sheetClose?.addEventListener("click", chiudiSheet);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica (apertura e rendering) ────────────────────────────────
+// ─── Rubrica ───────────────────────────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -103,23 +107,16 @@ if (openRubricaField) {
 rubricaModal?.addEventListener("click", (e) => {
   if (e.target === rubricaModal) rubricaModal.style.display = "none";
 });
+btnRubricaClose?.addEventListener("click", () => {
+  if (!rubricaPanel) return (rubricaModal.style.display = "none");
+  rubricaPanel.classList.add("swipe-out-down");
+  rubricaPanel.addEventListener("transitionend", () => {
+    rubricaPanel.classList.remove("swipe-out-down");
+    rubricaModal.style.display = "none";
+    rubricaPanel.style.transform = "translateY(0)";
+  }, { once: true });
+});
 
-// ✅ FIX: chiusura rubrica con reset corretto
-function chiudiRubricaConAnimazione() {
-  if (!rubricaPanel) { 
-    rubricaModal.style.display = "none"; 
-    return; 
-  }
-  rubricaPanel.classList.add('swipe-out-down');
-  rubricaPanel.addEventListener('transitionend', () => {
-    rubricaPanel.classList.remove('swipe-out-down');
-    rubricaModal.style.display = 'none';
-    rubricaPanel.style.transform = 'translateY(0)'; // reset per apertura successiva
-  }, { once:true });
-}
-btnRubricaClose?.addEventListener("click", chiudiRubricaConAnimazione);
-
-// ─── Render rubrica per picker ─────────────────────────────────────
 function renderRubrica(clienti) {
   const groups = {};
   clienti.forEach(c => {
@@ -165,23 +162,6 @@ function renderRubrica(clienti) {
     letterNavPicker.appendChild(el);
   });
 }
-
-searchCliente?.addEventListener("input", () => {
-  const f = searchCliente.value.toLowerCase();
-  if (letterNavPicker) letterNavPicker.style.display = f ? "none" : "flex";
-  clientListPicker.querySelectorAll("li.item").forEach(li => {
-    li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
-  });
-  clientListPicker.querySelectorAll("li.section").forEach(sec => {
-    let el = sec.nextElementSibling;
-    let visible = false;
-    while (el && !el.classList.contains("section")) {
-      if (el.style.display !== "none") { visible = true; break; }
-      el = el.nextElementSibling;
-    }
-    sec.style.display = visible ? "" : "none";
-  });
-});
 
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
@@ -276,6 +256,7 @@ btnSalva?.addEventListener("click", async () => {
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
 
+  // 🔍 Controlla duplicati
   const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
   const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const esiste = appuntamenti.some(app => {
@@ -352,6 +333,7 @@ btnSalva?.addEventListener("click", async () => {
       if (apptDoc.exists()) {
         apptData = apptDoc.data();
 
+        // Data
         let iso = "";
         if (apptData.data && typeof apptData.data.toDate === "function") {
           const d = apptData.data.toDate();
@@ -361,12 +343,14 @@ btnSalva?.addEventListener("click", async () => {
         }
         if (inpData) inpData.value = iso;
 
+        // Ora
         if (apptData.ora) {
           const [hh, mm] = apptData.ora.split(":");
           if (inpOraHH) inpOraHH.value = hh;
           if (inpOraMM) inpOraMM.value = mm;
         }
 
+        // Trattamenti preselezionati
         const selectedMap = new Map(
           (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
             .map(t => [t.nome, Number(t.prezzo) || 0])
@@ -384,9 +368,19 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
+  // Preimpostazioni se URL ?cliente= o ?data=
   if (!editId && presetDataISO && inpData && !inpData.value) {
     inpData.value = presetDataISO;
   }
 
   updateNavState();
+
+  // Tasto ANNULLA → torna indietro o al calendario
+  btnCancel?.addEventListener("click", () => {
+    if (history.length > 1) {
+      history.back();
+    } else {
+      location.href = "calendario.html";
+    }
+  });
 })();
