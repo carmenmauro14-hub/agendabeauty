@@ -1,6 +1,6 @@
 // nuovo-appuntamento.js
 
-// ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
+// ─── Firebase: riuso app da auth.js ───────────────
 import { app } from "./auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
@@ -9,19 +9,19 @@ import { abilitaSwipeVerticale } from "./swipe.js";
 
 const db = getFirestore(app);
 
-// ─── Parametri URL ─────────────────────────────────────────────────
+// ─── Parametri URL ────────────────────────────────
 const urlParams        = new URLSearchParams(location.search);
 const editId           = urlParams.get("edit");
 const presetClienteId  = urlParams.get("cliente");
 const presetDataISO    = urlParams.get("data");
 
-// ─── Utils ─────────────────────────────────────────────────────────
+// ─── Utils ───────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
   document.title = text;
 }
 
-// ─── Riferimenti DOM ───────────────────────────────────────────────
+// ─── Riferimenti DOM ─────────────────────────────
 const wizardTitle        = document.getElementById("wizardTitle");
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
@@ -58,18 +58,18 @@ const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
 
-// ─── Stato ─────────────────────────────────────────────────────────
+// ─── Stato ───────────────────────────────────────
 let apptData     = null;
 let clientiCache = null;
 
-// ─── Abilitazioni UI ───────────────────────────────────────────────
+// ─── Abilitazioni UI ─────────────────────────────
 function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
 }
 [inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
 
-// ─── Overlay chiusura ─────────────────────────────────────────────
+// ─── Overlay chiusura ────────────────────────────
 function chiudiSheet() {
   const doClose = () => document.getElementById("cancelWizard")?.click();
   if (!sheetEl) return doClose();
@@ -81,7 +81,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiShee
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica (apertura e rendering) ────────────────────────────────
+// ─── Rubrica ─────────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -103,20 +103,87 @@ if (openRubricaField) {
 rubricaModal?.addEventListener("click", (e) => {
   if (e.target === rubricaModal) rubricaModal.style.display = "none";
 });
-btnRubricaClose?.addEventListener("click", () => {
-  if (!rubricaPanel) return (rubricaModal.style.display = "none");
-  rubricaPanel.classList.add("swipe-out-down");
-  rubricaPanel.addEventListener("transitionend", () => {
-    rubricaPanel.classList.remove("swipe-out-down");
-    rubricaModal.style.display = "none";
-  }, { once: true });
+btnRubricaClose?.addEventListener("click", chiudiRubricaConAnimazione);
+
+// Funzione ripristinata
+function renderRubrica(clienti) {
+  const groups = {};
+  clienti.forEach(c => {
+    const L = (c.nome ? c.nome.charAt(0) : "#").toUpperCase();
+    (groups[L] = groups[L] || []).push(c);
+  });
+  const letters = Object.keys(groups).sort();
+
+  clientListPicker.innerHTML = "";
+  letters.forEach(L => {
+    const sec = document.createElement("li");
+    sec.textContent = L;
+    sec.className = "section";
+    sec.id = "picker-letter-" + L;
+    clientListPicker.appendChild(sec);
+
+    groups[L].forEach(c => {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.textContent = c.nome || "(senza nome)";
+      li.onclick = () => {
+        clienteIdHidden.value = c.id;
+        const nome = c.nome || "(senza nome)";
+        clienteSelezionato.textContent = nome;
+        if (pickerValue) pickerValue.textContent = nome;
+        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+        if (openRubricaField) openRubricaField.classList.remove("empty");
+        rubricaModal.style.display = "none";
+        updateNavState();
+      };
+      clientListPicker.appendChild(li);
+    });
+  });
+
+  letterNavPicker.innerHTML = "";
+  letters.forEach(L => {
+    const el = document.createElement("span");
+    el.textContent = L;
+    el.onclick = () => {
+      const target = document.getElementById("picker-letter-" + L);
+      target && target.scrollIntoView({ behavior: "smooth" });
+    };
+    letterNavPicker.appendChild(el);
+  });
+}
+
+function chiudiRubricaConAnimazione() {
+  if (!rubricaPanel) { rubricaModal.style.display = "none"; return; }
+  rubricaPanel.classList.add('swipe-out-down');
+  rubricaPanel.addEventListener('transitionend', () => {
+    rubricaPanel.classList.remove('swipe-out-down');
+    rubricaModal.style.display = 'none';
+    rubricaPanel.style.transform = 'translateY(0)';
+  }, { once:true });
+}
+
+// Ricerca clienti
+searchCliente?.addEventListener("input", () => {
+  const f = searchCliente.value.toLowerCase();
+  if (letterNavPicker) letterNavPicker.style.display = f ? "none" : "flex";
+  clientListPicker.querySelectorAll("li.item").forEach(li => {
+    li.style.display = li.textContent.toLowerCase().includes(f) ? "" : "none";
+  });
+  clientListPicker.querySelectorAll("li.section").forEach(sec => {
+    let el = sec.nextElementSibling;
+    let visible = false;
+    while (el && !el.classList.contains("section")) {
+      if (el.style.display !== "none") { visible = true; break; }
+      el = el.nextElementSibling;
+    }
+    sec.style.display = visible ? "" : "none";
+  });
 });
 
-// ─── Trattamenti ───────────────────────────────────────────────────
+// ─── Trattamenti ──────────────────────────────────
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
-  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia",
-  "airbrush_sopracciglia", "laser"
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia", "laser"
 ];
 function trovaIcona(nome) {
   const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
@@ -143,9 +210,6 @@ async function caricaTrattamenti(selectedMap = null) {
       const prezzoSel = selectedMap && selectedMap.has(t.nome)
                         ? Number(selectedMap.get(t.nome)) || 0
                         : prezzoListino;
-      const quantitaSel = selectedMap && selectedMap.has(t.nome)
-                        ? (selectedMap.get(t.nome+"_qta") || 1)
-                        : 1;
 
       row.innerHTML = `
         <label>
@@ -155,24 +219,12 @@ async function caricaTrattamenti(selectedMap = null) {
           <img src="${icona}" alt="${t.nome}" class="icona-trattamento">
           ${t.nome}
         </label>
-        <div class="trattamento-extra" style="display:${checked ? "flex" : "none"}; gap:8px; align-items:center;">
-          <input type="number" class="prezzo-input"
-                 placeholder="€${prezzoListino}"
-                 value="${prezzoSel}"
-                 min="0" step="0.01"
-                 inputmode="decimal">
-          <input type="number" class="quantita-input"
-                 value="${quantitaSel}" min="1" step="1"
-                 style="width:60px;">
-        </div>
+        <input type="number" class="prezzo-input"
+               placeholder="€${prezzoListino}"
+               value="${prezzoSel}"
+               min="0" step="0.01"
+               inputmode="decimal">
       `;
-
-      const cb = row.querySelector(".trattamento-checkbox");
-      cb.addEventListener("change", (e) => {
-        const extra = row.querySelector(".trattamento-extra");
-        extra.style.display = e.target.checked ? "flex" : "none";
-      });
-
       wrapperTratt.appendChild(row);
     }
   } catch (e) {
@@ -181,7 +233,7 @@ async function caricaTrattamenti(selectedMap = null) {
   }
 }
 
-// ─── Navigazione step ──────────────────────────────────────────────
+// ─── Navigazione step ─────────────────────────────
 btnToStep2?.addEventListener("click", () => {
   if (!clienteIdHidden.value) return alert("Seleziona un cliente");
   step1.style.display = "none";
@@ -203,11 +255,10 @@ btnBackToStep2?.addEventListener("click", () => {
   step2.style.display = "block";
 });
 
-// ─── Salvataggio appuntamento ──────────────────────────────────────
+// ─── Salvataggio appuntamento ─────────────────────
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const dataISO   = inpData.value;
-
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(dataISO && inpOraHH.value !== "" && inpOraMM.value !== "")) {
     return alert("Inserisci data e ora");
@@ -219,20 +270,6 @@ btnSalva?.addEventListener("click", async () => {
 
   const selected = [...document.querySelectorAll(".trattamento-checkbox:checked")];
   if (!selected.length) return alert("Seleziona almeno un trattamento");
-
-  const trattamenti = selected.map(cb => {
-    const row = cb.closest(".trattamento-row");
-    const prezzoInput = row.querySelector(".prezzo-input");
-    const quantitaInput = row.querySelector(".quantita-input");
-    const prezzoVal = parseFloat(prezzoInput.value);
-    const quantitaVal = parseInt(quantitaInput.value, 10) || 1;
-    return {
-      nome: cb.dataset.nome,
-      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
-      icona: cb.dataset.icona || trovaIcona(cb.dataset.nome),
-      quantita: quantitaVal
-    };
-  });
 
   const appuntamentiSnap = await getDocs(collection(db, "appuntamenti"));
   const appuntamenti = appuntamentiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -247,6 +284,17 @@ btnSalva?.addEventListener("click", async () => {
     alert(`Hai già un appuntamento alle ${ora} del ${dataISO}`);
     return;
   }
+
+  const trattamenti = selected.map(cb => {
+    const row = cb.closest(".trattamento-row");
+    const prezzoInput = row.querySelector(".prezzo-input");
+    const prezzoVal = parseFloat(prezzoInput.value);
+    return {
+      nome: cb.dataset.nome,
+      prezzo: Number.isFinite(prezzoVal) ? prezzoVal : 0,
+      icona: cb.dataset.icona || trovaIcona(cb.dataset.nome)
+    };
+  });
 
   const dateMidnight = new Date(dataISO + "T00:00:00");
   const dataTs = Timestamp.fromDate(dateMidnight);
@@ -285,10 +333,9 @@ btnSalva?.addEventListener("click", async () => {
   }
 });
 
-// ─── Avvio ─────────────────────────────────────────────────────────
+// ─── Avvio ───────────────────────────────────────
 (async function init() {
   setPageTitle(editId ? "Modifica Appuntamento" : "Nuovo Appuntamento");
-
   if (!editId) {
     await caricaTrattamenti();
   }
@@ -314,11 +361,10 @@ btnSalva?.addEventListener("click", async () => {
           if (inpOraMM) inpOraMM.value = mm;
         }
 
-        const selectedMap = new Map();
-        (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : []).forEach(t => {
-          selectedMap.set(t.nome, Number(t.prezzo) || 0);
-          selectedMap.set(t.nome+"_qta", t.quantita || 1);
-        });
+        const selectedMap = new Map(
+          (Array.isArray(apptData.trattamenti) ? apptData.trattamenti : [])
+            .map(t => [t.nome, Number(t.prezzo) || 0])
+        );
         await caricaTrattamenti(selectedMap);
 
       } else {
