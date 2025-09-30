@@ -30,7 +30,7 @@
           <h2>1. Seleziona cliente</h2>
           <input type="hidden" id="clienteId" />
           <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
-              aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
+               aria-haspopup="dialog" aria-controls="rubricaModal">
             <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
             <span id="pickerValue" class="value" aria-live="polite"></span>
           </div>
@@ -89,10 +89,10 @@
       </div>
 
       <!-- 🔽 Form aggiunta rapida cliente -->
-      <div id="addClienteWizardForm" style="display:none; padding:16px;">
-        <input id="addClienteNome" type="text" placeholder="Nome cliente…" style="margin-bottom:8px; width:100%; padding:10px; font-size:16px;">
-        <input id="addClienteTel" type="tel" placeholder="Telefono…" style="margin-bottom:8px; width:100%; padding:10px; font-size:16px;">
-        <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <div id="addClienteWizardForm">
+        <input id="addClienteNome" type="text" placeholder="Nome cliente…">
+        <input id="addClienteTel" type="tel" placeholder="Telefono…">
+        <div class="actions">
           <button id="annullaAddCliente" type="button" class="btn-secondary">Annulla</button>
           <button id="salvaAddCliente" type="button" class="btn-primary">Salva</button>
         </div>
