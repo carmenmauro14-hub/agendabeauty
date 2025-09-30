@@ -1,6 +1,6 @@
 // nuovo-appuntamento.js
 
-// ─── Firebase: riuso app da auth.js ───────────────
+// ─── Firebase: riuso dell'app inizializzata in auth.js ────────────
 import { app } from "./auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, getDoc, doc, Timestamp
@@ -9,19 +9,19 @@ import { abilitaSwipeVerticale } from "./swipe.js";
 
 const db = getFirestore(app);
 
-// ─── Parametri URL ────────────────────────────────
+// ─── Parametri URL ─────────────────────────────────────────────────
 const urlParams        = new URLSearchParams(location.search);
 const editId           = urlParams.get("edit");
 const presetClienteId  = urlParams.get("cliente");
 const presetDataISO    = urlParams.get("data");
 
-// ─── Utils ───────────────────────────────────────
+// ─── Utils ─────────────────────────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
   document.title = text;
 }
 
-// ─── Riferimenti DOM ─────────────────────────────
+// ─── Riferimenti DOM ───────────────────────────────────────────────
 const wizardTitle        = document.getElementById("wizardTitle");
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
@@ -58,18 +58,18 @@ const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
 
-// ─── Stato ───────────────────────────────────────
+// ─── Stato ─────────────────────────────────────────────────────────
 let apptData     = null;
 let clientiCache = null;
 
-// ─── Abilitazioni UI ─────────────────────────────
+// ─── Abilitazioni UI ───────────────────────────────────────────────
 function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
 }
 [inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
 
-// ─── Overlay chiusura ────────────────────────────
+// ─── Overlay chiusura ─────────────────────────────────────────────
 function chiudiSheet() {
   const doClose = () => document.getElementById("cancelWizard")?.click();
   if (!sheetEl) return doClose();
@@ -81,7 +81,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiShee
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica ─────────────────────────────────────
+// ─── Rubrica (apertura e rendering) ────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -103,9 +103,23 @@ if (openRubricaField) {
 rubricaModal?.addEventListener("click", (e) => {
   if (e.target === rubricaModal) rubricaModal.style.display = "none";
 });
+
+// ✅ FIX: chiusura rubrica con reset corretto
+function chiudiRubricaConAnimazione() {
+  if (!rubricaPanel) { 
+    rubricaModal.style.display = "none"; 
+    return; 
+  }
+  rubricaPanel.classList.add('swipe-out-down');
+  rubricaPanel.addEventListener('transitionend', () => {
+    rubricaPanel.classList.remove('swipe-out-down');
+    rubricaModal.style.display = 'none';
+    rubricaPanel.style.transform = 'translateY(0)'; // reset per apertura successiva
+  }, { once:true });
+}
 btnRubricaClose?.addEventListener("click", chiudiRubricaConAnimazione);
 
-// Funzione ripristinata
+// ─── Render rubrica per picker ─────────────────────────────────────
 function renderRubrica(clienti) {
   const groups = {};
   clienti.forEach(c => {
@@ -152,17 +166,6 @@ function renderRubrica(clienti) {
   });
 }
 
-function chiudiRubricaConAnimazione() {
-  if (!rubricaPanel) { rubricaModal.style.display = "none"; return; }
-  rubricaPanel.classList.add('swipe-out-down');
-  rubricaPanel.addEventListener('transitionend', () => {
-    rubricaPanel.classList.remove('swipe-out-down');
-    rubricaModal.style.display = 'none';
-    rubricaPanel.style.transform = 'translateY(0)';
-  }, { once:true });
-}
-
-// Ricerca clienti
 searchCliente?.addEventListener("input", () => {
   const f = searchCliente.value.toLowerCase();
   if (letterNavPicker) letterNavPicker.style.display = f ? "none" : "flex";
@@ -180,10 +183,11 @@ searchCliente?.addEventListener("input", () => {
   });
 });
 
-// ─── Trattamenti ──────────────────────────────────
+// ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
   "makeup_sposa", "makeup", "microblading", "extension_ciglia",
-  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia", "airbrush_sopracciglia", "laser"
+  "laminazione_ciglia", "filo_arabo", "architettura_sopracciglia",
+  "airbrush_sopracciglia", "laser"
 ];
 function trovaIcona(nome) {
   const norm = (nome || "").toLowerCase().replace(/\s+/g, "_");
@@ -233,7 +237,7 @@ async function caricaTrattamenti(selectedMap = null) {
   }
 }
 
-// ─── Navigazione step ─────────────────────────────
+// ─── Navigazione step ──────────────────────────────────────────────
 btnToStep2?.addEventListener("click", () => {
   if (!clienteIdHidden.value) return alert("Seleziona un cliente");
   step1.style.display = "none";
@@ -255,10 +259,11 @@ btnBackToStep2?.addEventListener("click", () => {
   step2.style.display = "block";
 });
 
-// ─── Salvataggio appuntamento ─────────────────────
+// ─── Salvataggio appuntamento ──────────────────────────────────────
 btnSalva?.addEventListener("click", async () => {
   const clienteId = clienteIdHidden.value;
   const dataISO   = inpData.value;
+
   if (!clienteId) return alert("Seleziona un cliente");
   if (!(dataISO && inpOraHH.value !== "" && inpOraMM.value !== "")) {
     return alert("Inserisci data e ora");
@@ -333,9 +338,10 @@ btnSalva?.addEventListener("click", async () => {
   }
 });
 
-// ─── Avvio ───────────────────────────────────────
+// ─── Avvio ─────────────────────────────────────────────────────────
 (async function init() {
   setPageTitle(editId ? "Modifica Appuntamento" : "Nuovo Appuntamento");
+
   if (!editId) {
     await caricaTrattamenti();
   }
