@@ -383,4 +383,56 @@ btnSalva?.addEventListener("click", async () => {
       location.href = "calendario.html";
     }
   });
+  // ─── Aggiunta rapida cliente dal wizard ──────────────────────────────
+const btnOpenAddCliente = document.getElementById("openAddClienteWizard");
+const formAddCliente    = document.getElementById("addClienteWizardForm");
+const btnSalvaCliente   = document.getElementById("salvaAddCliente");
+const btnAnnullaCliente = document.getElementById("annullaAddCliente");
+const inpNomeCliente    = document.getElementById("addClienteNome");
+const inpTelCliente     = document.getElementById("addClienteTel");
+
+btnOpenAddCliente?.addEventListener("click", () => {
+  formAddCliente.style.display = "block";
+  inpNomeCliente.focus();
+});
+
+btnAnnullaCliente?.addEventListener("click", () => {
+  formAddCliente.style.display = "none";
+  inpNomeCliente.value = "";
+  inpTelCliente.value = "";
+});
+
+btnSalvaCliente?.addEventListener("click", async () => {
+  const nome = inpNomeCliente.value.trim();
+  const telefono = inpTelCliente.value.trim();
+  if (!nome) {
+    alert("Inserisci il nome del cliente");
+    return;
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
+
+    // preseleziona subito il nuovo cliente nello step 1
+    clienteIdHidden.value = docRef.id;
+    if (pickerValue) pickerValue.textContent = nome;
+    if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+    if (openRubricaField) openRubricaField.classList.remove("empty");
+    clienteSelezionato.textContent = nome;
+
+    // chiudi il modale rubrica
+    rubricaModal.style.display = "none";
+
+    // reset form
+    formAddCliente.style.display = "none";
+    inpNomeCliente.value = "";
+    inpTelCliente.value = "";
+
+    updateNavState();
+
+  } catch (err) {
+    console.error("Errore durante salvataggio cliente:", err);
+    alert("Errore nel salvataggio del cliente.");
+  }
+});
 })();
