@@ -491,5 +491,56 @@ input[type="checkbox"] {
 .trattamento-extra .quantita-input {
   width: 55px;
 }
+/* ─── Form aggiunta rapida cliente nel wizard ─────────────────── */
+#addClienteWizardForm {
+  display: none;              /* nascosto di default */
+  padding: 16px;
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+
+#addClienteWizardForm input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: #fff;
+  margin-bottom: 10px;
+  transition: all .2s ease;
+}
+
+#addClienteWizardForm input:focus {
+  border-color: var(--prim);
+  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
+  outline: none;
+}
+
+#addClienteWizardForm .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#addClienteWizardForm .btn-primary {
+  background: var(--prim);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+#addClienteWizardForm .btn-secondary {
+  background: #f4e5dc;
+  color: var(--text);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
 
 #addClienteForm button:active { transform: scale(.97); }
