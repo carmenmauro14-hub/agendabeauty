@@ -87,6 +87,18 @@
         <!-- Bottone Aggiungi Cliente -->
         <button id="openAddClienteWizard" class="btn-add">+</button>
       </div>
+
+      <!-- 🔽 Form aggiunta rapida cliente -->
+      <div id="addClienteWizardForm" style="display:none; padding:16px;">
+        <input id="addClienteNome" type="text" placeholder="Nome cliente…" style="margin-bottom:8px; width:100%; padding:10px; font-size:16px;">
+        <input id="addClienteTel" type="tel" placeholder="Telefono…" style="margin-bottom:8px; width:100%; padding:10px; font-size:16px;">
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button id="annullaAddCliente" type="button" class="btn-secondary">Annulla</button>
+          <button id="salvaAddCliente" type="button" class="btn-primary">Salva</button>
+        </div>
+      </div>
+      <!-- 🔼 Fine form -->
+
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
     </div>
@@ -103,14 +115,5 @@
 
   <!-- JS -->
   <script type="module" src="nuovo-appuntamento.js"></script>
-  <script>
-    // Listener per aprire la rubrica completa se clicchi +
-    document.addEventListener("DOMContentLoaded", () => {
-      const btnAddClienteWizard = document.getElementById("openAddClienteWizard");
-      btnAddClienteWizard?.addEventListener("click", () => {
-        location.href = "rubrica.html"; // ti porta nella pagina rubrica per aggiungere cliente
-      });
-    });
-  </script>
 </body>
 </html>
