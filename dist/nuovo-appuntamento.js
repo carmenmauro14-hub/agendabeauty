@@ -7,12 +7,6 @@ import { abilitaSwipeVerticale } from "./swipe.js";
 
 const db = getFirestore(app);
 
-// ─── Parametri URL ─────────────────────────────────────────────────
-const urlParams        = new URLSearchParams(location.search);
-const editId           = urlParams.get("edit");
-const presetClienteId  = urlParams.get("cliente");
-const presetDataISO    = urlParams.get("data");
-
 // ─── Utils ─────────────────────────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
@@ -45,13 +39,12 @@ const clienteIdHidden    = document.getElementById("clienteId");
 const clienteSelezionato = document.getElementById("clienteSelezionato");
 const openRubrica        = document.getElementById("openRubrica");
 const rubricaModal       = document.getElementById("rubricaModal");
-const searchCliente      = document.getElementById("searchCliente");
 const clientListPicker   = document.getElementById("clientListPicker");
 const letterNavPicker    = document.getElementById("letterNavPicker");
 const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-container");
 const btnRubricaClose    = document.getElementById("rubricaClose");
-const rubricaGrabber     = document.getElementById("rubricaGrabber");  // maniglia
-const rubricaScroll      = document.getElementById("rubricaScroll");   // wrapper scroll (se presente)
+const rubricaGrabber     = document.getElementById("rubricaGrabber");  
+const rubricaScroll      = document.getElementById("rubricaScroll");  
 
 const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
@@ -74,32 +67,8 @@ const inpTelCliente      = document.getElementById("addClienteTel");
 let apptData     = null;
 let clientiCache = null;
 
-// ─── Abilitazioni UI ──────────────────────────────────────────────
-function updateNavState() {
-  if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
-  if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
-}
-[inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
-
-// ─── Overlay chiusura (wizard) ─────────────────────────────────────
-function chiudiSheet() {
-  if (!sheetEl) { btnCancel?.click(); return; }
-  sheetEl.classList.add("swipe-out-down");
-  sheetEl.addEventListener("transitionend", () => { btnCancel?.click(); }, { once: true });
-}
-sheetClose?.addEventListener("click", chiudiSheet);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiSheet(); });
-pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
-if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
-
-// ─── Rubrica (open/close + swipe maniglia) ─────────────────────────
+// ─── Rubrica (apri/chiudi) ─────────────────────────────────────────
 function apriRubrica() {
-  rubricaScroll && (rubricaScroll._lastY = undefined); // 🔑 reset ogni volta che apro
-  if (searchCliente) searchCliente.value = "";
-  letterNavPicker && (letterNavPicker.style.display = "flex");
-  rubricaModal.style.display = "flex";
-  lockBodyScroll(true);
-
   (async () => {
     if (!clientiCache) {
       const snap = await getDocs(collection(db, "clienti"));
@@ -107,45 +76,36 @@ function apriRubrica() {
         .sort((a,b) => (a.nome || "").localeCompare(b.nome || "", "it"));
     }
     renderRubrica(clientiCache);
+    rubricaModal.style.display = "flex";
+    rubricaScroll && (rubricaScroll._lastY = undefined); // reset stato scroll
+    lockBodyScroll(true);
   })();
 }
 
 function chiudiRubricaAnimata() {
-  if (!rubricaPanel) { rubricaModal.style.display = "none"; lockBodyScroll(false); return; }
+  if (!rubricaPanel) {
+    rubricaModal.style.display = "none";
+    lockBodyScroll(false);
+    rubricaScroll && (rubricaScroll._lastY = undefined);
+    return;
+  }
   rubricaPanel.classList.add("swipe-out-down");
   rubricaPanel.addEventListener("transitionend", () => {
     rubricaPanel.classList.remove("swipe-out-down");
     rubricaModal.style.display = "none";
     rubricaPanel.style.transform = "translateY(0)";
-    rubricaScroll && (rubricaScroll._lastY = undefined); // 🔑 reset allo stato pulito
+    rubricaScroll && (rubricaScroll._lastY = undefined); // reset
     lockBodyScroll(false);
   }, { once: true });
 }
 
-openRubrica?.addEventListener("click", apriRubrica);
 openRubricaField?.addEventListener("click", apriRubrica);
-openRubricaField?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
-});
 btnRubricaClose?.addEventListener("click", chiudiRubricaAnimata);
 rubricaModal?.addEventListener("click", (e) => { if (e.target === rubricaModal) chiudiRubricaAnimata(); });
 
-// swipe sulla maniglia della rubrica
 if (rubricaGrabber) {
   abilitaSwipeVerticale(rubricaGrabber, null, chiudiRubricaAnimata, true, 45);
 }
-
-// impedisci che lo scroll della lista trascini anche il pannello
-rubricaScroll?.addEventListener("touchmove", (e) => {
-  const el = rubricaScroll;
-  const atTop    = el.scrollTop <= 0;
-  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight;
-  const dy = e.touches[0]?.clientY - (rubricaScroll._lastY || e.touches[0].clientY);
-  rubricaScroll._lastY = e.touches[0].clientY;
-  if ((atTop && dy > 0) || (atBottom && dy < 0)) return; // lascia propagare
-  e.stopPropagation();
-}, { passive: true });
-rubricaScroll?.addEventListener("touchend", () => { rubricaScroll._lastY = undefined; });
 
 // ─── Render rubrica ────────────────────────────────────────────────
 function renderRubrica(clienti) {
@@ -162,7 +122,7 @@ function renderRubrica(clienti) {
     sec.textContent = L; sec.className = "section"; sec.id = "picker-letter-" + L;
     clientListPicker.appendChild(sec);
 
-    groups[L].sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","it")).forEach(c => {
+    groups[L].forEach(c => {
       const li = document.createElement("li");
       li.className = "item";
       li.textContent = c.nome || "(senza nome)";
@@ -175,27 +135,28 @@ function renderRubrica(clienti) {
   letters.forEach(L => {
     const el = document.createElement("span");
     el.textContent = L;
-    el.onclick = () => document.getElementById("picker-letter-" + L)?.scrollIntoView({ behavior:"smooth", block:"start" });
+    el.onclick = () => document.getElementById("picker-letter-" + L)?.scrollIntoView({ behavior:"smooth" });
     letterNavPicker.appendChild(el);
   });
 }
-function selezionaCliente(id, nome){
+
+function selezionaCliente(id, nome) {
   clienteIdHidden.value = id;
   clienteSelezionato.textContent = nome;
-  if (pickerValue) pickerValue.textContent = nome;
-  if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-  openRubricaField?.classList.remove("empty");
+  pickerValue.textContent = nome;
+  pickerPlaceholder.style.display = "none";
+  openRubricaField.classList.remove("empty");
   chiudiRubricaAnimata();
-  updateNavState();
 }
 
 // ─── Mini-modal nuovo cliente ─────────────────────────────────────
-btnOpenAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "flex"; inpNomeCliente?.focus(); lockBodyScroll(true); });
-btnCloseAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "none"; lockBodyScroll(true); });
+btnOpenAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "flex"; inpNomeCliente?.focus(); });
+btnCloseAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "none"; });
+
 addClienteForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const nome = (inpNomeCliente?.value || "").trim();
-  const telefono = (inpTelCliente?.value || "").trim();
+  const nome = inpNomeCliente.value.trim();
+  const telefono = inpTelCliente.value.trim();
   if (!nome) { alert("Inserisci il nome del cliente"); return; }
   try {
     const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
