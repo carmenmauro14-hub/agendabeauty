@@ -30,8 +30,8 @@
         <div class="step" id="step1">
           <h2>1. Seleziona cliente</h2>
           <input type="hidden" id="clienteId" />
-          <div id="openRubricaField" class="picker-input empty" role="button" tabindex="0"
-               aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
+          <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
+              aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
             <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
             <span id="pickerValue" class="value" aria-live="polite"></span>
           </div>
@@ -76,24 +76,21 @@
 
   <!-- RUBRICA - Modal separata (in alto) -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
-    <div class="rubrica-container"
+    <div class="rubrica-container" id="rubricaScroll"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
-                border-radius:16px 16px 0 0; position:relative;">
+                overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
       <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
       <div class="rubrica-header">
         <div class="rubrica-grabber" id="rubricaGrabber"></div>
       </div>
-
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
-        <button id="openAddClienteWizard" class="btn-add" type="button">+</button>
+        <!-- Bottone Aggiungi Cliente -->
+        <button id="openAddClienteWizard" class="btn-add">+</button>
       </div>
 
-      <!-- SOLO QUESTO WRAPPER SCROLLA -->
-      <div id="rubricaScroll">
-        <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
-        <div id="letterNavPicker" class="letter-nav"></div>
-      </div>
+      <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
+      <div id="letterNavPicker" class="letter-nav"></div>
     </div>
   </div>
 
@@ -102,7 +99,7 @@
     <div class="modal-content">
       <header>
         <h2>Nuovo Cliente</h2>
-        <button class="close" id="closeAddCliente" aria-label="Chiudi">&times;</button>
+        <button class="close" id="closeAddCliente">&times;</button>
       </header>
       <form id="addClienteForm">
         <input id="addClienteNome" type="text" placeholder="Nome cliente…" required>
@@ -116,7 +113,9 @@
   <script>
     fetch("navbar.html")
       .then(res => res.text())
-      .then(html => { document.getElementById("navbar-placeholder").innerHTML = html; });
+      .then(html => {
+        document.getElementById("navbar-placeholder").innerHTML = html;
+      });
   </script>
 
   <!-- JS -->
