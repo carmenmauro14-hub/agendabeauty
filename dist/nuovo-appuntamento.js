@@ -82,8 +82,13 @@ function apriRubrica() {
         .sort((a,b) => (a.nome || "").localeCompare(b.nome || "", "it"));
     }
     renderRubrica(clientiCache);
+
+    // 🔑 reset sicuro dello stato pannello prima di riaprirlo
+    rubricaPanel?.classList.remove("swipe-out-down");
+    rubricaPanel.style.transform = "translateY(0)";
+
     rubricaModal.style.display = "flex";
-    rubricaScroll && (rubricaScroll._lastY = undefined); // reset stato scroll
+    rubricaScroll && (rubricaScroll._lastY = undefined); 
     lockBodyScroll(true);
   })();
 }
