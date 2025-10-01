@@ -9,19 +9,19 @@ import { abilitaSwipeVerticale } from "./swipe.js";
 
 const db = getFirestore(app);
 
-// ─── Parametri URL ─────────────────────────────────────────────────
+// ─── Parametri URL ────────────────────────────────────────────────
 const urlParams        = new URLSearchParams(location.search);
 const editId           = urlParams.get("edit");
 const presetClienteId  = urlParams.get("cliente");
 const presetDataISO    = urlParams.get("data");
 
-// ─── Utils ─────────────────────────────────────────────────────────
+// ─── Utils ────────────────────────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
   document.title = text;
 }
 
-// ─── Riferimenti DOM ───────────────────────────────────────────────
+// ─── Riferimenti DOM ──────────────────────────────────────────────
 const wizardTitle        = document.getElementById("wizardTitle");
 const step1              = document.getElementById("step1");
 const step2              = document.getElementById("step2");
@@ -58,11 +58,19 @@ const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
 
-// ─── Stato ─────────────────────────────────────────────────────────
+// Mini-modal nuovo cliente
+const btnOpenAddCliente  = document.getElementById("openAddClienteWizard");
+const addClienteModal    = document.getElementById("addClienteModal");
+const btnCloseAddCliente = document.getElementById("closeAddCliente");
+const addClienteForm     = document.getElementById("addClienteForm");
+const inpNomeCliente     = document.getElementById("addClienteNome");
+const inpTelCliente      = document.getElementById("addClienteTel");
+
+// ─── Stato ────────────────────────────────────────────────────────
 let apptData     = null;
 let clientiCache = null;
 
-// ─── Abilitazioni UI ───────────────────────────────────────────────
+// ─── Abilitazioni UI ──────────────────────────────────────────────
 function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
@@ -85,7 +93,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiShee
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica ───────────────────────────────────────────────────────
+// ─── Rubrica ──────────────────────────────────────────────────────
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -104,19 +112,11 @@ if (openRubricaField) {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
   });
 }
-rubricaModal?.addEventListener("click", (e) => {
-  if (e.target === rubricaModal) rubricaModal.style.display = "none";
-});
 btnRubricaClose?.addEventListener("click", () => {
-  if (!rubricaPanel) return (rubricaModal.style.display = "none");
-  rubricaPanel.classList.add("swipe-out-down");
-  rubricaPanel.addEventListener("transitionend", () => {
-    rubricaPanel.classList.remove("swipe-out-down");
-    rubricaModal.style.display = "none";
-    rubricaPanel.style.transform = "translateY(0)";
-  }, { once: true });
+  rubricaModal.style.display = "none";
 });
 
+// rendering rubrica
 function renderRubrica(clienti) {
   const groups = {};
   clienti.forEach(c => {
@@ -138,14 +138,7 @@ function renderRubrica(clienti) {
       li.className = "item";
       li.textContent = c.nome || "(senza nome)";
       li.onclick = () => {
-        clienteIdHidden.value = c.id;
-        const nome = c.nome || "(senza nome)";
-        clienteSelezionato.textContent = nome;
-        if (pickerValue) pickerValue.textContent = nome;
-        if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-        if (openRubricaField) openRubricaField.classList.remove("empty");
-        rubricaModal.style.display = "none";
-        updateNavState();
+        selezionaCliente(c.id, c.nome);
       };
       clientListPicker.appendChild(li);
     });
@@ -162,6 +155,48 @@ function renderRubrica(clienti) {
     letterNavPicker.appendChild(el);
   });
 }
+
+// funzione per selezionare cliente
+function selezionaCliente(id, nome) {
+  clienteIdHidden.value = id;
+  clienteSelezionato.textContent = nome;
+  if (pickerValue) pickerValue.textContent = nome;
+  if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
+  if (openRubricaField) openRubricaField.classList.remove("empty");
+  rubricaModal.style.display = "none";
+  updateNavState();
+}
+
+// ─── Mini-modal nuovo cliente ─────────────────────────────────────
+btnOpenAddCliente?.addEventListener("click", () => {
+  addClienteModal.style.display = "flex";
+  inpNomeCliente.focus();
+});
+btnCloseAddCliente?.addEventListener("click", () => {
+  addClienteModal.style.display = "none";
+});
+addClienteForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const nome = inpNomeCliente.value.trim();
+  const telefono = inpTelCliente.value.trim();
+  if (!nome) {
+    alert("Inserisci il nome del cliente");
+    return;
+  }
+  try {
+    const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
+
+    // preseleziona subito il nuovo cliente
+    selezionaCliente(docRef.id, nome);
+
+    // reset form e chiudi modal
+    addClienteForm.reset();
+    addClienteModal.style.display = "none";
+  } catch (err) {
+    console.error("Errore durante salvataggio cliente:", err);
+    alert("Errore nel salvataggio del cliente.");
+  }
+});
 
 // ─── Trattamenti ───────────────────────────────────────────────────
 const iconeDisponibili = [
