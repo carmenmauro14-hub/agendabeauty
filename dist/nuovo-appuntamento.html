@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="navbar.css" />
   <link rel="stylesheet" href="rubrica.css" />
   <link rel="stylesheet" href="nuovo-appuntamento.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script type="module" src="auth.js"></script>
 </head>
 <body>
@@ -30,7 +31,7 @@
           <h2>1. Seleziona cliente</h2>
           <input type="hidden" id="clienteId" />
           <div id="openRubricaField" class="picker-input" role="button" tabindex="0"
-               aria-haspopup="dialog" aria-controls="rubricaModal">
+              aria-haspopup="dialog" aria-controls="rubricaModal" style="margin-bottom:12px;">
             <span id="pickerPlaceholder">Cerca/Seleziona cliente…</span>
             <span id="pickerValue" class="value" aria-live="polite"></span>
           </div>
@@ -88,19 +89,23 @@
         <button id="openAddClienteWizard" class="btn-add">+</button>
       </div>
 
-      <!-- 🔽 Form aggiunta rapida cliente -->
-      <div id="addClienteWizardForm">
-        <input id="addClienteNome" type="text" placeholder="Nome cliente…">
-        <input id="addClienteTel" type="tel" placeholder="Telefono…">
-        <div class="actions">
-          <button id="annullaAddCliente" type="button" class="btn-secondary">Annulla</button>
-          <button id="salvaAddCliente" type="button" class="btn-primary">Salva</button>
-        </div>
-      </div>
-      <!-- 🔼 Fine form -->
-
       <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
       <div id="letterNavPicker" class="letter-nav"></div>
+    </div>
+  </div>
+
+  <!-- MINI MODAL: Aggiungi Cliente -->
+  <div id="addClienteModal">
+    <div class="modal-content">
+      <header>
+        <h2>Nuovo Cliente</h2>
+        <button class="close" id="closeAddCliente">&times;</button>
+      </header>
+      <form id="addClienteForm">
+        <input id="addClienteNome" type="text" placeholder="Nome cliente…" required>
+        <input id="addClienteTel" type="tel" placeholder="Telefono…">
+        <button type="submit" class="btn-primary"><i class="fas fa-check"></i> Salva</button>
+      </form>
     </div>
   </div>
 
