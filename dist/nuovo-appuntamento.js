@@ -7,6 +7,12 @@ import { abilitaSwipeVerticale } from "./swipe.js";
 
 const db = getFirestore(app);
 
+// ─── Parametri URL ────────────────────────────────────────────────
+const urlParams        = new URLSearchParams(location.search);
+const editId           = urlParams.get("edit");
+const presetClienteId  = urlParams.get("cliente");
+const presetDataISO    = urlParams.get("data");
+
 // ─── Utils ─────────────────────────────────────────────────────────
 function setPageTitle(text) {
   if (wizardTitle) wizardTitle.textContent = text;
@@ -89,14 +95,18 @@ function chiudiRubricaAnimata() {
     rubricaScroll && (rubricaScroll._lastY = undefined);
     return;
   }
-  rubricaPanel.classList.add("swipe-out-down");
-  rubricaPanel.addEventListener("transitionend", () => {
+
+  const reset = () => {
     rubricaPanel.classList.remove("swipe-out-down");
     rubricaModal.style.display = "none";
     rubricaPanel.style.transform = "translateY(0)";
-    rubricaScroll && (rubricaScroll._lastY = undefined); // reset
+    rubricaScroll && (rubricaScroll._lastY = undefined);
     lockBodyScroll(false);
-  }, { once: true });
+    rubricaPanel.removeEventListener("transitionend", reset);
+  };
+
+  rubricaPanel.addEventListener("transitionend", reset);
+  rubricaPanel.classList.add("swipe-out-down");
 }
 
 openRubricaField?.addEventListener("click", apriRubrica);
