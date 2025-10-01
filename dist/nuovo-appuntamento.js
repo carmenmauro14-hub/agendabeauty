@@ -51,7 +51,7 @@ const letterNavPicker    = document.getElementById("letterNavPicker");
 const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-container");
 const btnRubricaClose    = document.getElementById("rubricaClose");
 const rubricaGrabber     = document.getElementById("rubricaGrabber");  // maniglia
-const rubricaScroll      = document.getElementById("rubricaScroll");   // wrapper scroll
+const rubricaScroll      = document.getElementById("rubricaScroll");   // wrapper scroll (se presente)
 
 const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
@@ -74,7 +74,7 @@ const inpTelCliente      = document.getElementById("addClienteTel");
 let apptData     = null;
 let clientiCache = null;
 
-// ─── Abilitazioni UI ───────────────────────────────────────────────
+// ─── Abilitazioni UI ──────────────────────────────────────────────
 function updateNavState() {
   if (btnToStep2) btnToStep2.disabled = !clienteIdHidden.value;
   if (btnToStep3) btnToStep3.disabled = !(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "");
@@ -94,6 +94,12 @@ if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 4
 
 // ─── Rubrica (open/close + swipe maniglia) ─────────────────────────
 function apriRubrica() {
+  rubricaScroll && (rubricaScroll._lastY = undefined); // 🔑 reset ogni volta che apro
+  if (searchCliente) searchCliente.value = "";
+  letterNavPicker && (letterNavPicker.style.display = "flex");
+  rubricaModal.style.display = "flex";
+  lockBodyScroll(true);
+
   (async () => {
     if (!clientiCache) {
       const snap = await getDocs(collection(db, "clienti"));
@@ -101,12 +107,9 @@ function apriRubrica() {
         .sort((a,b) => (a.nome || "").localeCompare(b.nome || "", "it"));
     }
     renderRubrica(clientiCache);
-    if (searchCliente) searchCliente.value = "";
-    letterNavPicker && (letterNavPicker.style.display = "flex");
-    rubricaModal.style.display = "flex";
-    lockBodyScroll(true);
   })();
 }
+
 function chiudiRubricaAnimata() {
   if (!rubricaPanel) { rubricaModal.style.display = "none"; lockBodyScroll(false); return; }
   rubricaPanel.classList.add("swipe-out-down");
@@ -114,9 +117,11 @@ function chiudiRubricaAnimata() {
     rubricaPanel.classList.remove("swipe-out-down");
     rubricaModal.style.display = "none";
     rubricaPanel.style.transform = "translateY(0)";
+    rubricaScroll && (rubricaScroll._lastY = undefined); // 🔑 reset allo stato pulito
     lockBodyScroll(false);
   }, { once: true });
 }
+
 openRubrica?.addEventListener("click", apriRubrica);
 openRubricaField?.addEventListener("click", apriRubrica);
 openRubricaField?.addEventListener("keydown", (e) => {
@@ -132,16 +137,12 @@ if (rubricaGrabber) {
 
 // impedisci che lo scroll della lista trascini anche il pannello
 rubricaScroll?.addEventListener("touchmove", (e) => {
-  // se non c'è più da scrollare, lascia passare; altrimenti consumiamo.
   const el = rubricaScroll;
   const atTop    = el.scrollTop <= 0;
   const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight;
   const dy = e.touches[0]?.clientY - (rubricaScroll._lastY || e.touches[0].clientY);
   rubricaScroll._lastY = e.touches[0].clientY;
-  if ((atTop && dy > 0) || (atBottom && dy < 0)) {
-    // lasciamo propagare per poter chiudere con swipe (se parte dalla maniglia).
-    return;
-  }
+  if ((atTop && dy > 0) || (atBottom && dy < 0)) return; // lascia propagare
   e.stopPropagation();
 }, { passive: true });
 rubricaScroll?.addEventListener("touchend", () => { rubricaScroll._lastY = undefined; });
@@ -190,7 +191,7 @@ function selezionaCliente(id, nome){
 
 // ─── Mini-modal nuovo cliente ─────────────────────────────────────
 btnOpenAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "flex"; inpNomeCliente?.focus(); lockBodyScroll(true); });
-btnCloseAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "none"; lockBodyScroll(true); /* rubrica resta aperta */ });
+btnCloseAddCliente?.addEventListener("click", () => { addClienteModal.style.display = "none"; lockBodyScroll(true); });
 addClienteForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const nome = (inpNomeCliente?.value || "").trim();
@@ -198,9 +199,7 @@ addClienteForm?.addEventListener("submit", async (e) => {
   if (!nome) { alert("Inserisci il nome del cliente"); return; }
   try {
     const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
-    // preseleziona subito
     selezionaCliente(docRef.id, nome);
-    // reset/chiudi mini modal
     addClienteForm.reset();
     addClienteModal.style.display = "none";
   } catch (err) {
@@ -349,12 +348,10 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
-  // Preimpostazioni da URL
   if (!editId && presetDataISO && inpData && !inpData.value) inpData.value = presetDataISO;
 
   updateNavState();
 
-  // bottone Annulla → back o calendario
   btnCancel?.addEventListener("click", () => {
     if (history.length > 1) history.back();
     else location.href = "calendario.html";
