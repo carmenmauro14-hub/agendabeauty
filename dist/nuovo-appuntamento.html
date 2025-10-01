@@ -7,6 +7,7 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="navbar.css" />
+  <link rel="stylesheet" href="rubrica.css" />
   <link rel="stylesheet" href="nuovo-appuntamento.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script type="module" src="auth.js"></script>
@@ -35,9 +36,7 @@
             <span id="pickerValue" class="value" aria-live="polite"></span>
           </div>
           <div id="clienteSelezionato" style="display:none;"></div>
-          <!-- fallback -->
           <button id="openRubrica" class="btn" style="display:none;">Apri rubrica</button>
-
           <div class="wizard-nav">
             <button id="cancelWizard" type="button" class="btn">Annulla</button>
             <button id="toStep2" class="btn" disabled>Avanti</button>
@@ -54,7 +53,6 @@
             <span>:</span>
             <input type="number" id="oraAppuntamentoMM" min="0" max="59" placeholder="MM">
           </div>
-
           <div class="wizard-nav">
             <button id="backToStep1" class="btn" type="button">Indietro</button>
             <button id="toStep3" class="btn" disabled>Avanti</button>
@@ -77,31 +75,30 @@
   </div>
 
   <!-- RUBRICA - Modal separata (in alto) -->
-  <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px; display:none;">
+  <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
     <div class="rubrica-container"
          style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
                 border-radius:16px 16px 0 0; position:relative;">
       <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
-
-      <!-- maniglia/area drag -->
       <div class="rubrica-header">
         <div class="rubrica-grabber" id="rubricaGrabber"></div>
       </div>
 
-      <!-- barra superiore sticky -->
       <div class="top-bar">
         <input id="searchCliente" type="text" placeholder="Cerca cliente…">
         <button id="openAddClienteWizard" class="btn-add" type="button">+</button>
       </div>
 
-      <!-- lista che scorre -->
-      <ul id="clientListPicker" style="margin:0 0 12px 0; padding:0;"></ul>
-      <div id="letterNavPicker" class="letter-nav"></div>
+      <!-- SOLO QUESTO WRAPPER SCROLLA -->
+      <div id="rubricaScroll">
+        <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
+        <div id="letterNavPicker" class="letter-nav"></div>
+      </div>
     </div>
   </div>
 
   <!-- MINI MODAL: Aggiungi Cliente -->
-  <div id="addClienteModal" style="display:none;">
+  <div id="addClienteModal">
     <div class="modal-content">
       <header>
         <h2>Nuovo Cliente</h2>
@@ -110,9 +107,7 @@
       <form id="addClienteForm">
         <input id="addClienteNome" type="text" placeholder="Nome cliente…" required>
         <input id="addClienteTel" type="tel" placeholder="Telefono…">
-        <button type="submit" class="btn-primary">
-          <i class="fas fa-check"></i> Salva
-        </button>
+        <button type="submit" class="btn-primary"><i class="fas fa-check"></i> Salva</button>
       </form>
     </div>
   </div>
