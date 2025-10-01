@@ -11,419 +11,114 @@
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont,
-               "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-               "Helvetica Neue", sans-serif;
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+  margin: 0; padding: 0; background: var(--bg); color: var(--text);
 }
-
-/* Blocca lo scroll del body quando la rubrica è aperta */
-body.no-scroll { overflow: hidden; }
 
 /* ===== WIZARD ===== */
-.wizard-container {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-}
-
+.wizard-container { max-width: 600px; margin: 20px auto; padding: 20px; }
 .step {
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 10px 10px rgba(0,0,0,0.1);
-  margin-top: 20px;
+  background:#f9f9f9; padding:20px; border-radius:10px; box-shadow:0 10px 10px rgba(0,0,0,0.1); margin-top:20px;
 }
-
-.step h2 {
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--text);
-  margin-bottom: 20px;
-}
+.step h2 { font-size:18px; font-weight:bold; color:var(--text); margin-bottom:20px; }
 
 /* ===== PULSANTI ===== */
-.wizard-nav {
-  margin-top: 20px;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
+.wizard-nav { margin-top:20px; display:flex; gap:12px; justify-content:space-between; }
+.btn,.btn-primary,.btn-secondary{
+  flex:1; display:inline-flex; align-items:center; justify-content:center; height:48px; padding:0 18px;
+  border:none; border-radius:14px; background:var(--prim); color:#fff; font-size:16px; font-weight:700;
+  cursor:pointer; transition:transform .06s ease, opacity .15s ease; text-decoration:none; user-select:none;
 }
-
-.btn,
-.btn-primary,
-.btn-secondary {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 14px;
-  background: var(--prim);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform .06s ease, opacity .15s ease, box-shadow .15s ease;
-  text-decoration: none;
-  user-select: none;
-}
-.btn:hover { opacity: .95; }
-.btn:active { transform: scale(.98); }
-.btn:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(10%); }
+.btn:hover{opacity:.95} .btn:active{transform:scale(.98)} .btn:disabled{opacity:.55; cursor:not-allowed; filter:grayscale(10%)}
 
 /* ===== INPUT ===== */
-select,
-input[type="date"],
-input[type="time"] {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  margin-top: 12px;
-  margin-bottom: 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--text);
-  font-size: 16px;
+select,input[type="date"],input[type="time"]{
+  width:100%; box-sizing:border-box; padding:12px 14px; margin:12px 0; border:1px solid var(--line);
+  border-radius:12px; background:#fff; color:var(--text); font-size:16px;
 }
 
 /* ===== TRATTAMENTI ===== */
-#trattamentiWrapper {
-  max-height: none;
-  overflow-y: auto;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
-}
-
-.trattamento-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  gap: 8px;
-}
-
-.trattamento-row label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-grow: 1;
-  color: var(--text);
-}
-
-.trattamento-row .icona-trattamento {
-  width: 24px;
-  height: 24px;
-}
-
-.prezzo-input {
-  width: 80px;
-  height: 32px;
-  padding: 2px 8px;
-  border: 1px solid var(--prim);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--text);
-  box-sizing: border-box;
-  font-size: 16px;
-  transform-origin: left center;
-}
-
-.prezzo-input:focus {
-  outline: none;
-  border-color: var(--text);
-  box-shadow: 0 0 0 3px rgba(210, 184, 163, .28);
-}
-
-input[type="checkbox"] { accent-color: var(--prim); }
+#trattamentiWrapper{ max-height:none; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:12px; background:#fff; }
+.trattamento-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; }
+.trattamento-row label{ display:flex; align-items:center; gap:10px; flex-grow:1; color:var(--text); }
+.trattamento-row .icona-trattamento{ width:24px; height:24px; }
+.prezzo-input{ width:80px; height:32px; padding:2px 8px; border:1px solid var(--prim); border-radius:10px; background:#fff; color:var(--text); box-sizing:border-box; font-size:16px; }
+.prezzo-input:focus{ outline:none; border-color:var(--text); box-shadow:0 0 0 3px rgba(210,184,163,.28); }
+input[type="checkbox"]{ accent-color:var(--prim); }
 
 /* ===== INPUT FALSO (CLIENTE) ===== */
-.picker-input {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #fff;
-  color: var(--text);
-  cursor: text;
-  user-select: none;
+.picker-input{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%;
+  padding:12px 16px; border:1px solid var(--line); border-radius:14px; background:#fff; color:var(--text);
+  cursor:text; user-select:none;
 }
-.picker-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(210, 184, 163, .25);
-}
-.picker-input .value { font-weight: 600; color: var(--text); }
-.picker-input.empty .value { display: none; }
-.picker-input.empty #pickerPlaceholder { opacity: .6; }
+.picker-input:focus{ outline:none; box-shadow:0 0 0 4px rgba(210,184,163,.25); }
+.picker-input .value{ font-weight:600; color:var(--text); }
+.picker-input.empty .value{ display:none; }
+.picker-input.empty #pickerPlaceholder{ opacity:.6; }
 
 /* ===== WIZARD MODALE (IN BASSO) ===== */
-.page-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1000;
+.page-modal{
+  position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; justify-content:center; align-items:flex-end; z-index:1000;
 }
-
-#wizardSheet {
-  background: #fff;
-  width: 100%;
-  max-width: 600px;
-  max-height: 95vh;
-  overflow-y: auto;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-  transform: translateY(0);
-  transition: transform 0.25s ease;
+#wizardSheet{
+  background:#fff; width:100%; max-width:600px; max-height:95vh; overflow-y:auto;
+  border-radius:16px 16px 0 0; box-shadow:0 -4px 12px rgba(0,0,0,.15); transform:translateY(0); transition:transform .25s ease;
 }
-
-#wizardSheet.swipe-out-down { transform: translateY(100%); }
-
-.sheet-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  background: transparent;
-  padding: 0;
-  touch-action: none;
-  user-select: none;
+#wizardSheet.swipe-out-down{ transform:translateY(100%); }
+.sheet-header{
+  position:absolute; top:0; left:0; right:0; height:44px; display:flex; align-items:center; justify-content:center; z-index:3;
+  background:transparent; padding:0; touch-action:none; user-select:none;
 }
-.sheet-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--line);
-  margin: 0;
-  cursor: grab;
-}
-.sheet-close {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 32px;
-  color: var(--text);
-  opacity: .85;
-  cursor: pointer;
-  z-index: 4;
-}
+.sheet-grabber{ width:48px; height:5px; border-radius:3px; background:var(--line); margin:0; cursor:grab; }
+.sheet-close{ position:absolute; top:6px; right:8px; width:32px; height:32px; border:0; background:transparent; font-size:22px; line-height:32px; color:var(--text); opacity:.85; cursor:pointer; z-index:4; }
 
 /* ===== RUBRICA MODALE (ALTA) ===== */
-#rubricaModal .rubrica-container {
-  position: relative;
-  padding-top: 56px;
-  will-change: transform;
-  transform: translateY(0);
-  transition: transform 200ms ease;
-
-  /* 🔒 blocca lo scroll del container; scorrerà solo la lista */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  /* evita che il bounce/overscroll tocchi la pagina sottostante */
-  overscroll-behavior: contain;
+#rubricaModal .rubrica-container{
+  position:relative; padding-top:56px; will-change:transform; transform:translateY(0); transition:transform 200ms ease;
+  overflow:hidden;                 /* ← blocca lo scroll del contenitore */
 }
-#rubricaModal .rubrica-container.swipe-out-down { transform: translateY(100%); }
-
-#rubricaModal .rubrica-header {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  background: transparent;
-  padding: 0;
-  user-select: none;
-
-  /* 🔑 importantissimo per catturare il drag su mobile */
-  touch-action: none;
+#rubricaModal .rubrica-container.swipe-out-down{ transform:translateY(100%); }
+#rubricaModal .rubrica-header{
+  position:absolute; top:0; left:0; right:0; height:44px; display:flex; align-items:center; justify-content:center; z-index:3;
+  background:transparent; padding:0; user-select:none; touch-action:none;   /* ← gesture affidabile */
 }
-#rubricaModal .rubrica-grabber {
-  width: 48px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--line);
-  margin: 0;
-  cursor: grab;
-}
-#rubricaModal .rubrica-close {
-  position: absolute;
-  top: 6px; right: 8px;
-  width: 32px; height: 32px;
-  border: 0; background: transparent;
-  font-size: 22px; line-height: 32px;
-  color: var(--text);
-  opacity: .85; cursor: pointer; z-index: 4;
-}
-#rubricaModal .rubrica-close:hover { opacity: 1; }
-#rubricaModal .rubrica-close:active { transform: scale(.96); }
+#rubricaModal .rubrica-grabber{ width:48px; height:5px; border-radius:3px; background:var(--line); margin:0; cursor:grab; }
+#rubricaModal .rubrica-close{ position:absolute; top:6px; right:8px; width:32px; height:32px; border:0; background:transparent; font-size:22px; line-height:32px; color:var(--text); opacity:.85; cursor:pointer; z-index:4; }
+#rubricaModal .rubrica-close:hover{ opacity:1; } #rubricaModal .rubrica-close:active{ transform:scale(.96); }
 
-/* Barra sopra la lista, sempre visibile */
-#rubricaModal .top-bar {
-  position: sticky;
-  top: 44px;               /* sotto la grabber/header */
-  background: #fff;
-  z-index: 2;
-  padding: 0 16px 12px 16px;
+/* SOLO questo blocco scorre (lista + index lettere) */
+#rubricaScroll{
+  height: calc(95vh - 56px - 72px); /* header 56 + topbar ~72 */
+  overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:16px;
 }
 
-/* Scorre SOLO l’elenco clienti */
-#clientListPicker {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
+/* ===== Titolo dinamico in alto ===== */
+.wizard-title{ font-size:22px; font-weight:bold; color:var(--text); margin-bottom:10px; }
 
-/* ===== SCROLL SOLO SUI TRATTAMENTI ===== */
-.trattamenti-scroll-container {
-  max-height: calc(95vh - 280px);
-  overflow-y: auto;
-  margin-top: 12px;
-  padding-right: 6px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--prim) #f5f5f5;
-}
-.trattamenti-scroll-container::-webkit-scrollbar { width: 6px; }
-.trattamenti-scroll-container::-webkit-scrollbar-track { background: #f5f5f5; }
-.trattamenti-scroll-container::-webkit-scrollbar-thumb {
-  background-color: var(--prim);
-  border-radius: 6px;
-}
+/* ===== INPUT ORARIO ===== */
+.time-input{ display:flex; align-items:center; justify-content:center; gap:6px; margin:12px 0; }
+.time-input input{ width:70px; padding:12px 14px; font-size:16px; text-align:center; border:1px solid var(--line); border-radius:12px; background:#fff; color:var(--text); }
+.time-input span{ font-size:18px; font-weight:bold; color:var(--text); }
 
-/* ===== Titolo dinamico ===== */
-.wizard-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: var(--text);
-  margin-bottom: 10px;
+/* Pulsante “+” nella rubrica */
+.btn-add{
+  width:44px; height:44px; border-radius:50%; border:none; background:var(--prim); color:#fff; font-size:24px; font-weight:bold; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:transform .1s ease, opacity .2s ease;
 }
+.btn-add:hover{ opacity:.9 } .btn-add:active{ transform:scale(.95) }
 
-/* ===== INPUT ORARIO (HH:MM) ===== */
-.time-input {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 12px 0;
+/* Mini modal aggiungi cliente */
+#addClienteModal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000; align-items:center; justify-content:center; }
+#addClienteModal .modal-content{
+  background:#fff; border-radius:16px; width:90%; max-width:400px; padding:20px; box-shadow:0 6px 16px rgba(0,0,0,.2);
+  display:flex; flex-direction:column; gap:16px;
 }
-.time-input input {
-  width: 70px;
-  padding: 12px 14px;
-  font-size: 16px;
-  text-align: center;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--text);
-}
-.time-input span { font-size: 18px; font-weight: bold; color: var(--text); }
-
-/* ─── Pulsante + dentro la rubrica modale ───────────────── */
-.btn-add {
-  width: 44px; height: 44px; border-radius: 50%;
-  border: none; background: var(--prim); color: #fff;
-  font-size: 24px; font-weight: bold; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform .1s ease, opacity .2s ease;
-}
-.btn-add:hover { opacity: .9; }
-.btn-add:active { transform: scale(.95); }
-
-/* ─── Mini Modal nuovo cliente ───────────────────────────── */
-#addClienteModal {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
-  z-index: 2000;
-  align-items: center; justify-content: center;
-}
-#addClienteModal .modal-content {
-  background: #fff; border-radius: 16px;
-  width: 90%; max-width: 400px; padding: 20px;
-  box-shadow: 0 6px 16px rgba(0,0,0,.2);
-  display: flex; flex-direction: column; gap: 16px;
-}
-#addClienteModal header { display: flex; justify-content: space-between; align-items: center; }
-#addClienteModal header h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--text); }
-#addClienteModal .close {
-  background: none; border: none; font-size: 24px; line-height: 1;
-  color: var(--text); cursor: pointer; opacity: .8;
-}
-#addClienteModal .close:hover { opacity: 1; }
-
-#addClienteForm {
-  display: flex; flex-direction: column; gap: 14px;
-}
-#addClienteForm input {
-  padding: 12px; font-size: 16px;
-  border: 1px solid var(--line); border-radius: 12px;
-  color: var(--text); background: #fff; transition: all .2s;
-}
-#addClienteForm input:focus {
-  border-color: var(--prim);
-  box-shadow: 0 0 0 3px rgba(210,184,163,.25);
-  outline: none;
-}
-#addClienteForm button {
-  background: var(--prim); color: #fff; border: none; border-radius: 12px;
-  padding: 12px 20px; font-size: 16px; font-weight: 700; cursor: pointer;
-  transition: transform .06s ease, opacity .15s ease;
-}
-
-/* === Step 3 - Trattamenti con quantità (placeholder classi) === */
-.trattamento-extra {
-  display: flex; gap: 8px; align-items: center; margin-left: auto;
-}
-.trattamento-extra input {
-  padding: 6px 8px; font-size: 14px; border: 1px solid var(--line);
-  border-radius: 6px; text-align: center; color: var(--text); background: #fff; width: 70px;
-}
-.trattamento-extra .quantita-input { width: 55px; }
-
-/* ─── Form aggiunta rapida cliente nel wizard (se la userai) ───── */
-#addClienteWizardForm {
-  display: none; padding: 16px; background: #fff; border-top: 1px solid var(--line);
-}
-#addClienteWizardForm input {
-  width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--line);
-  border-radius: 12px; color: var(--text); background: #fff; margin-bottom: 10px; transition: all .2s ease;
-}
-#addClienteWizardForm input:focus {
-  border-color: var(--prim);
-  box-shadow: 0 0 0 4px rgba(210,184,163,.25);
-  outline: none;
-}
-#addClienteWizardForm .actions { display: flex; justify-content: flex-end; gap: 10px; }
-#addClienteWizardForm .btn-primary {
-  background: var(--prim); color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font-size: 15px; cursor: pointer;
-}
-#addClienteWizardForm .btn-secondary {
-  background: #f4e5dc; color: var(--text); border: none; border-radius: 12px; padding: 10px 20px; font-size: 15px; cursor: pointer;
-}
+#addClienteModal header{ display:flex; justify-content:space-between; align-items:center; }
+#addClienteModal header h2{ margin:0; font-size:20px; font-weight:700; color:var(--text); }
+#addClienteModal .close{ background:none; border:none; font-size:24px; line-height:1; color:var(--text); cursor:pointer; opacity:.8; }
+#addClienteModal .close:hover{ opacity:1; }
+#addClienteForm{ display:flex; flex-direction:column; gap:14px; }
+#addClienteForm input{ padding:12px; font-size:16px; border:1px solid var(--line); border-radius:12px; color:var(--text); background:#fff; transition:all .2s; }
+#addClienteForm input:focus{ border-color:var(--prim); box-shadow:0 0 0 3px rgba(210,184,163,.25); outline:none; }
+#addClienteForm button{ background:var(--prim); color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; font-weight:700; cursor:pointer; transition:transform .06s ease, opacity .15s ease; }
