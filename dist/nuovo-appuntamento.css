@@ -8,9 +8,7 @@
   --tile-hover: #e8d7cb;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-}
+html { -webkit-text-size-adjust: 100%; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont,
@@ -21,6 +19,9 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+
+/* Blocca lo scroll del body quando la rubrica è aperta */
+body.no-scroll { overflow: hidden; }
 
 /* ===== WIZARD ===== */
 .wizard-container {
@@ -74,11 +75,7 @@ body {
 }
 .btn:hover { opacity: .95; }
 .btn:active { transform: scale(.98); }
-.btn:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-  filter: grayscale(10%);
-}
+.btn:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(10%); }
 
 /* ===== INPUT ===== */
 select,
@@ -146,9 +143,7 @@ input[type="time"] {
   box-shadow: 0 0 0 3px rgba(210, 184, 163, .28);
 }
 
-input[type="checkbox"] {
-  accent-color: var(--prim);
-}
+input[type="checkbox"] { accent-color: var(--prim); }
 
 /* ===== INPUT FALSO (CLIENTE) ===== */
 .picker-input {
@@ -169,16 +164,9 @@ input[type="checkbox"] {
   outline: none;
   box-shadow: 0 0 0 4px rgba(210, 184, 163, .25);
 }
-.picker-input .value {
-  font-weight: 600;
-  color: var(--text);
-}
-.picker-input.empty .value {
-  display: none;
-}
-.picker-input.empty #pickerPlaceholder {
-  opacity: .6;
-}
+.picker-input .value { font-weight: 600; color: var(--text); }
+.picker-input.empty .value { display: none; }
+.picker-input.empty #pickerPlaceholder { opacity: .6; }
 
 /* ===== WIZARD MODALE (IN BASSO) ===== */
 .page-modal {
@@ -203,9 +191,7 @@ input[type="checkbox"] {
   transition: transform 0.25s ease;
 }
 
-#wizardSheet.swipe-out-down {
-  transform: translateY(100%);
-}
+#wizardSheet.swipe-out-down { transform: translateY(100%); }
 
 .sheet-header {
   position: absolute;
@@ -253,17 +239,20 @@ input[type="checkbox"] {
   will-change: transform;
   transform: translateY(0);
   transition: transform 200ms ease;
-}
 
-#rubricaModal .rubrica-container.swipe-out-down {
-  transform: translateY(100%);
+  /* 🔒 blocca lo scroll del container; scorrerà solo la lista */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  /* evita che il bounce/overscroll tocchi la pagina sottostante */
+  overscroll-behavior: contain;
 }
+#rubricaModal .rubrica-container.swipe-out-down { transform: translateY(100%); }
 
 #rubricaModal .rubrica-header {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 44px;
   display: flex;
   align-items: center;
@@ -272,6 +261,9 @@ input[type="checkbox"] {
   background: transparent;
   padding: 0;
   user-select: none;
+
+  /* 🔑 importantissimo per catturare il drag su mobile */
+  touch-action: none;
 }
 #rubricaModal .rubrica-grabber {
   width: 48px;
@@ -283,21 +275,31 @@ input[type="checkbox"] {
 }
 #rubricaModal .rubrica-close {
   position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 32px;
+  top: 6px; right: 8px;
+  width: 32px; height: 32px;
+  border: 0; background: transparent;
+  font-size: 22px; line-height: 32px;
   color: var(--text);
-  opacity: .85;
-  cursor: pointer;
-  z-index: 4;
+  opacity: .85; cursor: pointer; z-index: 4;
 }
 #rubricaModal .rubrica-close:hover { opacity: 1; }
 #rubricaModal .rubrica-close:active { transform: scale(.96); }
+
+/* Barra sopra la lista, sempre visibile */
+#rubricaModal .top-bar {
+  position: sticky;
+  top: 44px;               /* sotto la grabber/header */
+  background: #fff;
+  z-index: 2;
+  padding: 0 16px 12px 16px;
+}
+
+/* Scorre SOLO l’elenco clienti */
+#clientListPicker {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* ===== SCROLL SOLO SUI TRATTAMENTI ===== */
 .trattamenti-scroll-container {
@@ -305,23 +307,17 @@ input[type="checkbox"] {
   overflow-y: auto;
   margin-top: 12px;
   padding-right: 6px;
-}
-.trattamenti-scroll-container {
   scrollbar-width: thin;
   scrollbar-color: var(--prim) #f5f5f5;
 }
-.trattamenti-scroll-container::-webkit-scrollbar {
-  width: 6px;
-}
-.trattamenti-scroll-container::-webkit-scrollbar-track {
-  background: #f5f5f5;
-}
+.trattamenti-scroll-container::-webkit-scrollbar { width: 6px; }
+.trattamenti-scroll-container::-webkit-scrollbar-track { background: #f5f5f5; }
 .trattamenti-scroll-container::-webkit-scrollbar-thumb {
   background-color: var(--prim);
   border-radius: 6px;
 }
 
-/* ===== Titolo dinamico in alto ===== */
+/* ===== Titolo dinamico ===== */
 .wizard-title {
   font-size: 22px;
   font-weight: bold;
@@ -337,7 +333,6 @@ input[type="checkbox"] {
   gap: 6px;
   margin: 12px 0;
 }
-
 .time-input input {
   width: 70px;
   padding: 12px 14px;
@@ -348,26 +343,14 @@ input[type="checkbox"] {
   background: #fff;
   color: var(--text);
 }
-.time-input span {
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--text);
-}
+.time-input span { font-size: 18px; font-weight: bold; color: var(--text); }
 
 /* ─── Pulsante + dentro la rubrica modale ───────────────── */
 .btn-add {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: var(--prim);
-  color: #fff;
-  font-size: 24px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: none; background: var(--prim); color: #fff;
+  font-size: 24px; font-weight: bold; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
   transition: transform .1s ease, opacity .2s ease;
 }
 .btn-add:hover { opacity: .9; }
@@ -376,59 +359,32 @@ input[type="checkbox"] {
 /* ─── Mini Modal nuovo cliente ───────────────────────────── */
 #addClienteModal {
   display: none;
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background: rgba(0,0,0,.45);
   z-index: 2000;
-  align-items: center;
-  justify-content: center;
+  align-items: center; justify-content: center;
 }
 #addClienteModal .modal-content {
-  background: #fff;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 400px;
-  padding: 20px;
+  background: #fff; border-radius: 16px;
+  width: 90%; max-width: 400px; padding: 20px;
   box-shadow: 0 6px 16px rgba(0,0,0,.2);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: flex; flex-direction: column; gap: 16px;
 }
-#addClienteModal header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-#addClienteModal header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-}
+#addClienteModal header { display: flex; justify-content: space-between; align-items: center; }
+#addClienteModal header h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--text); }
 #addClienteModal .close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  line-height: 1;
-  color: var(--text);
-  cursor: pointer;
-  opacity: .8;
+  background: none; border: none; font-size: 24px; line-height: 1;
+  color: var(--text); cursor: pointer; opacity: .8;
 }
 #addClienteModal .close:hover { opacity: 1; }
 
 #addClienteForm {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: flex; flex-direction: column; gap: 14px;
 }
 #addClienteForm input {
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--text);
-  background: #fff;
-  transition: all .2s;
+  padding: 12px; font-size: 16px;
+  border: 1px solid var(--line); border-radius: 12px;
+  color: var(--text); background: #fff; transition: all .2s;
 }
 #addClienteForm input:focus {
   border-color: var(--prim);
@@ -436,111 +392,38 @@ input[type="checkbox"] {
   outline: none;
 }
 #addClienteForm button {
-  background: var(--prim);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
+  background: var(--prim); color: #fff; border: none; border-radius: 12px;
+  padding: 12px 20px; font-size: 16px; font-weight: 700; cursor: pointer;
   transition: transform .06s ease, opacity .15s ease;
 }
 
-/* === Step 3 - Trattamenti con quantità === */
-
-.trattamento-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
-}
-
-.trattamento-row label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.trattamento-row .icona-trattamento {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
-
+/* === Step 3 - Trattamenti con quantità (placeholder classi) === */
 .trattamento-extra {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-left: auto;
+  display: flex; gap: 8px; align-items: center; margin-left: auto;
 }
-
 .trattamento-extra input {
-  padding: 6px 8px;
-  font-size: 14px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  text-align: center;
-  color: var(--text);
-  background: #fff;
-  width: 70px;
+  padding: 6px 8px; font-size: 14px; border: 1px solid var(--line);
+  border-radius: 6px; text-align: center; color: var(--text); background: #fff; width: 70px;
 }
+.trattamento-extra .quantita-input { width: 55px; }
 
-.trattamento-extra .quantita-input {
-  width: 55px;
-}
-/* ─── Form aggiunta rapida cliente nel wizard ─────────────────── */
+/* ─── Form aggiunta rapida cliente nel wizard (se la userai) ───── */
 #addClienteWizardForm {
-  display: none;              /* nascosto di default */
-  padding: 16px;
-  background: #fff;
-  border-top: 1px solid var(--line);
+  display: none; padding: 16px; background: #fff; border-top: 1px solid var(--line);
 }
-
 #addClienteWizardForm input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--text);
-  background: #fff;
-  margin-bottom: 10px;
-  transition: all .2s ease;
+  width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--line);
+  border-radius: 12px; color: var(--text); background: #fff; margin-bottom: 10px; transition: all .2s ease;
 }
-
 #addClienteWizardForm input:focus {
   border-color: var(--prim);
   box-shadow: 0 0 0 4px rgba(210,184,163,.25);
   outline: none;
 }
-
-#addClienteWizardForm .actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
+#addClienteWizardForm .actions { display: flex; justify-content: flex-end; gap: 10px; }
 #addClienteWizardForm .btn-primary {
-  background: var(--prim);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-size: 15px;
-  cursor: pointer;
+  background: var(--prim); color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font-size: 15px; cursor: pointer;
 }
-
 #addClienteWizardForm .btn-secondary {
-  background: #f4e5dc;
-  color: var(--text);
-  border: none;
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-size: 15px;
-  cursor: pointer;
+  background: #f4e5dc; color: var(--text); border: none; border-radius: 12px; padding: 10px 20px; font-size: 15px; cursor: pointer;
 }
-
-#addClienteForm button:active { transform: scale(.97); }
