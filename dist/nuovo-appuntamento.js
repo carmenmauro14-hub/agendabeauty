@@ -49,8 +49,8 @@ const clientListPicker   = document.getElementById("clientListPicker");
 const letterNavPicker    = document.getElementById("letterNavPicker");
 const rubricaPanel       = document.querySelector("#rubricaModal .rubrica-container");
 const btnRubricaClose    = document.getElementById("rubricaClose");
-const rubricaGrabber     = document.getElementById("rubricaGrabber");  
-const rubricaScroll      = document.getElementById("rubricaScroll");  
+const rubricaGrabber     = document.getElementById("rubricaGrabber");
+const rubricaScroll      = document.getElementById("rubricaScroll");
 
 const openRubricaField   = document.getElementById("openRubricaField");
 const pickerValue        = document.getElementById("pickerValue");
@@ -72,6 +72,7 @@ const inpTelCliente      = document.getElementById("addClienteTel");
 // ─── Stato ─────────────────────────────────────────────────────────
 let apptData     = null;
 let clientiCache = null;
+let rubricaCloseTimer = null; // fallback per chiusura modale rubrica
 
 // ─── Rubrica (apri/chiudi) ─────────────────────────────────────────
 function apriRubrica() {
@@ -83,14 +84,19 @@ function apriRubrica() {
     }
     renderRubrica(clientiCache);
 
-    // ✅ reset sicuro solo se necessario
+    // ✅ reset eventuali classi pendenti
     if (rubricaPanel?.classList.contains("swipe-out-down")) {
       rubricaPanel.classList.remove("swipe-out-down");
       rubricaPanel.style.transform = "translateY(0)";
     }
+    // pulisci eventuale timeout pendente
+    if (rubricaCloseTimer) {
+      clearTimeout(rubricaCloseTimer);
+      rubricaCloseTimer = null;
+    }
 
     rubricaModal.style.display = "flex";
-    rubricaScroll && (rubricaScroll._lastY = undefined); 
+    if (rubricaScroll) rubricaScroll._lastY = undefined;
     lockBodyScroll(true);
   })();
 }
@@ -99,21 +105,31 @@ function chiudiRubricaAnimata() {
   if (!rubricaPanel) {
     rubricaModal.style.display = "none";
     lockBodyScroll(false);
-    rubricaScroll && (rubricaScroll._lastY = undefined);
+    if (rubricaScroll) rubricaScroll._lastY = undefined;
     return;
   }
 
   const reset = () => {
-    rubricaPanel.classList.remove("swipe-out-down");
-    rubricaModal.style.display = "none";
-    rubricaPanel.style.transform = "translateY(0)";
-    rubricaScroll && (rubricaScroll._lastY = undefined);
-    lockBodyScroll(false);
     rubricaPanel.removeEventListener("transitionend", reset);
+    if (rubricaCloseTimer) {
+      clearTimeout(rubricaCloseTimer);
+      rubricaCloseTimer = null;
+    }
+    rubricaPanel.classList.remove("swipe-out-down");
+    rubricaPanel.style.transform = "translateY(0)";
+    rubricaModal.style.display = "none";
+    if (rubricaScroll) rubricaScroll._lastY = undefined;
+    lockBodyScroll(false);
   };
 
-  rubricaPanel.addEventListener("transitionend", reset);
+  // forza reflow per sicurezza
+  rubricaPanel.offsetHeight;
+
+  rubricaPanel.addEventListener("transitionend", reset, { once: true });
   rubricaPanel.classList.add("swipe-out-down");
+
+  // fallback timeout se transitionend non arriva
+  rubricaCloseTimer = setTimeout(reset, 400);
 }
 
 openRubricaField?.addEventListener("click", apriRubrica);
