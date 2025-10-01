@@ -58,7 +58,7 @@ const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
 
-// Mini-modal nuovo cliente
+// Mini-modal nuovo cliente (rubrica)
 const btnOpenAddCliente  = document.getElementById("openAddClienteWizard");
 const addClienteModal    = document.getElementById("addClienteModal");
 const btnCloseAddCliente = document.getElementById("closeAddCliente");
@@ -77,7 +77,7 @@ function updateNavState() {
 }
 [inpData, inpOraHH, inpOraMM].forEach(el => el?.addEventListener("input", updateNavState));
 
-// ─── Overlay chiusura ─────────────────────────────────────────────
+// ─── Overlay chiusura wizard (sheet in basso) ─────────────────────
 function chiudiSheet() {
   if (!sheetEl) {
     btnCancel?.click();
@@ -93,7 +93,31 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") chiudiShee
 pageModal?.addEventListener("click", (e) => { if (e.target === pageModal) chiudiSheet(); });
 if (sheetHeader) { abilitaSwipeVerticale(sheetHeader, null, chiudiSheet, true, 45); }
 
-// ─── Rubrica ──────────────────────────────────────────────────────
+// ─── Rubrica (apertura, drag-to-close, rendering) ─────────────────
+// Drag-to-close per la Rubrica (modale alta)
+const rubricaHeaderEl = document.querySelector('#rubricaModal .rubrica-header');
+
+function chiudiRubricaConAnimazione() {
+  if (!rubricaPanel) {
+    rubricaModal.style.display = 'none';
+    document.body.classList.remove('no-scroll');
+    return;
+  }
+  rubricaPanel.classList.add('swipe-out-down');
+  rubricaPanel.addEventListener('transitionend', () => {
+    rubricaPanel.classList.remove('swipe-out-down');
+    rubricaModal.style.display = 'none';
+    rubricaPanel.style.transform = 'translateY(0)'; // reset posizione
+    document.body.classList.remove('no-scroll');
+  }, { once: true });
+}
+
+// attiva il drag verticale sulla maniglia della rubrica
+if (rubricaHeaderEl && rubricaPanel) {
+  // (handle, panel, onClose, soloVersoGiu=true, sogliaPx)
+  abilitaSwipeVerticale(rubricaHeaderEl, rubricaPanel, chiudiRubricaConAnimazione, true, 80);
+}
+
 async function apriRubrica() {
   if (!clientiCache) {
     const snap = await getDocs(collection(db, "clienti"));
@@ -104,6 +128,7 @@ async function apriRubrica() {
   if (searchCliente) searchCliente.value = "";
   if (letterNavPicker) letterNavPicker.style.display = "flex";
   rubricaModal.style.display = "flex";
+  document.body.classList.add('no-scroll'); // blocca scroll della pagina dietro
 }
 openRubrica?.addEventListener("click", apriRubrica);
 if (openRubricaField) {
@@ -112,24 +137,12 @@ if (openRubricaField) {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); apriRubrica(); }
   });
 }
-btnRubricaClose?.addEventListener("click", () => {
-  rubricaModal.style.display = "none";
+// chiusure rubrica
+btnRubricaClose?.addEventListener("click", chiudiRubricaConAnimazione);
+rubricaModal?.addEventListener('click', (e) => {
+  if (e.target === rubricaModal) chiudiRubricaConAnimazione();
 });
 
-// 🔽 SWIPE su grabber rubrica per chiudere
-const rubricaGrabber = document.getElementById("rubricaGrabber");
-if (rubricaGrabber) {
-  abilitaSwipeVerticale(rubricaGrabber, null, () => {
-    rubricaPanel.classList.add("swipe-out-down");
-    rubricaPanel.addEventListener("transitionend", () => {
-      rubricaPanel.classList.remove("swipe-out-down");
-      rubricaModal.style.display = "none";
-      rubricaPanel.style.transform = "translateY(0)";
-    }, { once: true });
-  }, true, 45);
-}
-
-// rendering rubrica
 function renderRubrica(clienti) {
   const groups = {};
   clienti.forEach(c => {
@@ -150,9 +163,7 @@ function renderRubrica(clienti) {
       const li = document.createElement("li");
       li.className = "item";
       li.textContent = c.nome || "(senza nome)";
-      li.onclick = () => {
-        selezionaCliente(c.id, c.nome);
-      };
+      li.onclick = () => selezionaCliente(c.id, c.nome || "(senza nome)");
       clientListPicker.appendChild(li);
     });
   });
@@ -176,26 +187,28 @@ function selezionaCliente(id, nome) {
   if (pickerValue) pickerValue.textContent = nome;
   if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
   if (openRubricaField) openRubricaField.classList.remove("empty");
-  rubricaModal.style.display = "none";
+  chiudiRubricaConAnimazione();
   updateNavState();
 }
 
-// ─── Mini-modal nuovo cliente ─────────────────────────────────────
+// ─── Mini-modal nuovo cliente nella rubrica ───────────────────────
 btnOpenAddCliente?.addEventListener("click", () => {
   addClienteModal.style.display = "flex";
-  inpNomeCliente.focus();
+  inpNomeCliente?.focus();
 });
 btnCloseAddCliente?.addEventListener("click", () => {
   addClienteModal.style.display = "none";
 });
 addClienteForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const nome = inpNomeCliente.value.trim();
-  const telefono = inpTelCliente.value.trim();
+  const nome = (inpNomeCliente?.value || "").trim();
+  const telefono = (inpTelCliente?.value || "").trim();
+
   if (!nome) {
     alert("Inserisci il nome del cliente");
     return;
   }
+
   try {
     const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
 
@@ -431,56 +444,4 @@ btnSalva?.addEventListener("click", async () => {
       location.href = "calendario.html";
     }
   });
-  // ─── Aggiunta rapida cliente dal wizard ──────────────────────────────
-const btnOpenAddCliente = document.getElementById("openAddClienteWizard");
-const formAddCliente    = document.getElementById("addClienteWizardForm");
-const btnSalvaCliente   = document.getElementById("salvaAddCliente");
-const btnAnnullaCliente = document.getElementById("annullaAddCliente");
-const inpNomeCliente    = document.getElementById("addClienteNome");
-const inpTelCliente     = document.getElementById("addClienteTel");
-
-btnOpenAddCliente?.addEventListener("click", () => {
-  formAddCliente.style.display = "block";
-  inpNomeCliente.focus();
-});
-
-btnAnnullaCliente?.addEventListener("click", () => {
-  formAddCliente.style.display = "none";
-  inpNomeCliente.value = "";
-  inpTelCliente.value = "";
-});
-
-btnSalvaCliente?.addEventListener("click", async () => {
-  const nome = inpNomeCliente.value.trim();
-  const telefono = inpTelCliente.value.trim();
-  if (!nome) {
-    alert("Inserisci il nome del cliente");
-    return;
-  }
-
-  try {
-    const docRef = await addDoc(collection(db, "clienti"), { nome, telefono });
-
-    // preseleziona subito il nuovo cliente nello step 1
-    clienteIdHidden.value = docRef.id;
-    if (pickerValue) pickerValue.textContent = nome;
-    if (pickerPlaceholder) pickerPlaceholder.style.display = "none";
-    if (openRubricaField) openRubricaField.classList.remove("empty");
-    clienteSelezionato.textContent = nome;
-
-    // chiudi il modale rubrica
-    rubricaModal.style.display = "none";
-
-    // reset form
-    formAddCliente.style.display = "none";
-    inpNomeCliente.value = "";
-    inpTelCliente.value = "";
-
-    updateNavState();
-
-  } catch (err) {
-    console.error("Errore durante salvataggio cliente:", err);
-    alert("Errore nel salvataggio del cliente.");
-  }
-});
 })();
