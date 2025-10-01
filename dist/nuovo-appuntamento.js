@@ -83,9 +83,11 @@ function apriRubrica() {
     }
     renderRubrica(clientiCache);
 
-    // 🔑 reset sicuro dello stato pannello prima di riaprirlo
-    rubricaPanel?.classList.remove("swipe-out-down");
-    rubricaPanel.style.transform = "translateY(0)";
+    // ✅ reset sicuro solo se necessario
+    if (rubricaPanel?.classList.contains("swipe-out-down")) {
+      rubricaPanel.classList.remove("swipe-out-down");
+      rubricaPanel.style.transform = "translateY(0)";
+    }
 
     rubricaModal.style.display = "flex";
     rubricaScroll && (rubricaScroll._lastY = undefined); 
