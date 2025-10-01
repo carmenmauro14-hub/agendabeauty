@@ -116,6 +116,19 @@ btnRubricaClose?.addEventListener("click", () => {
   rubricaModal.style.display = "none";
 });
 
+// 🔽 SWIPE su grabber rubrica per chiudere
+const rubricaGrabber = document.getElementById("rubricaGrabber");
+if (rubricaGrabber) {
+  abilitaSwipeVerticale(rubricaGrabber, null, () => {
+    rubricaPanel.classList.add("swipe-out-down");
+    rubricaPanel.addEventListener("transitionend", () => {
+      rubricaPanel.classList.remove("swipe-out-down");
+      rubricaModal.style.display = "none";
+      rubricaPanel.style.transform = "translateY(0)";
+    }, { once: true });
+  }, true, 45);
+}
+
 // rendering rubrica
 function renderRubrica(clienti) {
   const groups = {};
