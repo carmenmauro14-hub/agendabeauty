@@ -94,7 +94,7 @@ function apriRubrica() {
       clearTimeout(rubricaCloseTimer);
       rubricaCloseTimer = null;
     }
-
+    pageModal.style.display = "none"; // nasconde il wizard sotto
     rubricaModal.style.display = "flex";
     if (rubricaScroll) rubricaScroll._lastY = undefined;
     lockBodyScroll(true);
@@ -118,6 +118,7 @@ function chiudiRubricaAnimata() {
     rubricaPanel.classList.remove("swipe-out-down");
     rubricaPanel.style.transform = "translateY(0)";
     rubricaModal.style.display = "none";
+    pageModal.style.display = "flex"; // riattiva il wizard
     if (rubricaScroll) rubricaScroll._lastY = undefined;
     lockBodyScroll(false);
   };
