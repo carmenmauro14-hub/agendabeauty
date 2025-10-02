@@ -340,6 +340,24 @@ btnSalva?.addEventListener("click", async () => {
       const apptDoc = await getDoc(doc(db, "appuntamenti", editId));
       if (apptDoc.exists()) {
         apptData = apptDoc.data();
+        // recupera cliente collegato e mostra il nome nello step 1
+if (apptData.clienteId) {
+  try {
+    const clienteDoc = await getDoc(doc(db, "clienti", apptData.clienteId));
+    if (clienteDoc.exists()) {
+      const clienteData = clienteDoc.data();
+      const nomeCliente = clienteData.nome || "(senza nome)";
+      clienteIdHidden.value = apptData.clienteId;
+      clienteSelezionato.textContent = nomeCliente;
+      pickerValue.textContent = nomeCliente;
+      pickerPlaceholder.style.display = "none";
+      openRubricaField.classList.remove("empty");
+      if (btnToStep2) btnToStep2.disabled = false; // abilita Avanti
+    }
+  } catch (e) {
+    console.warn("Cliente non trovato:", e);
+  }
+}
         let iso = "";
         if (apptData.data && typeof apptData.data.toDate === "function") {
           const d = apptData.data.toDate();
