@@ -281,6 +281,18 @@ btnToStep3?.addEventListener("click", () => {
   if (!(inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "")) return alert("Inserisci data e ora");
   step2.style.display = "none"; step3.style.display = "block";
 });
+// abilita/disabilita automaticamente il bottone Avanti dello step 2
+function checkStep2() {
+  if (inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "") {
+    btnToStep3.disabled = false;
+  } else {
+    btnToStep3.disabled = true;
+  }
+}
+
+inpData?.addEventListener("input", checkStep2);
+inpOraHH?.addEventListener("input", checkStep2);
+inpOraMM?.addEventListener("input", checkStep2);
 btnBackToStep2?.addEventListener("click", () => { step3.style.display = "none"; step2.style.display = "block"; });
 
 // ─── Salvataggio appuntamento ──────────────────────────────────────
