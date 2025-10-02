@@ -373,6 +373,12 @@ if (apptData.clienteId) {
         }
         const selectedMap = new Map((Array.isArray(apptData.trattamenti) ? apptData.trattamenti : []).map(t => [t.nome, Number(t.prezzo) || 0]));
         await caricaTrattamenti(selectedMap);
+      
+        // se data e ora sono già compilate → abilita "Avanti"
+        if (inpData.value && inpOraHH.value !== "" && inpOraMM.value !== "") {
+          if (btnToStep3) btnToStep3.disabled = false;
+        }
+      
       } else {
         alert("Appuntamento non trovato. Procedo come 'Nuovo'.");
         setPageTitle("Nuovo Appuntamento");
