@@ -293,6 +293,12 @@ function checkStep2() {
 inpData?.addEventListener("input", checkStep2);
 inpOraHH?.addEventListener("input", checkStep2);
 inpOraMM?.addEventListener("input", checkStep2);
+// ─── Auto-focus minuti dopo 2 cifre ore ─────────────────────────────
+inpOraHH?.addEventListener("input", () => {
+  if (inpOraHH.value.length >= 2) {
+    inpOraMM.focus();
+  }
+});
 btnBackToStep2?.addEventListener("click", () => { step3.style.display = "none"; step2.style.display = "block"; });
 
 // ─── Salvataggio appuntamento ──────────────────────────────────────
