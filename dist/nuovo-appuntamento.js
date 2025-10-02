@@ -69,6 +69,29 @@ const addClienteForm     = document.getElementById("addClienteForm");
 const inpNomeCliente     = document.getElementById("addClienteNome");
 const inpTelCliente      = document.getElementById("addClienteTel");
 
+// ─── Chiusura wizard (X, Annulla, swipe maniglia) ─────────────────
+function chiudiWizard() {
+  // se per caso la rubrica fosse aperta, chiudila prima
+  if (rubricaModal && rubricaModal.style.display === "flex") {
+    rubricaModal.style.display = "none";
+  }
+  // poi esci dal wizard
+  if (history.length > 1) history.back();
+  else location.href = "calendario.html";
+}
+
+// X in alto a destra
+sheetClose?.addEventListener("click", chiudiWizard);
+
+// Bottone "Annulla"
+btnCancel?.addEventListener("click", chiudiWizard);
+
+// Swipe down dalla maniglia della sheet
+if (sheetHeader) {
+  // chiudi sullo swipe verso il basso
+  abilitaSwipeVerticale(sheetHeader, null, chiudiWizard, true, 45);
+}
+
 // ─── Stato ─────────────────────────────────────────────────────────
 let apptData     = null;
 let clientiCache = null;
@@ -343,12 +366,15 @@ btnSalva?.addEventListener("click", async () => {
     }
   }
 
-  if (!editId && presetDataISO && inpData && !inpData.value) inpData.value = presetDataISO;
+  if (!editId && presetDataISO && inpData && !inpData.value) {
+    inpData.value = presetDataISO;
+  }
 
-  updateNavState();
+  // proteggi la chiamata a updateNavState (può non esistere)
+  if (typeof updateNavState === "function") {
+    try { updateNavState(); } catch (e) { 
+      console.warn("updateNavState() errore:", e); 
+    }
+  }
 
-  btnCancel?.addEventListener("click", () => {
-    if (history.length > 1) history.back();
-    else location.href = "calendario.html";
-  });
-})();
+})(); // fine init
