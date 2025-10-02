@@ -76,23 +76,22 @@
 
   <!-- RUBRICA - Modal separata (in alto) -->
   <div id="rubricaModal" class="modal" style="align-items:flex-start; padding-top:24px;">
-    <div class="rubrica-container" id="rubricaScroll"
-         style="height:95vh; width:100%; max-width:480px; margin:0 auto; background:#fff;
-                overflow-y:auto; border-radius:16px 16px 0 0; position:relative;">
-      <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
-      <div class="rubrica-header">
-        <div class="rubrica-grabber" id="rubricaGrabber"></div>
-      </div>
-      <div class="top-bar">
-        <input id="searchCliente" type="text" placeholder="Cerca cliente…">
-        <!-- Bottone Aggiungi Cliente -->
-        <button id="openAddClienteWizard" class="btn-add">+</button>
-      </div>
-
-      <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
-      <div id="letterNavPicker" class="letter-nav"></div>
-    </div>
+    <div class="rubrica-container">
+  <button class="rubrica-close" id="rubricaClose" aria-label="Chiudi">✕</button>
+  <div class="rubrica-header">
+    <div class="rubrica-grabber" id="rubricaGrabber"></div>
   </div>
+  <div class="top-bar">
+    <input id="searchCliente" type="text" placeholder="Cerca cliente…">
+    <button id="openAddClienteWizard" class="btn-add">+</button>
+  </div>
+
+  <!-- SOLO questo scorre -->
+  <div id="rubricaScroll">
+    <ul id="clientListPicker" style="margin-bottom:40px;"></ul>
+    <div id="letterNavPicker" class="letter-nav"></div>
+  </div>
+</div>
 
   <!-- MINI MODAL: Aggiungi Cliente -->
   <div id="addClienteModal">
