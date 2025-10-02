@@ -203,6 +203,10 @@ function selezionaCliente(id, nome) {
   pickerValue.textContent = nome;
   pickerPlaceholder.style.display = "none";
   openRubricaField.classList.remove("empty");
+
+  // ✅ abilita il tasto Avanti anche in Nuovo Appuntamento
+  if (btnToStep2) btnToStep2.disabled = false;
+
   chiudiRubricaAnimata();
 }
 
