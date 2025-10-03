@@ -61,6 +61,87 @@ const sheetEl     = document.getElementById("wizardSheet");
 const sheetHeader = document.querySelector(".sheet-header");
 const sheetClose  = document.getElementById("sheetClose");
 
+// ─── Controllo input ore e minuti con blocco ─────────────────────────────
+
+// Ore (00–23)
+inpOraHH?.addEventListener("beforeinput", (e) => {
+  const val = inpOraHH.value;
+  const input = e.data;
+
+  // consenti solo numeri
+  if (input && !/[0-9]/.test(input)) {
+    e.preventDefault();
+    return;
+  }
+
+  // massimo 2 cifre
+  if (val.length >= 2 && e.inputType === "insertText") {
+    e.preventDefault();
+    return;
+  }
+
+  // se prima cifra >2 → blocca
+  if (val.length === 0 && input && parseInt(input) > 2) {
+    e.preventDefault();
+    return;
+  }
+
+  // se prima cifra è 2 → la seconda non può essere >3
+  if (val.length === 1 && val[0] === "2" && input && parseInt(input) > 3) {
+    e.preventDefault();
+    return;
+  }
+});
+
+// auto-focus ai minuti dopo due cifre
+inpOraHH?.addEventListener("input", () => {
+  if (inpOraHH.value.length === 2) {
+    inpOraMM.focus();
+  }
+});
+
+// Minuti (00–59)
+inpOraMM?.addEventListener("beforeinput", (e) => {
+  const val = inpOraMM.value;
+  const input = e.data;
+
+  // consenti solo numeri
+  if (input && !/[0-9]/.test(input)) {
+    e.preventDefault();
+    return;
+  }
+
+  // massimo 2 cifre
+  if (val.length >= 2 && e.inputType === "insertText") {
+    e.preventDefault();
+    return;
+  }
+
+  // se prima cifra >5 → blocca
+  if (val.length === 0 && input && parseInt(input) > 5) {
+    e.preventDefault();
+    return;
+  }
+});
+
+// ─── Normalizza valori caricati in Modifica ─────────────────────────────
+function normalizzaOrarioInput() {
+  // ore
+  if (inpOraHH && inpOraHH.value) {
+    let hh = parseInt(inpOraHH.value, 10);
+    if (isNaN(hh) || hh < 0) hh = 0;
+    if (hh > 23) hh = 23;
+    inpOraHH.value = String(hh).padStart(2, "0");
+  }
+  // minuti
+  if (inpOraMM && inpOraMM.value) {
+    let mm = parseInt(inpOraMM.value, 10);
+    if (isNaN(mm) || mm < 0) mm = 0;
+    if (mm > 59) mm = 59;
+    inpOraMM.value = String(mm).padStart(2, "0");
+  }
+}
+
 // Mini-modal nuovo cliente
 const btnOpenAddCliente  = document.getElementById("openAddClienteWizard");
 const addClienteModal    = document.getElementById("addClienteModal");
@@ -392,7 +473,9 @@ if (apptData.clienteId) {
           const [hh, mm] = apptData.ora.split(":");
           inpOraHH && (inpOraHH.value = hh);
           inpOraMM && (inpOraMM.value = mm);
+          normalizzaOrarioInput();
         }
+        
         const selectedMap = new Map((Array.isArray(apptData.trattamenti) ? apptData.trattamenti : []).map(t => [t.nome, Number(t.prezzo) || 0]));
         await caricaTrattamenti(selectedMap);
       
