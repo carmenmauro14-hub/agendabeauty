@@ -145,21 +145,23 @@ input[type="checkbox"]{ accent-color:var(--prim); }
 #addClienteForm input:focus{ border-color:var(--prim); box-shadow:0 0 0 3px rgba(210,184,163,.25); outline:none; }
 #addClienteForm button{ background:var(--prim); color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; font-weight:700; cursor:pointer; transition:transform .06s ease, opacity .15s ease; }
 
-/* ===== STEP 3: lista trattamenti scrollabile ===== */
+/* ===== STEP 3: Scegli trattamenti ===== */
 #step3 {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
+/* Titolo fisso */
 #step3 h2 {
   flex-shrink: 0;
   margin: 0 0 16px 0;
 }
 
-/* SOLO la lista scorre */
+/* Lista scrollabile */
 .trattamenti-scroll-container {
   flex: 1;
+  max-height: calc(95vh - 260px); /* lascia spazio a titolo e bottoni */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   background: #fff;
@@ -169,7 +171,7 @@ input[type="checkbox"]{ accent-color:var(--prim); }
   margin-bottom: 12px;
 }
 
-/* Footer fisso */
+/* Footer fisso con bottoni */
 #step3 .wizard-nav {
   flex-shrink: 0;
   display: flex;
@@ -180,5 +182,4 @@ input[type="checkbox"]{ accent-color:var(--prim); }
   border-top: 1px solid var(--line);
   position: sticky;
   bottom: 0;
-  z-index: 5;
 }
