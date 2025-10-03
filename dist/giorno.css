@@ -287,9 +287,9 @@ body {
   background: #f8dcdc;
 }
 
-/* Spazio extra per non coprire l’ultimo appuntamento con la navbar */
 #contenutoGiorno {
-  padding-bottom: calc(var(--tabbar-height) + 40px); /* navbar (72px) + margine extra */
+  padding: 16px;
+  padding-bottom: calc(var(--tabbar-height) + 40px); /* spazio extra per non coprire l’ultimo evento */
 }
 
 .promem-ico:active { transform: scale(.95); }
