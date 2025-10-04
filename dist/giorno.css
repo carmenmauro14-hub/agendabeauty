@@ -1,7 +1,3 @@
-:root {
-  --tabbar-height: 72px; /* altezza della navbar inferiore */
-}
-
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
@@ -289,11 +285,6 @@ body {
 .btn-elimina:active {
   transform: scale(0.98);
   background: #f8dcdc;
-}
-
-#contenutoGiorno {
-  padding: 16px;
-  padding-bottom: calc(var(--tabbar-height) + 40px); /* spazio extra per non coprire l’ultimo evento */
 }
 
 .promem-ico:active { transform: scale(.95); }
