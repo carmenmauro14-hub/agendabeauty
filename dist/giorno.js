@@ -53,18 +53,24 @@ function dayRangeFromISO(iso) {
 }
 
 function pickDate(d){
+  let dateObj;
   if (d && typeof d.toDate === "function") {
-    const dateObj = d.toDate();
-    return { dateObj, iso: dateObj.toISOString().slice(0,10) };
+    dateObj = d.toDate();
+  } else if (typeof d === "string") {
+    // se è solo "YYYY-MM-DD" metto mezzogiorno per evitare shift UTC
+    dateObj = new Date(d.length === 10 ? d + "T12:00:00" : d);
+  } else if (d instanceof Date) {
+    dateObj = d;
+  } else {
+    return { dateObj: null, iso: "" };
   }
-  if (typeof d === "string") {
-    const dateObj = new Date(d.length === 10 ? d + "T00:00:00" : d);
-    return { dateObj, iso: dateObj.toISOString().slice(0,10) };
-  }
-  if (d instanceof Date) {
-    return { dateObj: d, iso: d.toISOString().slice(0,10) };
-  }
-  return { dateObj: null, iso: "" };
+
+  // 🔑 uso getFullYear/getMonth/getDate (locale), NON toISOString()
+  const year  = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day   = String(dateObj.getDate()).padStart(2, "0");
+
+  return { dateObj, iso: `${year}-${month}-${day}` };
 }
 
 function trovaIcona(nome) {
