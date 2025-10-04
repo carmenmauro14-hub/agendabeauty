@@ -39,6 +39,7 @@ const elOra        = document.getElementById("detOra");
 const elTrattList  = document.getElementById("detTrattList");
 const elTotale     = document.getElementById("detTotale");
 const btnModifica  = document.getElementById("detModifica");
+const btnDuplica   = document.getElementById("detDuplica");
 const btnPromem    = document.getElementById("detPromemoria");
 const btnElimina   = document.getElementById("detElimina");
 
