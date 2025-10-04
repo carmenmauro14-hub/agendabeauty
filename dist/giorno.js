@@ -276,8 +276,9 @@ function openModal(appt){
     }
 
     // 🔑 Creiamo la data in modo sicuro (locale → niente UTC bug)
-    const [yy, mm, dd] = appt.iso.split("-").map(n => parseInt(n, 10));
-    const dataDup = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+const [yy, mm, dd] = appt.iso.split("-").map(n => parseInt(n, 10));
+// usiamo mezzogiorno locale invece di mezzanotte
+const dataDup = new Date(yy, mm - 1, dd, 12, 0, 0, 0);
 
     // Creiamo una copia dell’appuntamento
     const nuovoApp = {
