@@ -334,22 +334,34 @@ detModal.addEventListener("click", (e) => { if (e.target === detModal) closeModa
 
 // ── Render lista
 function renderLista(items){
-  contenuto.innerHTML = "";
+  // titolo fisso
+  let titolo = document.getElementById("titoloData");
+  if (!titolo) {
+    titolo = document.createElement("h2");
+    titolo.id = "titoloData";
+    titolo.style.textTransform = "capitalize";
+    contenuto.appendChild(titolo);
 
-  const h2 = document.createElement("h2");
-  h2.id = "titoloData";
-  h2.style.textTransform = "capitalize";
-  h2.textContent = dataCorrente.toLocaleDateString("it-IT", {
+    // contenitore scrollabile
+    const lista = document.createElement("div");
+    lista.id = "listaAppuntamenti";
+    lista.style.overflowY = "auto";
+    lista.style.maxHeight = "calc(100vh - 200px)"; // regola lo spazio sotto navbar
+    contenuto.appendChild(lista);
+  }
+
+  titolo.textContent = dataCorrente.toLocaleDateString("it-IT", {
     weekday:"long", day:"numeric", month:"long", year:"numeric"
   });
-  contenuto.appendChild(h2);
+
+  const lista = document.getElementById("listaAppuntamenti");
+  lista.innerHTML = "";
 
   if (!items.length) {
     const p = document.createElement("p");
     p.className = "no-appt";
     p.textContent = "Nessun appuntamento per questo giorno.";
-    contenuto.appendChild(p);
-    ensureMinHeight();
+    lista.appendChild(p);
     return;
   }
 
@@ -380,14 +392,10 @@ function renderLista(items){
 
     const nomeEl = document.createElement("span");
     nomeEl.className = "eg-nome";
-    // 👇 fallback se manca cliente
     nomeEl.textContent = clientiCache[appt.clienteId]?.nome || appt.nome || "Cliente eliminato";
 
-    // 🔔 Campanella promemoria inline
     const promemEl = document.createElement("button");
     promemEl.className = "btn-pill promem-ico";
-    promemEl.setAttribute("aria-label", "Promemoria WhatsApp");
-    promemEl.title = "Promemoria WhatsApp";
     promemEl.innerHTML = '<i class="fa-solid fa-bell"></i>';
 
     promemEl.addEventListener("click", async (e) => {
@@ -404,11 +412,9 @@ function renderLista(items){
     row.appendChild(nomeEl);
     row.appendChild(promemEl);
 
-    contenuto.appendChild(row);
+    lista.appendChild(row);
     row.addEventListener("click", ()=> openModal(appt));
   });
-
-  ensureMinHeight();
 }
 
 // ── Query Firestore (data = Timestamp)
