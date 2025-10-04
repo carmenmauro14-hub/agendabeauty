@@ -261,6 +261,7 @@ function openModal(appt){
   btnModifica.onclick = () => {
     if (appt.id) location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
   };
+  
   btnDuplica.onclick = async () => {
   if (!appt.id) return;
 
@@ -274,10 +275,14 @@ function openModal(appt){
       nuovaOra = `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
     }
 
+    // 🔑 Creiamo la data in modo sicuro (locale → niente UTC bug)
+    const [yy, mm, dd] = appt.iso.split("-").map(n => parseInt(n, 10));
+    const dataDup = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+
     // Creiamo una copia dell’appuntamento
     const nuovoApp = {
       clienteId: appt.clienteId || "",
-      data: Timestamp.fromDate(new Date(appt.iso + "T00:00:00")),
+      data: Timestamp.fromDate(dataDup),  // ✅ giorno corretto
       ora: nuovaOra || appt.ora,
       trattamenti: Array.isArray(appt.trattamenti) ? [...appt.trattamenti] : []
     };
@@ -294,6 +299,7 @@ function openModal(appt){
     alert("Errore durante la duplicazione.");
   }
 };
+
   btnPromem.onclick = async () => {
     if (openingWA) return;
     openingWA = true;
