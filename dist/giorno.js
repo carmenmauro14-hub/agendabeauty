@@ -4,7 +4,7 @@
 import { app } from "./auth.js";
 import {
   getFirestore, collection, query, where, orderBy,
-  getDocs, doc, getDoc, Timestamp, deleteDoc
+  getDocs, doc, getDoc, Timestamp, deleteDoc, addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { openWhatsAppReminder } from "./reminder-core.js";
 
@@ -261,6 +261,39 @@ function openModal(appt){
   btnModifica.onclick = () => {
     if (appt.id) location.href = `nuovo-appuntamento.html?edit=${appt.id}`;
   };
+  btnDuplica.onclick = async () => {
+  if (!appt.id) return;
+
+  try {
+    // Aggiungiamo 5 minuti all’orario originale
+    let nuovaOra = appt.ora;
+    if (nuovaOra && nuovaOra.includes(":")) {
+      let [hh, mm] = nuovaOra.split(":").map(n => parseInt(n,10));
+      mm += 5;
+      if (mm >= 60) { mm -= 60; hh = (hh+1)%24; }
+      nuovaOra = `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+    }
+
+    // Creiamo una copia dell’appuntamento
+    const nuovoApp = {
+      clienteId: appt.clienteId || "",
+      data: Timestamp.fromDate(new Date(appt.iso + "T00:00:00")),
+      ora: nuovaOra || appt.ora,
+      trattamenti: Array.isArray(appt.trattamenti) ? [...appt.trattamenti] : []
+    };
+
+    // Salviamo su Firestore
+    const docRef = await addDoc(collection(db, "appuntamenti"), nuovoApp);
+
+    // Chiudi modale e apri subito la pagina di modifica sul nuovo
+    detModal.style.display = "none";
+    location.href = `nuovo-appuntamento.html?edit=${docRef.id}`;
+
+  } catch (err) {
+    console.error("Errore duplicazione:", err);
+    alert("Errore durante la duplicazione.");
+  }
+};
   btnPromem.onclick = async () => {
     if (openingWA) return;
     openingWA = true;
