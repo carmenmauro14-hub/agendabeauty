@@ -115,7 +115,12 @@ body {
   margin:10px 0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-.eg-ora{ font-weight:700; min-width:72px; color:#a07863; }
+.eg-ora {
+  font-weight: 700;
+  min-width: 60px;   /* ridotto da 72px */
+  color: #a07863;
+  white-space: nowrap;   /* l’orario non va mai a capo */
+}
 .eg-icone{ display:flex; align-items:center; gap:4px; }
 .eg-icone img{ 
   width:24px; height:24px; object-fit:contain;
@@ -124,7 +129,13 @@ body {
 }
 @media (max-width: 375px){ .eg-icone img{ width:22px; height:22px; } }
 .eg-more{ font-size:12px; opacity:.7; }
-.eg-nome{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.eg-nome {
+  flex: 1;                /* prende lo spazio disponibile */
+  white-space: nowrap;    /* resta su una sola riga */
+  overflow: hidden;       /* nasconde il testo che esce */
+  text-overflow: ellipsis; /* aggiunge i "…" se troppo lungo */
+  font-weight: 600;
+}
 
 .mini-calendario {
   display: none;
