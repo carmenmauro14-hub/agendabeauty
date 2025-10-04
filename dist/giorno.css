@@ -287,4 +287,11 @@ body {
   background: #f8dcdc;
 }
 
+#listaAppuntamenti {
+  overflow-y: auto;
+  /* Calcolo: altezza totale viewport - topbar - titolo - navbar - margine extra */
+  max-height: calc(100vh - (50px + 40px + var(--tabbar-height, 72px) + 20px));
+  padding-bottom: calc(var(--tabbar-height, 72px) + 24px);
+}
+
 .promem-ico:active { transform: scale(.95); }
